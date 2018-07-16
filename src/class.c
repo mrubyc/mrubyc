@@ -441,6 +441,12 @@ static void c_object_new(mrb_vm *vm, mrb_value v[], int argc)
   mrb_value new_obj = mrbc_instance_new(vm, v->cls, 0);
 
   char syms[]="______initialize";
+  mrb_sym sym_id = str_to_symid(&syms[6]);
+  mrb_proc *m = find_method(vm, v[0], sym_id);
+  if( m==0 ){
+    SET_RETURN(new_obj);
+    return;
+  }
   uint32_to_bin( 1,(uint8_t*)&syms[0]);
   uint16_to_bin(10,(uint8_t*)&syms[4]);
 
