@@ -17,6 +17,8 @@
 #include <string.h>
 #include <assert.h>
 
+#include <stdio.h>
+
 #include "vm.h"
 #include "load.h"
 #include "errorcode.h"
@@ -46,7 +48,7 @@ static int load_header(struct VM *vm, const uint8_t **pos)
 {
   const uint8_t *p = *pos;
 
-  if( memcmp(p, "RITE0004", 8) != 0 ) {
+  if( memcmp(p, "RITE0005", 8) != 0 ) {
     vm->error_code = LOAD_FILE_HEADER_ERROR_VERSION;
     return -1;
   }
@@ -289,14 +291,18 @@ int mrbc_load_mrb(struct VM *vm, const uint8_t *ptr)
   vm->mrb = ptr;
 
   ret = load_header(vm, &ptr);
+  assert(ret == 0);
   while( ret == 0 ) {
     if( memcmp(ptr, "IREP", 4) == 0 ) {
       ret = load_irep(vm, &ptr);
-    }
+      assert(ret == 0);
+   }
     else if( memcmp(ptr, "LVAR", 4) == 0 ) {
       ret = load_lvar(vm, &ptr);
+      assert(ret == 0);
     }
     else if( memcmp(ptr, "END\0", 4) == 0 ) {
+      puts("loading irep\n");
       break;
     }
   }

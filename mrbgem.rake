@@ -5,6 +5,7 @@ MRuby::Gem::Specification.new('mrubyc') do |spec|
 
   cc.defines << 'MRBC_DEBUG' if build.debug_enabled?
   cc.include_paths << "#{dir}/core"
+  cc.flags << '-Wno-declaration-after-statement'
 
   lib = libfile "#{build.build_dir}/lib/libmrubyc"
   ext_lib = libfile "#{build.build_dir}/lib/libmrubyc_ext"

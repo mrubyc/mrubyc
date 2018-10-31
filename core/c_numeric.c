@@ -13,7 +13,7 @@
 
 
 #include "vm_config.h"
-#include "opcode.h"
+#include "mruby/opcode.h"
 #include <stdio.h>
 #include <limits.h>
 #if MRBC_USE_FLOAT

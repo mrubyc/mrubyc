@@ -19,7 +19,7 @@
 #include "c_range.h"
 #include "c_string.h"
 #include "console.h"
-#include "opcode.h"
+#include "mruby/opcode.h"
 
 
 //================================================================

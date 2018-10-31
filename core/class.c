@@ -25,7 +25,7 @@
 #include "symbol.h"
 #include "global.h"
 #include "console.h"
-#include "opcode.h"
+#include "mruby/opcode.h"
 #include "load.h"
 
 #include "c_array.h"
@@ -416,7 +416,7 @@ int mrbc_p_sub(mrbc_value *v)
 
   case MRBC_TT_SYMBOL:{
     const char *s = mrbc_symbol_cstr( v );
-    char *fmt = strchr(s, ':') ? "\":%s\"" : ":%s";
+    char const *fmt = strchr(s, ':') ? "\":%s\"" : ":%s";
     console_printf(fmt, s);
   } break;
 
@@ -705,17 +705,23 @@ static void c_object_new(struct VM *vm, mrbc_value v[], int argc)
   uint32_to_bin( 1,(uint8_t*)&syms[0]);
   uint16_to_bin(10,(uint8_t*)&syms[4]);
 
+  /*
   uint32_t code[2] = {
     MKOPCODE(OP_SEND) | MKARG_A(0) | MKARG_B(0) | MKARG_C(argc),
     MKOPCODE(OP_ABORT)
     };
-   mrbc_irep irep = {
+  */
+  uint8_t code[] = {
+    OP_SEND, 0, 0, argc,
+    OP_ABORT,
+  };
+  mrbc_irep irep = {
     0,     // nlocals
     0,     // nregs
     0,     // rlen
     2,     // ilen
     0,     // plen
-    (uint8_t *)code,   // iseq
+    code,   // iseq
     NULL,  // pools
     (uint8_t *)syms,  // ptr_to_sym
     NULL,  // reps
@@ -1107,6 +1113,8 @@ void c_ineffect(struct VM *vm, mrbc_value v[], int argc)
 }
 
 
+#include <stdio.h>
+
 //================================================================
 /*! Run mrblib, which is mruby bytecode
 */
@@ -1116,7 +1124,10 @@ static void mrbc_run_mrblib(void)
 
   mrbc_vm vm;
   mrbc_vm_open(&vm);
-  mrbc_load_mrb(&vm, mrblib_bytecode);
+  int ret = mrbc_load_mrb(&vm, mrblib_bytecode);
+  setbuf(stdout, NULL);
+  printf("load mrb: %d\n\n", ret);
+  assert(ret == 0);
   mrbc_vm_begin(&vm);
   mrbc_vm_run(&vm);
   mrbc_vm_end(&vm);

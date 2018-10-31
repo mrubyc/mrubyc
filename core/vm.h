@@ -209,6 +209,10 @@ static inline void uint16_to_bin( uint16_t v, void *d )
 }
 
 
+enum {
+  OP_ABORT = 0x50, // using OP_ABORT inside mruby/c only
+};
+
 #ifdef __cplusplus
 }
 #endif
