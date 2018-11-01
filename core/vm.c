@@ -83,13 +83,11 @@ const char * mrbc_get_irep_symbol( const uint8_t *p, int n )
 
   @param  vm	Pointer to VM
   @return	string
+*/
 const char *mrbc_get_callee_name( struct VM *vm )
 {
-  uint32_t code = bin_to_uint32(vm->pc_irep->code + (vm->pc - 1) * 4);
-  int rb = GETARG_B(code);  // index of method sym
-  return mrbc_get_irep_symbol(vm->pc_irep->ptr_to_sym, rb);
+  return mrbc_get_irep_symbol(vm->pc_irep->ptr_to_sym, vm->current_mid);
 }
-*/
 
 
 //================================================================
@@ -209,7 +207,7 @@ static inline int op_nop( mrbc_vm *vm, mrbc_value *regs )
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_move( mrbc_vm *vm, mrbc_value *regs, uint8_t ra, uint8_t rb )
+static inline int op_move( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb )
 {
   mrbc_release(&regs[ra]);
   mrbc_dup(&regs[rb]);
@@ -230,7 +228,7 @@ static inline int op_move( mrbc_vm *vm, mrbc_value *regs, uint8_t ra, uint8_t rb
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_loadl( mrbc_vm *vm, mrbc_value *regs, uint8_t ra, uint8_t rb )
+static inline int op_loadl( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb )
 {
   mrbc_release(&regs[ra]);
 
@@ -254,7 +252,7 @@ static inline int op_loadl( mrbc_vm *vm, mrbc_value *regs, uint8_t ra, uint8_t r
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_loadi( mrbc_vm *vm, mrbc_value *regs, uint8_t ra, uint8_t val )
+static inline int op_loadi( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint8_t val )
 {
   mrbc_release(&regs[ra]);
   regs[ra].tt = MRBC_TT_FIXNUM;
@@ -275,7 +273,7 @@ static inline int op_loadi( mrbc_vm *vm, mrbc_value *regs, uint8_t ra, uint8_t v
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_loadsym( mrbc_vm *vm, mrbc_value *regs, uint8_t ra, uint8_t rb )
+static inline int op_loadsym( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb )
 {
   const char *sym_name = mrbc_get_irep_symbol(vm->pc_irep->ptr_to_sym, rb);
   mrbc_sym sym_id = str_to_symid(sym_name);
@@ -299,7 +297,7 @@ static inline int op_loadsym( mrbc_vm *vm, mrbc_value *regs, uint8_t ra, uint8_t
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_loadnil( mrbc_vm *vm, mrbc_value *regs, uint8_t ra )
+static inline int op_loadnil( mrbc_vm *vm, mrbc_value *regs, uint32_t ra )
 {
   mrbc_release(&regs[ra]);
   regs[ra].tt = MRBC_TT_NIL;
@@ -319,7 +317,7 @@ static inline int op_loadnil( mrbc_vm *vm, mrbc_value *regs, uint8_t ra )
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_loadself( mrbc_vm *vm, mrbc_value *regs, uint8_t ra )
+static inline int op_loadself( mrbc_vm *vm, mrbc_value *regs, uint32_t ra )
 {
   mrbc_release(&regs[ra]);
   mrbc_dup(&regs[0]);
@@ -340,7 +338,7 @@ static inline int op_loadself( mrbc_vm *vm, mrbc_value *regs, uint8_t ra )
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_loadt( mrbc_vm *vm, mrbc_value *regs, uint8_t ra )
+static inline int op_loadt( mrbc_vm *vm, mrbc_value *regs, uint32_t ra )
 {
   mrbc_release(&regs[ra]);
   regs[ra].tt = MRBC_TT_TRUE;
@@ -360,7 +358,7 @@ static inline int op_loadt( mrbc_vm *vm, mrbc_value *regs, uint8_t ra )
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_loadf( mrbc_vm *vm, mrbc_value *regs, uint8_t ra )
+static inline int op_loadf( mrbc_vm *vm, mrbc_value *regs, uint32_t ra )
 {
   mrbc_release(&regs[ra]);
   regs[ra].tt = MRBC_TT_FALSE;
@@ -380,7 +378,7 @@ static inline int op_loadf( mrbc_vm *vm, mrbc_value *regs, uint8_t ra )
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_getglobal( mrbc_vm *vm, mrbc_value *regs, uint8_t ra, uint8_t rb )
+static inline int op_getglobal( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb )
 {
   const char *sym_name = mrbc_get_irep_symbol(vm->pc_irep->ptr_to_sym, rb);
   mrbc_sym sym_id = str_to_symid(sym_name);
@@ -409,7 +407,7 @@ static inline int op_getglobal( mrbc_vm *vm, mrbc_value *regs, uint8_t ra, uint8
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_setglobal( mrbc_vm *vm, mrbc_value *regs, uint8_t ra, uint8_t rb )
+static inline int op_setglobal( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb )
 {
   const char *sym_name = mrbc_get_irep_symbol(vm->pc_irep->ptr_to_sym, rb);
   mrbc_sym sym_id = str_to_symid(sym_name);
@@ -431,7 +429,7 @@ static inline int op_setglobal( mrbc_vm *vm, mrbc_value *regs, uint8_t ra, uint8
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_getiv( mrbc_vm *vm, mrbc_value *regs, uint8_t ra, uint8_t rb )
+static inline int op_getiv( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb )
 {
   const char *sym_name = mrbc_get_irep_symbol(vm->pc_irep->ptr_to_sym, rb);
   mrbc_sym sym_id = str_to_symid(sym_name+1);	// skip '@'
@@ -456,7 +454,7 @@ static inline int op_getiv( mrbc_vm *vm, mrbc_value *regs, uint8_t ra, uint8_t r
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_setiv( mrbc_vm *vm, mrbc_value *regs, uint8_t ra, uint8_t rb )
+static inline int op_setiv( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb )
 {
   const char *sym_name = mrbc_get_irep_symbol(vm->pc_irep->ptr_to_sym, rb);
   mrbc_sym sym_id = str_to_symid(sym_name+1);	// skip '@'
@@ -478,7 +476,7 @@ static inline int op_setiv( mrbc_vm *vm, mrbc_value *regs, uint8_t ra, uint8_t r
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_getconst( mrbc_vm *vm, mrbc_value *regs, uint8_t ra, uint8_t rb )
+static inline int op_getconst( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb )
 {
   const char *sym_name = mrbc_get_irep_symbol(vm->pc_irep->ptr_to_sym, rb);
   mrbc_sym sym_id = str_to_symid(sym_name);
@@ -510,7 +508,7 @@ static inline int op_getconst( mrbc_vm *vm, mrbc_value *regs, uint8_t ra, uint8_
   @retval 0  No error.
 */
 
-static inline int op_setconst( mrbc_vm *vm, mrbc_value *regs, uint8_t ra, uint8_t rb ) {
+static inline int op_setconst( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb ) {
   const char *sym_name = mrbc_get_irep_symbol(vm->pc_irep->ptr_to_sym, rb);
   mrbc_sym sym_id = str_to_symid(sym_name);
   mrbc_dup(&regs[ra]);
@@ -532,7 +530,7 @@ static inline int op_setconst( mrbc_vm *vm, mrbc_value *regs, uint8_t ra, uint8_
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_getupvar( mrbc_vm *vm, mrbc_value *regs, uint8_t ra, uint8_t rb, uint8_t rc )
+static inline int op_getupvar( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb, uint8_t rc )
 {
   mrbc_callinfo *callinfo = vm->callinfo_tail;
 
@@ -565,7 +563,7 @@ static inline int op_getupvar( mrbc_vm *vm, mrbc_value *regs, uint8_t ra, uint8_
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_setupvar( mrbc_vm *vm, mrbc_value *regs, uint8_t ra, uint8_t rb, uint8_t rc )
+static inline int op_setupvar( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb, uint8_t rc )
 {
   mrbc_callinfo *callinfo = vm->callinfo_tail;
 
@@ -598,9 +596,9 @@ static inline int op_setupvar( mrbc_vm *vm, mrbc_value *regs, uint8_t ra, uint8_
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_jmp( mrbc_vm *vm, mrbc_value *regs, uint16_t a )
+static inline int op_jmp( mrbc_vm *vm, mrbc_value *regs, uint32_t a )
 {
-  vm->pc = a;
+  vm->pc = vm->pc_irep->code + a;
   return 0;
 }
 
@@ -616,10 +614,10 @@ static inline int op_jmp( mrbc_vm *vm, mrbc_value *regs, uint16_t a )
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_jmpif( mrbc_vm *vm, mrbc_value *regs, uint8_t ra, uint16_t rb )
+static inline int op_jmpif( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb )
 {
   if( regs[ra].tt > MRBC_TT_FALSE ) {
-    vm->pc = rb;
+    vm->pc = vm->pc_irep->code + rb;
   }
   return 0;
 }
@@ -636,14 +634,13 @@ static inline int op_jmpif( mrbc_vm *vm, mrbc_value *regs, uint8_t ra, uint16_t 
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_jmpnot( mrbc_vm *vm, mrbc_value *regs, uint8_t ra, uint16_t rb )
+static inline int op_jmpnot( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb )
 {
   if( regs[ra].tt <= MRBC_TT_FALSE ) {
-    vm->pc = rb;
+    vm->pc = vm->pc_irep->code + rb;
   }
   return 0;
 }
-
 
 //================================================================
 /*!@brief
@@ -657,7 +654,7 @@ static inline int op_jmpnot( mrbc_vm *vm, mrbc_value *regs, uint8_t ra, uint16_t
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_send( mrbc_vm *vm, mrbc_value *regs, uint8_t ra, uint8_t rb, uint8_t rc )
+static inline int op_send_raw( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb, uint8_t rc )
 {
   // rb: index of method sym
   // rc: number of params
@@ -665,26 +662,6 @@ static inline int op_send( mrbc_vm *vm, mrbc_value *regs, uint8_t ra, uint8_t rb
 
   // Block param
   int bidx = ra + rc + 1;
-  switch( GET_OPCODE(code) ) {
-  case OP_SEND:
-    // set nil
-    mrbc_release( &regs[bidx] );
-    regs[bidx].tt = MRBC_TT_NIL;
-    break;
-
-  case OP_SENDB:
-    // set Proc object
-    if( regs[bidx].tt != MRBC_TT_NIL && regs[bidx].tt != MRBC_TT_PROC ){
-      // TODO: fix the following behavior
-      // convert to Proc ?
-      // raise exceprion in mruby/c ?
-      return 0;
-    }
-    break;
-
-  default:
-    break;
-  }
 
   const char *sym_name = mrbc_get_irep_symbol(vm->pc_irep->ptr_to_sym, rb);
   mrbc_sym sym_id = str_to_symid(sym_name);
@@ -699,6 +676,7 @@ static inline int op_send( mrbc_vm *vm, mrbc_value *regs, uint8_t ra, uint8_t rb
 
   // m is C func
   if( m->c_func ) {
+    vm->current_mid = sym_id;
     m->func(vm, regs + ra, rc);
 
     extern void c_proc_call(mrbc_vm *vm, mrbc_value v[], int argc);
@@ -726,6 +704,26 @@ static inline int op_send( mrbc_vm *vm, mrbc_value *regs, uint8_t ra, uint8_t rb
   return 0;
 }
 
+static inline int op_send_noblk(mrb_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb, uint8_t rc)
+{
+  int bidx = ra + rc + 1;
+  mrbc_release( &regs[bidx] );
+  regs[bidx].tt = MRBC_TT_NIL;
+  return op_send_raw(vm, regs, ra, rb, rc);
+}
+
+static inline int op_send_blk(mrb_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb, uint8_t rc)
+{
+  int bidx = ra + rc + 1;
+  // set Proc object
+  if( regs[bidx].tt != MRBC_TT_NIL && regs[bidx].tt != MRBC_TT_PROC ){
+    // TODO: fix the following behavior
+    // convert to Proc ?
+    // raise exceprion in mruby/c ?
+    return 0;
+  }
+  return op_send_raw(vm, regs, ra, rb, rc);
+}
 
 //================================================================
 /*!@brief
@@ -762,7 +760,7 @@ static inline int op_call( mrbc_vm *vm, mrbc_value *regs )
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-inline static int op_super( mrbc_vm *vm, mrbc_value *regs, uint8_t ra, uint8_t rc )
+inline static int op_super( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint8_t rc )
 {
   // rc: number of params
 
@@ -804,7 +802,7 @@ inline static int op_super( mrbc_vm *vm, mrbc_value *regs, uint8_t ra, uint8_t r
     extern void c_proc_call(mrbc_vm *vm, mrbc_value v[], int argc);
     if( m->func == c_proc_call ) return 0;
 
-    int release_reg = ra+1;
+    unsigned int release_reg = ra+1;
     while( release_reg <= ra+rc+1 ) {
       mrbc_release(&regs[release_reg]);
       release_reg++;
@@ -838,7 +836,7 @@ inline static int op_super( mrbc_vm *vm, mrbc_value *regs, uint8_t ra, uint8_t r
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-inline static int op_argary( mrbc_vm *vm, mrbc_value *regs )
+inline static int op_argary( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb )
 {
   //
 
@@ -882,7 +880,7 @@ static inline int op_enter( mrbc_vm *vm, mrbc_value *regs, uint32_t ra )
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_return( mrbc_vm *vm, mrbc_value *regs, uint8_t ra )
+static inline int op_return( mrbc_vm *vm, mrbc_value *regs, uint32_t ra )
 {
   // ra: return value
 
@@ -931,7 +929,7 @@ static inline int op_return( mrbc_vm *vm, mrbc_value *regs, uint8_t ra )
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_blkpush( mrbc_vm *vm, mrbc_value *regs, uint32_t ra )
+static inline int op_blkpush( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb )
 {
   mrbc_value *stack = regs + 1;
 
@@ -959,7 +957,7 @@ static inline int op_blkpush( mrbc_vm *vm, mrbc_value *regs, uint32_t ra )
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_add( mrbc_vm *vm, mrbc_value *regs, uint8_t ra )
+static inline int op_add( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb )
 {
   if( regs[ra].tt == MRBC_TT_FIXNUM ) {
     if( regs[ra+1].tt == MRBC_TT_FIXNUM ) {	// in case of Fixnum, Fixnum
@@ -986,7 +984,7 @@ static inline int op_add( mrbc_vm *vm, mrbc_value *regs, uint8_t ra )
   }
 
   // other case
-  op_send(vm, regs);
+  op_send_noblk(vm, regs, ra, ra, 1);
   return 0;
 }
 
@@ -1002,7 +1000,7 @@ static inline int op_add( mrbc_vm *vm, mrbc_value *regs, uint8_t ra )
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_addi( mrbc_vm *vm, mrbc_value *regs, uint8_t ra, uint8_t rc )
+static inline int op_addi( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb, uint8_t rc )
 {
  if( regs[ra].tt == MRBC_TT_FIXNUM ) {
     regs[ra].i += rc;
@@ -1032,7 +1030,7 @@ static inline int op_addi( mrbc_vm *vm, mrbc_value *regs, uint8_t ra, uint8_t rc
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_sub( mrbc_vm *vm, mrbc_value *regs, uint8_t ra )
+static inline int op_sub( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb )
 {
   if( regs[ra].tt == MRBC_TT_FIXNUM ) {
     if( regs[ra+1].tt == MRBC_TT_FIXNUM ) {	// in case of Fixnum, Fixnum
@@ -1059,7 +1057,7 @@ static inline int op_sub( mrbc_vm *vm, mrbc_value *regs, uint8_t ra )
   }
 
   // other case
-  op_send(vm, code, regs);
+  op_send_noblk(vm, regs, ra, ra, 1);
   mrbc_release(&regs[ra+1]);
   return 0;
 }
@@ -1076,7 +1074,7 @@ static inline int op_sub( mrbc_vm *vm, mrbc_value *regs, uint8_t ra )
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_subi( mrbc_vm *vm, mrbc_value *regs, uint8_t ra, uint8_t rc )
+static inline int op_subi( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb, uint8_t rc )
 {
   if( regs[ra].tt == MRBC_TT_FIXNUM ) {
     regs[ra].i -= rc;
@@ -1106,7 +1104,7 @@ static inline int op_subi( mrbc_vm *vm, mrbc_value *regs, uint8_t ra, uint8_t rc
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_mul( mrbc_vm *vm, mrbc_value *regs, uint8_t ra )
+static inline int op_mul( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb )
 {
   if( regs[ra].tt == MRBC_TT_FIXNUM ) {
     if( regs[ra+1].tt == MRBC_TT_FIXNUM ) {	// in case of Fixnum, Fixnum
@@ -1133,7 +1131,7 @@ static inline int op_mul( mrbc_vm *vm, mrbc_value *regs, uint8_t ra )
   }
 
   // other case
-  op_send(vm, code, regs);
+  op_send_noblk(vm, regs, ra, ra, 1);
   mrbc_release(&regs[ra+1]);
   return 0;
 }
@@ -1150,10 +1148,8 @@ static inline int op_mul( mrbc_vm *vm, mrbc_value *regs, uint8_t ra )
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_div( mrbc_vm *vm, mrbc_value *regs )
+static inline int op_div( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb )
 {
-  int ra = GETARG_A(code);
-
   if( regs[ra].tt == MRBC_TT_FIXNUM ) {
     if( regs[ra+1].tt == MRBC_TT_FIXNUM ) {	// in case of Fixnum, Fixnum
       regs[ra].i /= regs[ra+1].i;
@@ -1179,7 +1175,7 @@ static inline int op_div( mrbc_vm *vm, mrbc_value *regs )
   }
 
   // other case
-  op_send(vm, code, regs);
+  op_send_noblk(vm, regs, ra, ra, 1);
   mrbc_release(&regs[ra+1]);
   return 0;
 }
@@ -1196,7 +1192,7 @@ static inline int op_div( mrbc_vm *vm, mrbc_value *regs )
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_eq( mrbc_vm *vm, mrbc_value *regs, uint8_t ra )
+static inline int op_eq( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb )
 {
   int result = mrbc_compare(&regs[ra], &regs[ra+1]);
 
@@ -1219,7 +1215,7 @@ static inline int op_eq( mrbc_vm *vm, mrbc_value *regs, uint8_t ra )
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_lt( mrbc_vm *vm, mrbc_value *regs, uint8_t ra )
+static inline int op_lt( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb )
 {
   int result;
 
@@ -1247,7 +1243,7 @@ static inline int op_lt( mrbc_vm *vm, mrbc_value *regs, uint8_t ra )
   }
 
   // other case
-  op_send(vm, code, regs);
+  op_send_noblk(vm, regs, ra, ra, 1);
   mrbc_release(&regs[ra+1]);
   return 0;
 
@@ -1268,7 +1264,7 @@ DONE:
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_le( mrbc_vm *vm, mrbc_value *regs, uint8_t ra )
+static inline int op_le( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb )
 {
   int result;
 
@@ -1296,7 +1292,7 @@ static inline int op_le( mrbc_vm *vm, mrbc_value *regs, uint8_t ra )
   }
 
   // other case
-  op_send(vm, code, regs);
+  op_send_noblk(vm, regs, ra, ra, 1);
   mrbc_release(&regs[ra+1]);
   return 0;
 
@@ -1317,7 +1313,7 @@ DONE:
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_gt( mrbc_vm *vm, mrbc_value *regs, uint8_t ra )
+static inline int op_gt( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb )
 {
   int result;
 
@@ -1345,7 +1341,7 @@ static inline int op_gt( mrbc_vm *vm, mrbc_value *regs, uint8_t ra )
   }
 
   // other case
-  op_send(vm, code, regs);
+  op_send_noblk(vm , regs, ra, ra, 1);
   mrbc_release(&regs[ra+1]);
   return 0;
 
@@ -1366,7 +1362,7 @@ DONE:
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_ge( mrbc_vm *vm, mrbc_value *regs, uint8_t ra )
+static inline int op_ge( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t tb )
 {
   int result;
 
@@ -1394,7 +1390,7 @@ static inline int op_ge( mrbc_vm *vm, mrbc_value *regs, uint8_t ra )
   }
 
   // other case
-  op_send(vm, code, regs);
+  op_send_noblk(vm, regs, ra, ra, 1);
   mrbc_release(&regs[ra+1]);
   return 0;
 
@@ -1415,14 +1411,14 @@ DONE:
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_array( mrbc_vm *vm, mrbc_value *regs, uint8_t ra, uint8_t rb, uint8_t rc )
+static inline int op_array( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb )
 {
-  mrbc_value value = mrbc_array_new(vm, rc);
+  mrbc_value value = mrbc_array_new(vm, rb);
   if( value.array == NULL ) return -1;	// ENOMEM
 
-  memcpy( value.array->data, &regs[rb], sizeof(mrbc_value) * rc );
-  memset( &regs[rb], 0, sizeof(mrbc_value) * rc );
-  value.array->n_stored = rc;
+  memcpy( value.array->data, &regs[ra], sizeof(mrbc_value) * rb );
+  memset( &regs[ra], 0, sizeof(mrbc_value) * rb );
+  value.array->n_stored = rb;
 
   mrbc_release(&regs[ra]);
   regs[ra] = value;
@@ -1442,11 +1438,9 @@ static inline int op_array( mrbc_vm *vm, mrbc_value *regs, uint8_t ra, uint8_t r
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_string( mrbc_vm *vm, mrbc_value *regs )
+static inline int op_string( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb )
 {
 #if MRBC_USE_STRING
-  int ra = GETARG_A(code);
-  int rb = GETARG_Bx(code);
   mrbc_object *pool_obj = vm->pc_irep->pools[rb];
 
   /* CAUTION: pool_obj->str - 2. see IREP POOL structure. */
@@ -1475,20 +1469,17 @@ static inline int op_string( mrbc_vm *vm, mrbc_value *regs )
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_strcat( mrbc_vm *vm, mrbc_value *regs )
+static inline int op_strcat( mrbc_vm *vm, mrbc_value *regs, uint32_t ra )
 {
 #if MRBC_USE_STRING
-  int ra = GETARG_A(code);
-  int rb = GETARG_B(code);
-
   // call "to_s"
   mrbc_sym sym_id = str_to_symid("to_s");
-  mrbc_proc *m = find_method(vm, &regs[rb], sym_id);
+  mrbc_proc *m = find_method(vm, &regs[ra + 1], sym_id);
   if( m && m->c_func ){
-    m->func(vm, regs+rb, 0);
+    m->func(vm, regs+ra, 0);
   }
 
-  mrbc_value v = mrbc_string_add(vm, &regs[ra], &regs[rb]);
+  mrbc_value v = mrbc_string_add(vm, &regs[ra], &regs[ra + 1]);
   mrbc_release(&regs[ra]);
   regs[ra] = v;
 
@@ -1510,19 +1501,15 @@ static inline int op_strcat( mrbc_vm *vm, mrbc_value *regs )
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_hash( mrbc_vm *vm, mrbc_value *regs )
+static inline int op_hash( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb )
 {
-  int ra = GETARG_A(code);
-  int rb = GETARG_B(code);
-  int rc = GETARG_C(code);
-
-  mrbc_value value = mrbc_hash_new(vm, rc);
+  mrbc_value value = mrbc_hash_new(vm, rb);
   if( value.hash == NULL ) return -1;	// ENOMEM
 
-  rc *= 2;
-  memcpy( value.hash->data, &regs[rb], sizeof(mrbc_value) * rc );
-  memset( &regs[rb], 0, sizeof(mrbc_value) * rc );
-  value.hash->n_stored = rc;
+  rb *= 2;
+  memcpy( value.hash->data, &regs[ra], sizeof(mrbc_value) * rb );
+  memset( &regs[ra], 0, sizeof(mrbc_value) * rb );
+  value.hash->n_stored = rb;
 
   mrbc_release(&regs[ra]);
   regs[ra] = value;
@@ -1542,10 +1529,9 @@ static inline int op_hash( mrbc_vm *vm, mrbc_value *regs )
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_lambda( mrbc_vm *vm, mrbc_value *regs )
+static inline int op_lambda( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb )
 {
-  int ra = GETARG_A(code);
-  int rb = GETARG_Bz(code);      // sequence position in irep list
+  // rb: sequence position in irep list
   // int c = GETARG_C(code);    // TODO: Add flags support for OP_LAMBDA
   mrbc_proc *proc = mrbc_rproc_alloc(vm, "(lambda)");
 
@@ -1571,16 +1557,26 @@ static inline int op_lambda( mrbc_vm *vm, mrbc_value *regs )
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_range( mrbc_vm *vm, mrbc_value *regs )
+static inline int op_range_inc( mrbc_vm *vm, mrbc_value *regs, uint32_t ra )
 {
-  int ra = GETARG_A(code);
-  int rb = GETARG_B(code);
-  int rc = GETARG_C(code);
+  mrbc_dup(&regs[ra]);
+  mrbc_dup(&regs[ra+1]);
 
-  mrbc_dup(&regs[rb]);
-  mrbc_dup(&regs[rb+1]);
+  mrbc_value value = mrbc_range_new(vm, &regs[ra], &regs[ra+1], 0);
+  if( value.range == NULL ) return -1;		// ENOMEM
 
-  mrbc_value value = mrbc_range_new(vm, &regs[rb], &regs[rb+1], rc);
+  mrbc_release(&regs[ra]);
+  regs[ra] = value;
+
+  return 0;
+}
+
+static inline int op_range_exc( mrbc_vm *vm, mrbc_value *regs, uint32_t ra )
+{
+  mrbc_dup(&regs[ra]);
+  mrbc_dup(&regs[ra+1]);
+
+  mrbc_value value = mrbc_range_new(vm, &regs[ra], &regs[ra+1], 1);
   if( value.range == NULL ) return -1;		// ENOMEM
 
   mrbc_release(&regs[ra]);
@@ -1603,11 +1599,8 @@ static inline int op_range( mrbc_vm *vm, mrbc_value *regs )
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_class( mrbc_vm *vm, mrbc_value *regs )
+static inline int op_class( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb )
 {
-  int ra = GETARG_A(code);
-  int rb = GETARG_B(code);
-
   mrbc_irep *cur_irep = vm->pc_irep;
   const char *sym_name = mrbc_get_irep_symbol(cur_irep->ptr_to_sym, rb);
   mrbc_class *super = (regs[ra+1].tt == MRBC_TT_CLASS) ? regs[ra+1].cls : mrbc_class_object;
@@ -1634,11 +1627,8 @@ static inline int op_class( mrbc_vm *vm, mrbc_value *regs )
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_exec( mrbc_vm *vm, mrbc_value *regs )
+static inline int op_exec( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb )
 {
-  int ra = GETARG_A(code);
-  int rb = GETARG_Bx(code);
-
   mrbc_value recv = regs[ra];
 
   // prepare callinfo
@@ -1669,10 +1659,8 @@ static inline int op_exec( mrbc_vm *vm, mrbc_value *regs )
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_method( mrbc_vm *vm, mrbc_value *regs )
+static inline int op_method( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb )
 {
-  int ra = GETARG_A(code);
-  int rb = GETARG_B(code);
   mrbc_proc *proc = regs[ra+1].proc;
 
   if( regs[ra].tt == MRBC_TT_CLASS ) {
@@ -1729,10 +1717,8 @@ static inline int op_method( mrbc_vm *vm, mrbc_value *regs )
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_tclass( mrbc_vm *vm, mrbc_value *regs )
+static inline int op_tclass( mrbc_vm *vm, mrbc_value *regs, uint32_t ra )
 {
-  int ra = GETARG_A(code);
-
   mrbc_release(&regs[ra]);
   regs[ra].tt = MRBC_TT_CLASS;
   regs[ra].cls = vm->target_class;
@@ -1755,13 +1741,18 @@ static inline int op_tclass( mrbc_vm *vm, mrbc_value *regs )
 */
 static inline int op_stop( mrbc_vm *vm, mrbc_value *regs )
 {
-  if( GET_OPCODE(code) == OP_STOP ) {
-    int i;
-    for( i = 0; i < MAX_REGS_SIZE; i++ ) {
-      mrbc_release(&vm->regs[i]);
-    }
+  int i;
+  for( i = 0; i < MAX_REGS_SIZE; i++ ) {
+    mrbc_release(&vm->regs[i]);
   }
 
+  vm->flag_preemption = 1;
+
+  return -1;
+}
+
+static inline int op_abort( mrbc_vm *vm, mrbc_value *regs )
+{
   vm->flag_preemption = 1;
 
   return -1;
@@ -1787,7 +1778,7 @@ mrbc_vm *mrbc_vm_open( struct VM *vm_arg )
 
   // allocate vm id.
   int vm_id = 0;
-  int i;
+  unsigned int i;
   for( i = 0; i < Num(free_vm_bitmap); i++ ) {
     int n = nlz32( ~free_vm_bitmap[i] );
     if( n < FREE_BITMAP_WIDTH ) {
@@ -1820,7 +1811,7 @@ mrbc_vm *mrbc_vm_open( struct VM *vm_arg )
 void mrbc_vm_close( struct VM *vm )
 {
   // free vm id.
-  int i = (vm->vm_id-1) / FREE_BITMAP_WIDTH;
+  unsigned int i = (vm->vm_id-1) / FREE_BITMAP_WIDTH;
   int n = (vm->vm_id-1) % FREE_BITMAP_WIDTH;
   assert( i < Num(free_vm_bitmap) );
   free_vm_bitmap[i] &= ~(1 << (FREE_BITMAP_WIDTH - n - 1));
@@ -1888,7 +1879,6 @@ void mrbc_vm_end( struct VM *vm )
 int mrbc_vm_run( struct VM *vm )
 {
   int ret = 0;
-  int insn;
   uint32_t a;
   uint16_t b;
   uint8_t c;
@@ -1896,17 +1886,25 @@ int mrbc_vm_run( struct VM *vm )
   do {
     // regs
     mrbc_value *regs = vm->current_regs;
+    uint8_t const insn = *(vm->pc);
 
-    switch( vm->pc ) {
-#define pc vm->pc
+    switch( insn ) {
+#define pc (vm->pc)
 #define EXTRACT_Z
-#define EXTRACT_B a
-#define EXTRACT_BB a, b
-#define EXTRACT_BBB a, b, c
-#define EXTRACT_BS a, b
-#define EXTRACT_S a
-#define EXTRACT_W a
-#define CASE(op, args, func) case OP_ ## op: FETCT_ ## args (); ret = op_ ## func (vm, code, regs, EXTRACT_ ## args)
+#define EXTRACT_B , a
+#define EXTRACT_BB , a, b
+#define EXTRACT_BBB , a, b, c
+#define EXTRACT_BS , a, b
+#define EXTRACT_S , a
+#define EXTRACT_W , a
+
+#define CASE(op, func, args) \
+      case OP_ ## op: \
+        FETCH_ ## args (); \
+      L_ ## op ## _BODY: \
+        ret = op_ ## func (vm, regs EXTRACT_ ## args); \
+        break
+
     CASE(NOP, nop, Z);
     CASE(MOVE, move, BB);
     CASE(LOADL, loadl, BB);
@@ -1916,10 +1914,10 @@ int mrbc_vm_run( struct VM *vm )
     CASE(LOADSELF, loadself, B);
     CASE(LOADT, loadt, B);
     CASE(LOADF, loadf, B);
-    CASE(GETGLOBAL, getglobal, BB);
-    CASE(SETGLOBAL, setglobal, BB);
+    CASE(GETGV, getglobal, BB);
+    CASE(SETGV, setglobal, BB);
     CASE(GETIV, getiv, BB);
-    CASE(SETIV, setiv, BB;
+    CASE(SETIV, setiv, BB);
     CASE(GETCONST, getconst, BB);
     CASE(SETCONST, setconst, BB);
     CASE(GETMCNST, getconst, BB);  // reuse
@@ -1928,8 +1926,8 @@ int mrbc_vm_run( struct VM *vm )
     CASE(JMP, jmp, S);
     CASE(JMPIF, jmpif, BS);
     CASE(JMPNOT, jmpnot, BS);
-    CASE(SEND, send, BBB);
-    CASE(SENDB, send, BBB);  // reuse
+    CASE(SEND, send_noblk, BBB);
+    CASE(SENDB, send_blk, BBB);  // reuse
     CASE(CALL, call, Z);
     CASE(SUPER, super, BB);
     CASE(ARGARY, argary, BS);
@@ -1959,9 +1957,96 @@ int mrbc_vm_run( struct VM *vm )
     CASE(METHOD, method, BB);
     CASE(TCLASS, tclass, B);
     CASE(STOP, stop, Z);
-    CASE(ABORT, stop, Z);  // reuse
+    CASE(ABORT, abort, Z);
+
+    case OP_EXT1:
+    L_EXT1_BODY: {
+      uint8_t const insn = READ_B();
+      switch (insn) {
+#define OPCODE(insn,ops) case OP_ ## insn: FETCH_ ## ops ## _1(); goto L_ ## insn ## _BODY;
+#include "mruby/ops.h"
+#undef OPCODE
+      }
+      pc--;
+      break;
+    }
+    case OP_EXT2:
+    L_EXT2_BODY: {
+      uint8_t const insn = READ_B();
+      switch (insn) {
+#define OPCODE(insn, ops) case OP_ ## insn: FETCH_ ## ops ## _2(); goto L_ ## insn ## _BODY;
+#include "mruby/ops.h"
+#undef OPCODE
+      }
+      pc--;
+      break;
+    }
+    case OP_EXT3:
+    L_EXT3_BODY: {
+      uint8_t const insn = READ_B();
+      switch (insn) {
+#define OPCODE(insn, ops) case OP_ ## insn: FETCH_ ## ops ## _3(); goto L_ ## insn ## _BODY;
+#include "mruby/ops.h"
+#undef OPCODE
+      }
+      pc--;
+      break;
+    }
+
+#define NOT_IMPL_OP(op) case OP_ ## op: L_ ## op ## _BODY
+
+    NOT_IMPL_OP(LOADINEG):
+    NOT_IMPL_OP(LOADI__1):
+    NOT_IMPL_OP(LOADI_0):
+    NOT_IMPL_OP(LOADI_1):
+    NOT_IMPL_OP(LOADI_2):
+    NOT_IMPL_OP(LOADI_3):
+    NOT_IMPL_OP(LOADI_4):
+    NOT_IMPL_OP(LOADI_5):
+    NOT_IMPL_OP(LOADI_6):
+    NOT_IMPL_OP(LOADI_7):
+    NOT_IMPL_OP(ERR):
+    NOT_IMPL_OP(DEBUG):
+    NOT_IMPL_OP(SCLASS):
+    NOT_IMPL_OP(UNDEF):
+    NOT_IMPL_OP(ALIAS):
+    NOT_IMPL_OP(DEF):
+    NOT_IMPL_OP(MODULE):
+    NOT_IMPL_OP(OCLASS):
+    NOT_IMPL_OP(BLOCK):
+    NOT_IMPL_OP(HASHCAT):
+    NOT_IMPL_OP(HASHADD):
+    NOT_IMPL_OP(INTERN):
+    NOT_IMPL_OP(APOST):
+    NOT_IMPL_OP(ASET):
+    NOT_IMPL_OP(AREF):
+    NOT_IMPL_OP(ARYDUP):
+    NOT_IMPL_OP(ARYPUSH):
+    NOT_IMPL_OP(ARYCAT):
+    NOT_IMPL_OP(ARRAY2):
+    NOT_IMPL_OP(BREAK):
+    NOT_IMPL_OP(RETURN_BLK):
+    NOT_IMPL_OP(KARG):
+    NOT_IMPL_OP(KEYEND):
+    NOT_IMPL_OP(KEY_P):
+    NOT_IMPL_OP(SENDVB):
+    NOT_IMPL_OP(SENDV):
+    NOT_IMPL_OP(RAISE):
+    NOT_IMPL_OP(POPERR):
+    NOT_IMPL_OP(EPOP):
+    NOT_IMPL_OP(EPUSH):
+    NOT_IMPL_OP(RESCUE):
+    NOT_IMPL_OP(EXCEPT):
+    NOT_IMPL_OP(ONERR):
+    NOT_IMPL_OP(JMPNIL):
+    NOT_IMPL_OP(SETMCNST):
+    NOT_IMPL_OP(SETCV):
+    NOT_IMPL_OP(GETCV):
+    NOT_IMPL_OP(SETSV):
+    NOT_IMPL_OP(GETSV):
+
     default:
-      console_printf("Skip OP=%02x\n", GET_OPCODE(code));
+      console_printf("Skip OP=%02x\n", insn);
       break;
     }
   } while( !vm->flag_preemption );

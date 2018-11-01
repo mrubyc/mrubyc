@@ -732,7 +732,7 @@ static void c_object_new(struct VM *vm, mrbc_value v[], int argc)
   mrbc_dup(&new_obj);
 
   mrbc_irep *org_pc_irep = vm->pc_irep;
-  uint16_t  org_pc = vm->pc;
+  uint8_t *org_pc = vm->pc;
   mrbc_value* org_regs = vm->current_regs;
   vm->pc = 0;
   vm->pc_irep = &irep;

@@ -20,6 +20,8 @@
 #include "value.h"
 #include "class.h"
 
+#include <mruby/opcode.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -53,7 +55,8 @@ typedef struct CALLINFO {
   struct CALLINFO *prev;
   mrbc_sym mid;
   mrbc_irep *pc_irep;
-  uint16_t  pc;
+  uint8_t *pc;
+  // uint16_t  pc;
   mrbc_value *current_regs;
   mrbc_class *target_class;
   uint8_t   n_args;     // num of args
@@ -72,7 +75,9 @@ typedef struct VM {
   const uint8_t *mrb;   // bytecode
 
   mrbc_irep *pc_irep;    // PC
-  uint16_t  pc;         // PC
+  uint8_t *pc;
+  // uint16_t  pc;         // PC
+  mrbc_sym current_mid;
 
   //  uint16_t     reg_top;
   mrbc_value    regs[MAX_REGS_SIZE];
@@ -210,7 +215,7 @@ static inline void uint16_to_bin( uint16_t v, void *d )
 
 
 enum {
-  OP_ABORT = 0x50, // using OP_ABORT inside mruby/c only
+  OP_ABORT = OP_STOP + 0x10, // using OP_ABORT inside mruby/c only
 };
 
 #ifdef __cplusplus
