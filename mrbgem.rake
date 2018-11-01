@@ -7,6 +7,8 @@ MRuby::Gem::Specification.new('mrubyc') do |spec|
   cc.include_paths << "#{dir}/core"
   cc.flags << '-Wno-declaration-after-statement'
 
+  mrbc.compile_options << ' -E' # force big endian
+
   lib = libfile "#{build.build_dir}/lib/libmrubyc"
   ext_lib = libfile "#{build.build_dir}/lib/libmrubyc_ext"
 
@@ -21,7 +23,7 @@ MRuby::Gem::Specification.new('mrubyc') do |spec|
     cc.run t.name, t.prerequisites.first, []
   end
 
-  file mrblib_gen => mrblib_srcs + [build.mrbcfile] do |t|
+  file mrblib_gen => mrblib_srcs + [build.mrbcfile, __FILE__] do |t|
     File.open(t.name, 'w') do |f|
       mrbc.run f, mrblib_srcs, 'mrblib_bytecode'
     end
