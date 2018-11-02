@@ -27,21 +27,21 @@ extern "C" {
 //================================================================
 /*! printf tiny (mruby/c) version data container.
 */
+struct RPrintfFormat {
+  char type;				//!< format char. (e.g. 'd','f','x'...)
+  unsigned int flag_plus : 1;
+  unsigned int flag_minus : 1;
+  unsigned int flag_space : 1;
+  unsigned int flag_zero : 1;
+  int width;				//!< display width. (e.g. %10d as 10)
+  int precision;			//!< precision (e.g. %5.2f as 2)
+};
 typedef struct RPrintf {
   char *buf;		//!< output buffer.
   const char *buf_end;	//!< output buffer end point.
   char *p;		//!< output buffer write point.
   const char *fstr;	//!< format string. (e.g. "%d %03x")
-
-  struct RPrintfFormat {
-    char type;				//!< format char. (e.g. 'd','f','x'...)
-    unsigned int flag_plus : 1;
-    unsigned int flag_minus : 1;
-    unsigned int flag_space : 1;
-    unsigned int flag_zero : 1;
-    int width;				//!< display width. (e.g. %10d as 10)
-    int precision;			//!< precision (e.g. %5.2f as 2)
-  } fmt;
+  struct RPrintfFormat fmt;
 } mrbc_printf;
 
 
