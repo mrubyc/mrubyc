@@ -1897,6 +1897,7 @@ int mrbc_vm_run( struct VM *vm )
 
 #define CASE(op, func, args) \
       case OP_ ## op: \
+        pc++; \
         FETCH_ ## args (); \
       L_ ## op ## _BODY: \
         ret = op_ ## func (vm, regs EXTRACT_ ## args); \
