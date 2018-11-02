@@ -231,11 +231,8 @@ static inline int op_move( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t 
 static inline int op_loadl( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb )
 {
   mrbc_release(&regs[ra]);
-
-  // regs[ra] = vm->pc_irep->pools[rb];
-
-  mrbc_object *pool_obj = vm->pc_irep->pools[rb];
-  regs[ra] = *pool_obj;
+  assert(rb < vm->pc_irep->plen);
+  regs[ra] = *vm->pc_irep->pools[rb];
 
   return 0;
 }
@@ -695,8 +692,8 @@ static inline int op_send_raw( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint1
   mrbc_push_callinfo(vm, sym_id, rc);
 
   // target irep
-  vm->pc = 0;
   vm->pc_irep = m->irep;
+  vm->pc = vm->pc_irep->code;
 
   // new regs
   vm->current_regs += ra;
@@ -741,8 +738,8 @@ static inline int op_call( mrbc_vm *vm, mrbc_value *regs )
   mrbc_push_callinfo(vm, 0, 0);
 
   // jump to proc
-  vm->pc = 0;
   vm->pc_irep = regs[0].proc->irep;
+  vm->pc = vm->pc_irep->code;
 
   return 0;
 }
@@ -815,8 +812,8 @@ inline static int op_super( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint8_t 
   mrbc_push_callinfo(vm, sym_id, rc);
 
   // target irep
-  vm->pc = 0;
   vm->pc_irep = m->irep;
+  vm->pc = vm->pc_irep->code;
   // new regs
   vm->current_regs += ra;
 
@@ -1635,8 +1632,8 @@ static inline int op_exec( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t 
   mrbc_push_callinfo(vm, 0, 0);
 
   // target irep
-  vm->pc = 0;
   vm->pc_irep = vm->irep->reps[rb];
+  vm->pc = vm->pc_irep->code;
 
   // new regs
   vm->current_regs += ra;
@@ -1832,7 +1829,7 @@ void mrbc_vm_close( struct VM *vm )
 void mrbc_vm_begin( struct VM *vm )
 {
   vm->pc_irep = vm->irep;
-  vm->pc = 0;
+  vm->pc = vm->pc_irep->code;
   vm->current_regs = vm->regs;
   memset(vm->regs, 0, sizeof(vm->regs));
 

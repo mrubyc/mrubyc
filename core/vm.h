@@ -55,7 +55,7 @@ typedef struct CALLINFO {
   struct CALLINFO *prev;
   mrbc_sym mid;
   mrbc_irep *pc_irep;
-  uint8_t *pc;
+  uint8_t const *pc;
   // uint16_t  pc;
   mrbc_value *current_regs;
   mrbc_class *target_class;
@@ -75,7 +75,7 @@ typedef struct VM {
   const uint8_t *mrb;   // bytecode
 
   mrbc_irep *pc_irep;    // PC
-  uint8_t *pc;
+  uint8_t const *pc;
   // uint16_t  pc;         // PC
   mrbc_sym current_mid;
 

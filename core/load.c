@@ -124,6 +124,10 @@ static mrbc_irep * load_irep_1(struct VM *vm, const uint8_t **pos)
   // padding
   p += (vm->mrb - p) & 0x03;
 
+  // ISEQ (code) BLOCK
+  irep->code = (uint8_t const*)p;
+  p += irep->ilen;
+
   // allocate memory for child irep's pointers
   if( irep->rlen ) {
     irep->reps = (mrbc_irep **)mrbc_alloc(0, sizeof(mrbc_irep *) * irep->rlen);
@@ -132,10 +136,6 @@ static mrbc_irep * load_irep_1(struct VM *vm, const uint8_t **pos)
       return NULL;
     }
   }
-
-  // ISEQ (code) BLOCK
-  irep->code = (uint8_t *)p;
-  p += irep->ilen * 4;
 
   // POOL BLOCK
   irep->plen = bin_to_uint32(p);	p += 4;
@@ -239,12 +239,10 @@ static mrbc_irep * load_irep_0(struct VM *vm, const uint8_t **pos)
    "0000"	rite version
   </pre>
 */
-static int load_irep(struct VM *vm, const uint8_t **pos)
+static int load_irep(struct VM *vm, const uint8_t *pos)
 {
-  const uint8_t *p = *pos + 4;			// 4 = skip "RITE"
-  int section_size = bin_to_uint32(p);
-  p += 4;
-  if( memcmp(p, "0000", 4) != 0 ) {		// rite version
+  const uint8_t *p = pos + 8;			// 4 = skip "RITE"
+  if( memcmp(p, "0002", 4) != 0 ) {		// rite VM version
     vm->error_code = LOAD_FILE_IREP_ERROR_VERSION;
     return -1;
   }
@@ -254,7 +252,6 @@ static int load_irep(struct VM *vm, const uint8_t **pos)
     return -1;
   }
 
-  *pos += section_size;
   return 0;
 }
 
@@ -268,13 +265,8 @@ static int load_irep(struct VM *vm, const uint8_t **pos)
   @param  pos	A pointer of pointer of LVAR section.
   @return int	zero if no error.
 */
-static int load_lvar(struct VM *vm, const uint8_t **pos)
+static int load_lvar(struct VM *vm, const uint8_t *pos)
 {
-  const uint8_t *p = *pos;
-
-  /* size */
-  *pos += bin_to_uint32(p+4);
-
   return 0;
 }
 
@@ -296,17 +288,21 @@ int mrbc_load_mrb(struct VM *vm, const uint8_t *ptr)
   assert(ret == 0);
   while( ret == 0 ) {
     if( memcmp(ptr, "IREP", 4) == 0 ) {
-      ret = load_irep(vm, &ptr);
+      ret = load_irep(vm, ptr);
       assert(ret == 0);
    }
     else if( memcmp(ptr, "LVAR", 4) == 0 ) {
-      ret = load_lvar(vm, &ptr);
+      ret = load_lvar(vm, ptr);
       assert(ret == 0);
     }
     else if( memcmp(ptr, "END\0", 4) == 0 ) {
-      puts("loading irep\n");
       break;
     }
+    else {
+      // unsupported section
+      // fprintf(stderr, "unknown section: %c%c%c%c\n", ptr[0], ptr[1], ptr[2], ptr[3]);
+    }
+    ptr += bin_to_uint32(ptr + 4);
   }
 
   return ret;

@@ -326,8 +326,8 @@ void mrbc_funcall(struct VM *vm, const char *name, mrbc_value *v, int argc)
   vm->callinfo_tail = callinfo;
 
   // target irep
-  vm->pc = 0;
   vm->pc_irep = m->irep;
+  vm->pc = vm->pc_irep->code;
 
   // new regs
   vm->current_regs += 2;   // recv and symbol
@@ -732,10 +732,10 @@ static void c_object_new(struct VM *vm, mrbc_value v[], int argc)
   mrbc_dup(&new_obj);
 
   mrbc_irep *org_pc_irep = vm->pc_irep;
-  uint8_t *org_pc = vm->pc;
+  uint8_t const *org_pc = vm->pc;
   mrbc_value* org_regs = vm->current_regs;
-  vm->pc = 0;
   vm->pc_irep = &irep;
+  vm->pc = vm->pc_irep->code;
   vm->current_regs = v;
 
   while( mrbc_vm_run(vm) == 0 )
@@ -946,8 +946,8 @@ void c_proc_call(struct VM *vm, mrbc_value v[], int argc)
   mrbc_push_callinfo(vm, 0, argc);  // TODO: mid==0 is right?
 
   // target irep
-  vm->pc = 0;
   vm->pc_irep = v[0].proc->irep;
+  vm->pc = vm->pc_irep->code;
 
   // copy regs for object
   // original v[] : [proc][argc][nil]
