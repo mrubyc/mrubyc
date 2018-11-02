@@ -25,6 +25,8 @@
 #include "value.h"
 #include "alloc.h"
 
+#include <mruby/irep.h>
+
 
 //================================================================
 /*!@brief
@@ -156,12 +158,12 @@ static mrbc_irep * load_irep_1(struct VM *vm, const uint8_t **pos)
     }
     switch( tt ) {
 #if MRBC_USE_STRING
-    case 0: { // IREP_TT_STRING
+    case IREP_TT_STRING: {
       obj->tt = MRBC_TT_STRING;
       obj->str = (char*)p;
     } break;
 #endif
-    case 1: { // IREP_TT_FIXNUM
+    case IREP_TT_FIXNUM: {
       char buf[obj_size+1];
       memcpy(buf, p, obj_size);
       buf[obj_size] = '\0';
@@ -169,7 +171,7 @@ static mrbc_irep * load_irep_1(struct VM *vm, const uint8_t **pos)
       obj->i = atol(buf);
     } break;
 #if MRBC_USE_FLOAT
-    case 2: { // IREP_TT_FLOAT
+    case IREP_TT_FLOAT: {
       char buf[obj_size+1];
       memcpy(buf, p, obj_size);
       buf[obj_size] = '\0';
