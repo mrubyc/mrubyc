@@ -86,7 +86,7 @@ const char * mrbc_get_irep_symbol( const uint8_t *p, int n )
 */
 const char *mrbc_get_callee_name( struct VM *vm )
 {
-  return mrbc_get_irep_symbol(vm->pc_irep->ptr_to_sym, vm->current_mid);
+  return symid_to_str(vm->current_mid);
 }
 
 
