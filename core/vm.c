@@ -896,6 +896,9 @@ static inline int op_return( mrbc_vm *vm, mrbc_value *regs, uint32_t ra )
 
   // restore irep,pc,regs
   mrbc_callinfo *callinfo = vm->callinfo_tail;
+  if (!callinfo) {
+    return;
+  }
   vm->callinfo_tail = callinfo->prev;
   vm->current_regs = callinfo->current_regs;
   vm->pc_irep = callinfo->pc_irep;
@@ -1755,6 +1758,22 @@ static inline int op_abort( mrbc_vm *vm, mrbc_value *regs )
   return -1;
 }
 
+static inline int op_DEF(mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb)
+{
+  if (regs[ra].tt != MRBC_TT_CLASS) {
+    return -1;
+  }
+  if (regs[ra + 1].tt != MRBC_TT_PROC) {
+    return -1;
+  }
+  mrbc_proc *proc = regs[ra + 1].proc;
+  mrbc_class *cls = regs[ra].cls;
+  proc->sym_id = str_to_symid(mrbc_get_irep_symbol(vm->pc_irep->ptr_to_sym, rb));
+  proc->c_func = 0;
+  proc->next = cls->procs;
+  cls->procs = proc;
+  return 0;
+}
 
 //================================================================
 /*!@brief
@@ -1865,6 +1884,14 @@ void mrbc_vm_end( struct VM *vm )
   mrbc_free_all(vm);
 }
 
+static char const *to_opcode_str(uint8_t op) {
+  switch (op) {
+#define OPCODE(insn, ops) case OP_ ## insn: return "OP_" #insn;
+#include "mruby/ops.h"
+#undef OPCODE
+  }
+  return "unknown";
+}
 
 //================================================================
 /*!@brief
@@ -1956,6 +1983,7 @@ int mrbc_vm_run( struct VM *vm )
     CASE(TCLASS, tclass, B);
     CASE(STOP, stop, Z);
     CASE(ABORT, abort, Z);
+    CASE(DEF, DEF, BB);
 
     case OP_EXT1:
     L_EXT1_BODY: {
@@ -1991,59 +2019,64 @@ int mrbc_vm_run( struct VM *vm )
       break;
     }
 
-#define NOT_IMPL_OP(op) case OP_ ## op: L_ ## op ## _BODY
+#define NOT_IMPL_OP(op, args) \
+      case OP_ ## op: \
+        pc++; \
+        FETCH_ ## args (); \
+      L_ ## op ## _BODY: \
+        goto L_SKIP_OP
 
-    NOT_IMPL_OP(LOADINEG):
-    NOT_IMPL_OP(LOADI__1):
-    NOT_IMPL_OP(LOADI_0):
-    NOT_IMPL_OP(LOADI_1):
-    NOT_IMPL_OP(LOADI_2):
-    NOT_IMPL_OP(LOADI_3):
-    NOT_IMPL_OP(LOADI_4):
-    NOT_IMPL_OP(LOADI_5):
-    NOT_IMPL_OP(LOADI_6):
-    NOT_IMPL_OP(LOADI_7):
-    NOT_IMPL_OP(ERR):
-    NOT_IMPL_OP(DEBUG):
-    NOT_IMPL_OP(SCLASS):
-    NOT_IMPL_OP(UNDEF):
-    NOT_IMPL_OP(ALIAS):
-    NOT_IMPL_OP(DEF):
-    NOT_IMPL_OP(MODULE):
-    NOT_IMPL_OP(OCLASS):
-    NOT_IMPL_OP(BLOCK):
-    NOT_IMPL_OP(HASHCAT):
-    NOT_IMPL_OP(HASHADD):
-    NOT_IMPL_OP(INTERN):
-    NOT_IMPL_OP(APOST):
-    NOT_IMPL_OP(ASET):
-    NOT_IMPL_OP(AREF):
-    NOT_IMPL_OP(ARYDUP):
-    NOT_IMPL_OP(ARYPUSH):
-    NOT_IMPL_OP(ARYCAT):
-    NOT_IMPL_OP(ARRAY2):
-    NOT_IMPL_OP(BREAK):
-    NOT_IMPL_OP(RETURN_BLK):
-    NOT_IMPL_OP(KARG):
-    NOT_IMPL_OP(KEYEND):
-    NOT_IMPL_OP(KEY_P):
-    NOT_IMPL_OP(SENDVB):
-    NOT_IMPL_OP(SENDV):
-    NOT_IMPL_OP(RAISE):
-    NOT_IMPL_OP(POPERR):
-    NOT_IMPL_OP(EPOP):
-    NOT_IMPL_OP(EPUSH):
-    NOT_IMPL_OP(RESCUE):
-    NOT_IMPL_OP(EXCEPT):
-    NOT_IMPL_OP(ONERR):
-    NOT_IMPL_OP(JMPNIL):
-    NOT_IMPL_OP(SETMCNST):
-    NOT_IMPL_OP(SETCV):
-    NOT_IMPL_OP(GETCV):
-    NOT_IMPL_OP(SETSV):
-    NOT_IMPL_OP(GETSV):
+    NOT_IMPL_OP(LOADINEG, BB);
+    NOT_IMPL_OP(LOADI__1, B);
+    NOT_IMPL_OP(LOADI_0, B);
+    NOT_IMPL_OP(LOADI_1, B);
+    NOT_IMPL_OP(LOADI_2, B);
+    NOT_IMPL_OP(LOADI_3, B);
+    NOT_IMPL_OP(LOADI_4, B);
+    NOT_IMPL_OP(LOADI_5, B);
+    NOT_IMPL_OP(LOADI_6, B);
+    NOT_IMPL_OP(LOADI_7, B);
+    NOT_IMPL_OP(ALIAS, BB);
+    NOT_IMPL_OP(MODULE, BB);
+    NOT_IMPL_OP(OCLASS, B);
+    NOT_IMPL_OP(BLOCK, BB);
+    NOT_IMPL_OP(HASHCAT, B);
+    NOT_IMPL_OP(HASHADD, BB);
+    NOT_IMPL_OP(INTERN, B);
+    NOT_IMPL_OP(APOST, BBB);
+    NOT_IMPL_OP(ASET, BBB);
+    NOT_IMPL_OP(AREF, BBB);
+    NOT_IMPL_OP(ARYDUP, B);
+    NOT_IMPL_OP(ARYPUSH, B);
+    NOT_IMPL_OP(ARYCAT, B);
+    NOT_IMPL_OP(ARRAY2, BBB);
+    NOT_IMPL_OP(BREAK, B);
+    NOT_IMPL_OP(RETURN_BLK, B);
+    NOT_IMPL_OP(KARG, BB);
+    NOT_IMPL_OP(KEYEND, Z);
+    NOT_IMPL_OP(KEY_P, BB);
+    NOT_IMPL_OP(SENDVB, BB);
+    NOT_IMPL_OP(SENDV, BB);
+    NOT_IMPL_OP(RAISE, B);
+    NOT_IMPL_OP(POPERR, B);
+    NOT_IMPL_OP(EPOP, B);
+    NOT_IMPL_OP(EPUSH, B);
+    NOT_IMPL_OP(RESCUE, BB);
+    NOT_IMPL_OP(EXCEPT, B);
+    NOT_IMPL_OP(ONERR, S);
+    NOT_IMPL_OP(JMPNIL, BS);
+    NOT_IMPL_OP(SETMCNST, BB);
+    NOT_IMPL_OP(SETCV, BB);
+    NOT_IMPL_OP(GETCV, BB);
+    NOT_IMPL_OP(SETSV, BB);
+    NOT_IMPL_OP(GETSV, BB);
+    NOT_IMPL_OP(UNDEF, B);
+    NOT_IMPL_OP(SCLASS, B);
+    NOT_IMPL_OP(DEBUG, BBB);
+    NOT_IMPL_OP(ERR, B);
 
     default:
+    L_SKIP_OP:
       console_printf("Skip OP=%02x\n", insn);
       break;
     }
