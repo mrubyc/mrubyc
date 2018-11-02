@@ -37,14 +37,14 @@ uint8_t * load_mrb_file(const char *filename)
 
 
 // Sample code for making a mruby/c class
-static void c_myclass_func(mrb_vm *vm, mrb_value *v, int argc)
+static void c_myclass_func(mrb_vm *vm, mrbc_value *v, int argc)
 {
   printf("MyClass - func\n");
 }
 
 void make_class(mrb_vm *vm)
 {
-  mrb_class *cls = mrbc_define_class(vm, "MyClass", mrbc_class_object);
+  mrbc_class *cls = mrbc_define_class(vm, "MyClass", mrbc_class_object);
   mrbc_define_method(vm, cls, "func", c_myclass_func);
 }
 
