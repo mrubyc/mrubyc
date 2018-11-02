@@ -24,16 +24,16 @@ extern "C" {
 // pre define of some struct
 struct VM;
 struct IREP;
-struct RObject;
-struct RClass;
-struct RInstance;
-struct RProc;
+struct mrbc_object;
+struct mrbc_class;
+struct mrbc_instance;
+struct mrbc_proc;
 
 // mrbc types
 typedef int32_t mrbc_int;
 typedef double mrbc_float;
 typedef int16_t mrbc_sym;
-typedef void (*mrbc_func_t)(struct VM *vm, struct RObject *v, int argc);
+typedef void (*mrbc_func_t)(struct VM *vm, struct mrbc_object *v, int argc);
 
 /* aspec access ? */
 #define MRB_ASPEC_REQ(a)          (((a) >> 18) & 0x1f)
@@ -104,31 +104,26 @@ typedef enum {
 /*!@brief
   mruby/c value object.
 */
-struct RObject {
+typedef struct mrbc_object {
   mrbc_vtype tt : 8;
   union {
     mrbc_int i;			// MRBC_TT_FIXNUM, SYMBOL
 #if MRBC_USE_FLOAT
     mrbc_float d;		// MRBC_TT_FLOAT
 #endif
-    struct RClass *cls;		// MRBC_TT_CLASS
-    struct RObject *handle;	// handle to objects
-    struct RInstance *instance;	// MRBC_TT_OBJECT
-    struct RProc *proc;		// MRBC_TT_PROC
-    struct RArray *array;	// MRBC_TT_ARRAY
-    struct RString *string;	// MRBC_TT_STRING
+    struct mrbc_class *cls;		// MRBC_TT_CLASS
+    struct mrbc_object *handle;	// handle to objects
+    struct mrbc_instance *instance;	// MRBC_TT_OBJECT
+    struct mrbc_proc *proc;		// MRBC_TT_PROC
+    struct mrbc_array *array;	// MRBC_TT_ARRAY
+    struct mrbc_string *string;	// MRBC_TT_STRING
     const char *str;		// C-string (only loader use.)
-    struct RRange *range;	// MRBC_TT_RANGE
-    struct RHash *hash;		// MRBC_TT_HASH
+    struct mrbc_range *range;	// MRBC_TT_RANGE
+    struct mrbc_hash *hash;		// MRBC_TT_HASH
   };
-};
-typedef struct RObject mrb_object;	// not recommended.
-typedef struct RObject mrb_value;	// not recommended.
-typedef struct RObject mrbc_object;
-typedef struct RObject mrbc_value;
+} mrbc_object;
 
-
-
+typedef struct mrbc_object mrbc_value;
 
 // for C call
 #define SET_RETURN(n)		do { mrbc_value nnn = (n); \
@@ -177,7 +172,7 @@ mrbc_int mrbc_atoi(const char *s, int base);
   @param  n	int value
   @return	mrbc_value of type fixnum.
 */
-static inline mrbc_value mrb_fixnum_value( mrbc_int n )
+static inline mrbc_value (mrbc_fixnum_value)( mrbc_int n )
 {
   mrbc_value value = {.tt = MRBC_TT_FIXNUM};
   value.i = n;
@@ -193,7 +188,7 @@ static inline mrbc_value mrb_fixnum_value( mrbc_int n )
   @param  n	dluble value
   @return	mrbc_value of type float.
 */
-static inline mrbc_value mrb_float_value( mrbc_float n )
+static inline mrbc_value (mrbc_float_value)( mrbc_float n )
 {
   mrbc_value value = {.tt = MRBC_TT_FLOAT};
   value.d = n;
@@ -208,7 +203,7 @@ static inline mrbc_value mrb_float_value( mrbc_float n )
 
   @return	mrbc_value of type nil.
 */
-static inline mrbc_value mrb_nil_value(void)
+static inline mrbc_value (mrbc_nil_value)(void)
 {
   mrbc_value value = {.tt = MRBC_TT_NIL};
   return value;
@@ -221,7 +216,7 @@ static inline mrbc_value mrb_nil_value(void)
 
   @return	mrbc_value of type true.
 */
-static inline mrbc_value mrb_true_value(void)
+static inline mrbc_value (mrbc_true_value)(void)
 {
   mrbc_value value = {.tt = MRBC_TT_TRUE};
   return value;
@@ -234,7 +229,7 @@ static inline mrbc_value mrb_true_value(void)
 
   @return	mrbc_value of type false.
 */
-static inline mrbc_value mrb_false_value(void)
+static inline mrbc_value (mrbc_false_value)(void)
 {
   mrbc_value value = {.tt = MRBC_TT_FALSE};
   return value;
@@ -247,7 +242,7 @@ static inline mrbc_value mrb_false_value(void)
 
   @return	mrbc_value of type false.
 */
-static inline mrbc_value mrb_bool_value( int n )
+static inline mrbc_value (mrbc_bool_value)( int n )
 {
   mrbc_value value = {.tt = n ? MRBC_TT_TRUE : MRBC_TT_FALSE};
   return value;

@@ -44,7 +44,7 @@
   @param  cls	class
   @return	result
 */
-int mrbc_obj_is_kind_of( const mrbc_value *obj, const mrb_class *cls )
+int mrbc_obj_is_kind_of( const mrbc_value *obj, const mrbc_class *cls )
 {
   const mrbc_class *c = find_class_by_object( 0, obj );
   while( c != NULL ) {
@@ -244,7 +244,7 @@ mrbc_class * mrbc_define_class(struct VM *vm, const char *name, mrbc_class *supe
     cls->procs = 0;
 
     // register to global constant.
-    mrbc_set_const( sym_id, &(mrb_value){.tt = MRBC_TT_CLASS, .cls = cls} );
+    mrbc_set_const( sym_id, &(mrbc_value){.tt = MRBC_TT_CLASS, .cls = cls} );
     return cls;
   }
 
@@ -572,7 +572,7 @@ int mrbc_puts_sub(mrbc_value *v)
 static void c_object_alias_method(struct VM *vm, mrbc_value v[], int argc)
 {
   // find method only in this class.
-  mrb_proc *proc = v[0].cls->procs;
+  mrbc_proc *proc = v[0].cls->procs;
   while( proc != NULL ) {
     if( proc->sym_id == v[2].i ) break;
     proc = proc->next;

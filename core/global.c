@@ -41,7 +41,7 @@ void  mrbc_init_global(void)
 */
 int mrbc_set_const( mrbc_sym sym_id, mrbc_value *v )
 {
-  mrb_value *already = mrbc_kv_get( &handle_const, sym_id );
+  mrbc_value *already = mrbc_kv_get( &handle_const, sym_id );
   if( already != NULL ) {
     console_printf( "warning: already initialized constant.\n" );
     mrbc_release( already );

@@ -25,7 +25,7 @@ extern "C" {
 /*!@brief
   Define Range object (same the handles of other objects)
 */
-typedef struct RRange {
+typedef struct mrbc_range {
   MRBC_OBJECT_HEADER;
 
   uint8_t flag_exclude;	// true: exclude the end object, otherwise include.

@@ -44,7 +44,7 @@ typedef struct IREP {
   struct IREP **reps;		//!< array of child IREP's pointer.
 
 } mrbc_irep;
-typedef struct IREP mrb_irep;
+typedef struct IREP mrbc_irep;
 
 
 //================================================================
@@ -61,7 +61,7 @@ typedef struct CALLINFO {
   mrbc_class *target_class;
   uint8_t   n_args;     // num of args
 } mrbc_callinfo;
-typedef struct CALLINFO mrb_callinfo;
+typedef struct CALLINFO mrbc_callinfo;
 
 
 //================================================================

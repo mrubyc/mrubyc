@@ -668,7 +668,7 @@ static inline int op_send_raw( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint1
   mrbc_proc *m = find_method(vm, &recv, sym_id);
 
   if( m == 0 ) {
-    mrb_class *cls = find_class_by_object( vm, &recv );
+    mrbc_class *cls = find_class_by_object( vm, &recv );
     console_printf("No method. Class:%s Method:%s\n",
 		   symid_to_str(cls->sym_id), sym_name );
     return 0;

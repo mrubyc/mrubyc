@@ -25,7 +25,7 @@ extern "C" {
 /*!@brief
   Define Hash handle.
 */
-typedef struct RHash {
+typedef struct mrbc_hash {
   // (NOTE)
   //  Needs to be same members and order as RArray.
   MRBC_OBJECT_HEADER;
@@ -43,7 +43,7 @@ typedef struct RHash {
 /*!@brief
   Define Hash iterator.
 */
-typedef struct RHashIterator {
+typedef struct mrbc_hash_iterator {
   mrbc_hash *target;
   mrbc_value *point;
   mrbc_value *p_end;

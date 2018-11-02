@@ -26,25 +26,24 @@ extern "C" {
 //================================================================
 /*! mruby/c class object.
 */
-typedef struct RClass {
+typedef struct mrbc_class {
   mrbc_sym sym_id;	// class name
 #ifdef MRBC_DEBUG
   const char *names;	// for debug. delete soon.
 #endif
-  struct RClass *super;	// mrbc_class[super]
-  struct RProc *procs;	// mrbc_proc[rprocs], linked list
+  struct mrbc_class *super;	// mrbc_class[super]
+  struct mrbc_proc *procs;	// mrbc_proc[rprocs], linked list
 
 } mrbc_class;
-typedef struct RClass mrb_class;
 
 
 //================================================================
 /*! mruby/c instance object.
 */
-typedef struct RInstance {
+typedef struct mrbc_instance {
   MRBC_OBJECT_HEADER;
 
-  struct RClass *cls;
+  struct mrbc_class *cls;
   struct RKeyValueHandle ivar;
   uint8_t data[];
 
@@ -55,7 +54,7 @@ typedef struct RInstance mrb_instance;
 //================================================================
 /*! mruby/c proc object.
 */
-typedef struct RProc {
+typedef struct mrbc_proc {
   MRBC_OBJECT_HEADER;
 
   unsigned int c_func : 1;	// 0:IREP, 1:C Func
@@ -63,18 +62,15 @@ typedef struct RProc {
 #ifdef MRBC_DEBUG
   const char *names;		// for debug; delete soon
 #endif
-  struct RProc *next;
+  struct mrbc_proc *next;
   union {
     struct IREP *irep;
     mrbc_func_t func;
   };
 
 } mrbc_proc;
-typedef struct RProc mrb_proc;
 
-
-
-int mrbc_obj_is_kind_of(const mrbc_value *obj, const mrb_class *cls);
+int mrbc_obj_is_kind_of(const mrbc_value *obj, const mrbc_class *cls);
 mrbc_proc *mrbc_rproc_alloc(struct VM *vm, const char *name);
 mrbc_value mrbc_instance_new(struct VM *vm, mrbc_class *cls, int size);
 void mrbc_instance_delete(mrbc_value *v);

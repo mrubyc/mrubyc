@@ -26,7 +26,7 @@ extern "C" {
 /*!@brief
   Define String handle.
 */
-typedef struct RString {
+typedef struct mrbc_string {
   MRBC_OBJECT_HEADER;
 
   uint16_t size;	//!< string length.

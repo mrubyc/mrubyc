@@ -706,7 +706,7 @@ static void c_string_split(struct VM *vm, mrbc_value v[], int argc)
   }
 
   // check separator parameter.
-  mrb_value sep = (argc == 0) ? mrbc_string_new_cstr(vm, " ") : v[1];
+  mrbc_value sep = (argc == 0) ? mrbc_string_new_cstr(vm, " ") : v[1];
   switch( sep.tt ) {
   case MRBC_TT_NIL:
     sep = mrbc_string_new_cstr(vm, " ");
@@ -767,7 +767,7 @@ static void c_string_split(struct VM *vm, mrbc_value v[], int argc)
   SPLIT_ITEM:
     if( pos < 0 ) len = mrbc_string_size(&v[0]) - offset;
 
-    mrb_value v1 = mrbc_string_new(vm, mrbc_string_cstr(&v[0]) + offset, len);
+    mrbc_value v1 = mrbc_string_new(vm, mrbc_string_cstr(&v[0]) + offset, len);
     mrbc_array_push( &ret, &v1 );
 
     if( pos < 0 ) break;
@@ -780,7 +780,7 @@ static void c_string_split(struct VM *vm, mrbc_value v[], int argc)
       int idx = mrbc_array_size(&ret) - 1;
       if( idx < 0 ) break;
 
-      mrb_value v1 = mrbc_array_get( &ret, idx );
+      mrbc_value v1 = mrbc_array_get( &ret, idx );
       if( mrbc_string_size(&v1) != 0 ) break;
 
       mrbc_array_remove(&ret, idx);
@@ -1037,7 +1037,7 @@ static void tr_free_pattern( struct tr_pattern *pat )
   }
 }
 
-static struct tr_pattern * tr_parse_pattern( struct VM *vm, const mrb_value *v_pattern, int flag_reverse_enable )
+static struct tr_pattern * tr_parse_pattern( struct VM *vm, const mrbc_value *v_pattern, int flag_reverse_enable )
 {
   const char *pattern = mrbc_string_cstr( v_pattern );
   int pattern_length = mrbc_string_size( v_pattern );
@@ -1181,7 +1181,7 @@ static int tr_main( struct VM *vm, mrbc_value v[], int argc )
 
 static void c_string_tr(struct VM *vm, mrbc_value v[], int argc)
 {
-  mrb_value ret = mrbc_string_dup( vm, &v[0] );
+  mrbc_value ret = mrbc_string_dup( vm, &v[0] );
   SET_RETURN( ret );
   tr_main(vm, v, argc);
 }
