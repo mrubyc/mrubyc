@@ -58,9 +58,9 @@ MRuby::Gem::Specification.new('mrubyc') do |spec|
     build.bins << bin
   end
 
-  file "#{dir}/sample_c/sample01.c" => ["#{dir}/sample_c/myclass.rb", build.mrbcfile, __FILE__] do |t|
+  file "#{dir}/sample_c/sample01.c" => ["#{dir}/sample_c/sample.rb", build.mrbcfile, __FILE__] do |t|
     File.open(t.name, 'w') do |f|
-      mrbc.run f, ["#{dir}/sample_c/myclass.rb"], 'ary'
+      mrbc.run f, ["#{dir}/sample_c/sample.rb"], 'ary'
     end
   end
   file objfile("#{dir}/sample_c/main_sample.c".pathmap("#{build_dir}/sample_c/%n")) => "#{dir}/sample_c/sample01.c"
