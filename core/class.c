@@ -1125,8 +1125,6 @@ static void mrbc_run_mrblib(void)
   mrbc_vm vm;
   mrbc_vm_open(&vm);
   int ret = mrbc_load_mrb(&vm, mrblib_bytecode);
-  setbuf(stdout, NULL);
-  printf("load mrb: %d\n\n", ret);
   assert(ret == 0);
   mrbc_vm_begin(&vm);
   mrbc_vm_run(&vm);
