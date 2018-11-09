@@ -1773,6 +1773,78 @@ static inline int op_DEF(mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb
   return 0;
 }
 
+static inline int op_LOADI__1(mrb_vm *vm, mrbc_value *regs, uint32_t ra)
+{
+  mrbc_release(&regs[ra]);
+  regs[ra].tt = MRBC_TT_FIXNUM;
+  regs[ra].i = -1;
+  return 0;
+}
+
+static inline int op_LOADI_0(mrb_vm *vm, mrbc_value *regs, uint32_t ra)
+{
+  mrbc_release(&regs[ra]);
+  regs[ra].tt = MRBC_TT_FIXNUM;
+  regs[ra].i = 0;
+  return 0;
+}
+
+static inline int op_LOADI_1(mrb_vm *vm, mrbc_value *regs, uint32_t ra)
+{
+  mrbc_release(&regs[ra]);
+  regs[ra].tt = MRBC_TT_FIXNUM;
+  regs[ra].i = 1;
+  return 0;
+}
+
+static inline int op_LOADI_2(mrb_vm *vm, mrbc_value *regs, uint32_t ra)
+{
+  mrbc_release(&regs[ra]);
+  regs[ra].tt = MRBC_TT_FIXNUM;
+  regs[ra].i = 2;
+  return 0;
+}
+
+static inline int op_LOADI_3(mrb_vm *vm, mrbc_value *regs, uint32_t ra)
+{
+  mrbc_release(&regs[ra]);
+  regs[ra].tt = MRBC_TT_FIXNUM;
+  regs[ra].i = 3;
+  return 0;
+}
+
+static inline int op_LOADI_4(mrb_vm *vm, mrbc_value *regs, uint32_t ra)
+{
+  mrbc_release(&regs[ra]);
+  regs[ra].tt = MRBC_TT_FIXNUM;
+  regs[ra].i = 4;
+  return 0;
+}
+
+static inline int op_LOADI_5(mrb_vm *vm, mrbc_value *regs, uint32_t ra)
+{
+  mrbc_release(&regs[ra]);
+  regs[ra].tt = MRBC_TT_FIXNUM;
+  regs[ra].i = 5;
+  return 0;
+}
+
+static inline int op_LOADI_6(mrb_vm *vm, mrbc_value *regs, uint32_t ra)
+{
+  mrbc_release(&regs[ra]);
+  regs[ra].tt = MRBC_TT_FIXNUM;
+  regs[ra].i = 6;
+  return 0;
+}
+
+static inline int op_LOADI_7(mrb_vm *vm, mrbc_value *regs, uint32_t ra)
+{
+  mrbc_release(&regs[ra]);
+  regs[ra].tt = MRBC_TT_FIXNUM;
+  regs[ra].i = 7;
+  return 0;
+}
+
 //================================================================
 /*!@brief
   Open the VM.
@@ -1982,6 +2054,15 @@ int mrbc_vm_run( struct VM *vm )
     CASE(STOP, stop, Z);
     CASE(ABORT, abort, Z);
     CASE(DEF, DEF, BB);
+    CASE(LOADI__1, LOADI__1, B);
+    CASE(LOADI_0, LOADI_0, B);
+    CASE(LOADI_1, LOADI_1, B);
+    CASE(LOADI_2, LOADI_2, B);
+    CASE(LOADI_3, LOADI_3, B);
+    CASE(LOADI_4, LOADI_4, B);
+    CASE(LOADI_5, LOADI_5, B);
+    CASE(LOADI_6, LOADI_6, B);
+    CASE(LOADI_7, LOADI_7, B);
 
     case OP_EXT1:
     L_EXT1_BODY: {
@@ -2025,15 +2106,6 @@ int mrbc_vm_run( struct VM *vm )
         goto L_SKIP_OP
 
     NOT_IMPL_OP(LOADINEG, BB);
-    NOT_IMPL_OP(LOADI__1, B);
-    NOT_IMPL_OP(LOADI_0, B);
-    NOT_IMPL_OP(LOADI_1, B);
-    NOT_IMPL_OP(LOADI_2, B);
-    NOT_IMPL_OP(LOADI_3, B);
-    NOT_IMPL_OP(LOADI_4, B);
-    NOT_IMPL_OP(LOADI_5, B);
-    NOT_IMPL_OP(LOADI_6, B);
-    NOT_IMPL_OP(LOADI_7, B);
     NOT_IMPL_OP(ALIAS, BB);
     NOT_IMPL_OP(MODULE, BB);
     NOT_IMPL_OP(OCLASS, B);

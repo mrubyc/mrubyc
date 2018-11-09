@@ -4,4 +4,5 @@ class TestClass
   end
 end
 
-print TestClass.new.test
+
+print TestClass.new.test[0, 5]
