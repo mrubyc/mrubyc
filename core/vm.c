@@ -1607,10 +1607,9 @@ static inline int op_class( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t
 
   mrbc_class *cls = mrbc_define_class(vm, sym_name, super);
 
-  mrbc_value ret = {.tt = MRBC_TT_CLASS};
-  ret.cls = cls;
-
-  regs[ra] = ret;
+  mrbc_release(&regs[ra]);
+  regs[ra].tt = MRBC_TT_CLASS;
+  regs[ra].cls = cls;
 
   return 0;
 }
