@@ -180,7 +180,12 @@ void mrbc_dec_ref_counter(mrbc_value *v)
 
   switch( v->tt ) {
   case MRBC_TT_OBJECT:	mrbc_instance_delete(v);	break;
-  case MRBC_TT_PROC:	mrbc_raw_free(v->handle);	break;
+  case MRBC_TT_PROC:
+    if (!v->proc->c_func) {
+      mrbc_irep_free(v->proc->irep);
+    }
+    mrbc_raw_free(v->handle);
+    break;
   case MRBC_TT_ARRAY:	mrbc_array_delete(v);		break;
 #if MRBC_USE_STRING
   case MRBC_TT_STRING:	mrbc_string_delete(v);		break;

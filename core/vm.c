@@ -1715,6 +1715,9 @@ static inline int op_stop( mrbc_vm *vm, mrbc_value *regs )
 
   vm->flag_preemption = 1;
 
+  mrbc_irep_free( vm->irep );
+  vm->irep = NULL;
+
   return -1;
 }
 
@@ -1828,7 +1831,7 @@ void mrbc_vm_close( struct VM *vm )
   free_vm_bitmap[i] &= ~(1 << (FREE_BITMAP_WIDTH - n - 1));
 
   // free irep and vm
-  mrbc_irep_free( vm->irep );
+  if (vm->irep) mrbc_irep_free( vm->irep );
   if( vm->flag_need_memfree ) mrbc_raw_free(vm);
 }
 
