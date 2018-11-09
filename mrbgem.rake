@@ -4,7 +4,7 @@ MRuby::Gem::Specification.new('mrubyc') do |spec|
   spec.summary = 'more compact implementation of mruby VM'
 
   cc.defines << 'MRBC_DEBUG' if build.debug_enabled?
-  cc.include_paths << "#{dir}/core"
+  cc.include_paths << "#{dir}/core" << "#{build_dir}/include"
   cc.flags << '-Wno-declaration-after-statement'
 
   mrbc.compile_options << ' -E' # force big endian
@@ -58,10 +58,11 @@ MRuby::Gem::Specification.new('mrubyc') do |spec|
     build.bins << bin
   end
 
-  file "#{dir}/sample_c/sample01.c" => ["#{dir}/sample_c/sample.rb", build.mrbcfile, __FILE__] do |t|
+  file "#{build_dir}/include/sample01.c" => ["#{dir}/sample_c/sample.rb", build.mrbcfile, __FILE__] do |t|
+    FileUtils.mkdir_p File.dirname t.name
     File.open(t.name, 'w') do |f|
       mrbc.run f, ["#{dir}/sample_c/sample.rb"], 'ary'
     end
   end
-  file objfile("#{dir}/sample_c/main_sample.c".pathmap("#{build_dir}/sample_c/%n")) => "#{dir}/sample_c/sample01.c"
+  file objfile("#{dir}/sample_c/main_sample.c".pathmap("#{build_dir}/sample_c/%n")) => "#{build_dir}/include/sample01.c"
 end

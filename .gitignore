@@ -26,5 +26,3 @@ src/hal
 
 # doxygen output
 html
-
-/sample_c/sample01.c
