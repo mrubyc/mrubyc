@@ -241,7 +241,7 @@ mrbc_class * mrbc_define_class(struct VM *vm, const char *name, mrbc_class *supe
     cls->names = name;	// for debug; delete soon.
 #endif
     cls->super = super;
-    cls->procs = 0;
+    cls->procs = NULL;
 
     // register to global constant.
     mrbc_set_const( sym_id, &(mrbc_value){.tt = MRBC_TT_CLASS, .cls = cls} );
