@@ -1651,7 +1651,7 @@ static inline int op_exec( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t 
 /*!@brief
   Execute OP_METHOD
 
-  R(A).newmethod(Syms(B),R(A+1))
+  R(a) = lambda(SEQ[b],L_METHOD)
 
   @param  vm    A pointer of VM.
   @param  code  bytecode
@@ -1660,46 +1660,14 @@ static inline int op_exec( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t 
 */
 static inline int op_method( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb )
 {
-  mrbc_proc *proc = regs[ra+1].proc;
+  mrbc_proc *proc = mrbc_rproc_alloc(vm, "(method)");
+  proc->tt = MRBC_TT_PROC;
+  proc->c_func = 0;
+  proc->irep = vm->pc_irep->reps[rb];
 
-  if( regs[ra].tt == MRBC_TT_CLASS ) {
-    mrbc_class *cls = regs[ra].cls;
-
-    // sym_id : method name
-    mrbc_irep *cur_irep = vm->pc_irep;
-    const char *sym_name = mrbc_get_irep_symbol(cur_irep->ptr_to_sym, rb);
-    int sym_id = str_to_symid(sym_name);
-
-    // check same name method
-    mrbc_proc *p = cls->procs;
-    void *pp = &cls->procs;
-    while( p != NULL ) {
-      if( p->sym_id == sym_id ) break;
-      pp = &p->next;
-      p = p->next;
-    }
-    if( p ) {
-      // found it.
-      *((mrbc_proc**)pp) = p->next;
-      if( !p->c_func ) {
-	mrbc_value v = {.tt = MRBC_TT_PROC};
-	v.proc = p;
-	mrbc_release(&v);
-      }
-    }
-
-    // add proc to class
-    proc->c_func = 0;
-    proc->sym_id = sym_id;
-#ifdef MRBC_DEBUG
-    proc->names = sym_name;		// debug only.
-#endif
-    proc->next = cls->procs;
-    cls->procs = proc;
-
-    mrbc_set_vm_id(proc, 0);
-    regs[ra+1].tt = MRBC_TT_EMPTY;
-  }
+  mrbc_release(&regs[ra]);
+  regs[ra].tt = MRBC_TT_PROC;
+  regs[ra].proc = proc;
 
   return 0;
 }
@@ -1757,6 +1725,7 @@ static inline int op_abort( mrbc_vm *vm, mrbc_value *regs )
   return -1;
 }
 
+// R(a).newmethod(Syms(b),R(a+1))
 static inline int op_DEF(mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb)
 {
   if (regs[ra].tt != MRBC_TT_CLASS) {
@@ -1765,12 +1734,39 @@ static inline int op_DEF(mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb
   if (regs[ra + 1].tt != MRBC_TT_PROC) {
     return -1;
   }
-  mrbc_proc *proc = regs[ra + 1].proc;
+
   mrbc_class *cls = regs[ra].cls;
-  proc->sym_id = str_to_symid(mrbc_get_irep_symbol(vm->pc_irep->ptr_to_sym, rb));
+  mrbc_proc *proc = regs[ra + 1].proc;
+  mrbc_proc *p = cls->procs;
+  mrbc_proc **pp = &cls->procs;
+  char const *sym_name = mrbc_get_irep_symbol(vm->pc_irep->ptr_to_sym, rb);
+  mrbc_sym sym_id = str_to_symid(sym_name);
+
+  while( p != NULL ) {
+    if( p->sym_id == sym_id ) break;
+    pp = &p->next;
+    p = p->next;
+  }
+  if( p ) {
+    // found it.
+    *pp = p->next;
+    if( !p->c_func ) {
+      mrbc_value v = {.tt = MRBC_TT_PROC};
+      v.proc = p;
+      mrbc_release(&v);
+    }
+  }
+
+  // add proc to class
   proc->c_func = 0;
+  proc->sym_id = sym_id;
+#ifdef MRBC_DEBUG
+  proc->names = sym_name;		// debug only.
+#endif
   proc->next = cls->procs;
   cls->procs = proc;
+  proc->ref_count++;
+
   return 0;
 }
 
