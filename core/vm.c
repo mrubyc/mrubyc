@@ -901,7 +901,7 @@ static inline int op_return( mrbc_vm *vm, mrbc_value *regs, uint32_t ra )
   // restore irep,pc,regs
   mrbc_callinfo *callinfo = vm->callinfo_tail;
   if (!callinfo) {
-    return;
+    return -1;
   }
   vm->callinfo_tail = callinfo->prev;
   vm->current_regs = callinfo->current_regs;
