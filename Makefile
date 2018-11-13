@@ -7,15 +7,12 @@
 #  This file is distributed under BSD 3-Clause License.
 #
 
-all: mrubyc_lib mrubyc_ext mrubyc_bin
+all: mrubyc_lib mrubyc_bin
 
 
 mrubyc_lib:
 	cd mrblib ; $(MAKE) all
 	cd src ; $(MAKE) all
-
-mrubyc_ext:
-	cd ext ; $(MAKE) all
 
 mrubyc_bin:
 	cd sample_c ; $(MAKE) all
@@ -23,7 +20,6 @@ mrubyc_bin:
 clean:
 	cd mrblib ; $(MAKE) clean
 	cd src ; $(MAKE) clean
-	cd ext ; $(MAKE) clean
 	cd sample_c ; $(MAKE) clean
 
 package: clean
