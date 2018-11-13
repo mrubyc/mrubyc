@@ -30,8 +30,6 @@
 
 #include "c_array.h"
 #include "c_hash.h"
-#include "c_numeric.h"
-#include "c_math.h"
 #include "c_string.h"
 #include "c_range.h"
 
@@ -569,8 +567,7 @@ int mrbc_puts_sub(mrbc_value *v)
 
   note: using the 'alias' keyword, this method will be called.
 */
-static void c_object_alias_method(struct VM *vm, mrbc_value v[], int argc)
-{
+mrbc_static_method(Object, alias_method){
   // find method only in this class.
   mrbc_proc *proc = v[0].cls->procs;
   while( proc != NULL ) {
@@ -600,8 +597,7 @@ static void c_object_alias_method(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) p
  */
-static void c_object_p(struct VM *vm, mrbc_value v[], int argc)
-{
+mrbc_static_method(Object, p){
   int i;
   for( i = 1; i <= argc; i++ ) {
     mrbc_p_sub( &v[i] );
@@ -613,8 +609,7 @@ static void c_object_p(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) print
  */
-static void c_object_print(struct VM *vm, mrbc_value v[], int argc)
-{
+mrbc_static_method(Object, print){
   int i;
   for( i = 1; i <= argc; i++ ) {
     mrbc_print_sub( &v[i] );
@@ -625,8 +620,7 @@ static void c_object_print(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) puts
  */
-static void c_object_puts(struct VM *vm, mrbc_value v[], int argc)
-{
+mrbc_static_method(Object, puts){
   int i;
   if( argc ){
     for( i = 1; i <= argc; i++ ) {
@@ -641,8 +635,7 @@ static void c_object_puts(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (operator) !
  */
-static void c_object_not(struct VM *vm, mrbc_value v[], int argc)
-{
+mrbc_static_method(Object, not){
   SET_FALSE_RETURN();
 }
 
@@ -650,8 +643,7 @@ static void c_object_not(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (operator) !=
  */
-static void c_object_neq(struct VM *vm, mrbc_value v[], int argc)
-{
+mrbc_static_method(Object, neq){
   int result = mrbc_compare( &v[0], &v[1] );
   SET_BOOL_RETURN( result != 0 );
 }
@@ -660,8 +652,7 @@ static void c_object_neq(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (operator) <=>
  */
-static void c_object_compare(struct VM *vm, mrbc_value v[], int argc)
-{
+mrbc_static_method(Object, compare){
   int result = mrbc_compare( &v[0], &v[1] );
   SET_INT_RETURN( result );
 }
@@ -670,8 +661,7 @@ static void c_object_compare(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (operator) ===
  */
-static void c_object_equal3(struct VM *vm, mrbc_value v[], int argc)
-{
+mrbc_static_method(Object, equal3){
   int result;
 
   if( v[0].tt == MRBC_TT_CLASS ) {
@@ -687,8 +677,7 @@ static void c_object_equal3(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) class
  */
-static void c_object_class(struct VM *vm, mrbc_value v[], int argc)
-{
+mrbc_static_method(Object, class){
   mrbc_value value = {.tt = MRBC_TT_CLASS};
   value.cls = find_class_by_object( vm, v );
   SET_RETURN( value );
@@ -697,8 +686,7 @@ static void c_object_class(struct VM *vm, mrbc_value v[], int argc)
 
 
 // Object.new
-static void c_object_new(struct VM *vm, mrbc_value v[], int argc)
-{
+mrbc_static_method(Object, new){
   mrbc_value new_obj = mrbc_instance_new(vm, v->cls, 0);
 
   char syms[]="______initialize";
@@ -783,8 +771,7 @@ static void c_object_setiv(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (class method) access method 'attr_reader'
  */
-static void c_object_attr_reader(struct VM *vm, mrbc_value v[], int argc)
-{
+mrbc_static_method(Object, attr_reader){
   int i;
   for( i = 1; i <= argc; i++ ) {
     if( v[i].tt != MRBC_TT_SYMBOL ) continue;	// TypeError raise?
@@ -799,8 +786,7 @@ static void c_object_attr_reader(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (class method) access method 'attr_accessor'
  */
-static void c_object_attr_accessor(struct VM *vm, mrbc_value v[], int argc)
-{
+mrbc_static_method(Object, attr_accessor){
   int i;
   for( i = 1; i <= argc; i++ ) {
     if( v[i].tt != MRBC_TT_SYMBOL ) continue;	// TypeError raise?
@@ -824,8 +810,7 @@ static void c_object_attr_accessor(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) is_a, kind_of
  */
-static void c_object_kind_of(struct VM *vm, mrbc_value v[], int argc)
-{
+mrbc_static_method(Object, kind_of){
   int result = 0;
   if( v[1].tt != MRBC_TT_CLASS ) goto DONE;
 
@@ -840,8 +825,7 @@ static void c_object_kind_of(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) to_s
  */
-static void c_object_to_s(struct VM *vm, mrbc_value v[], int argc)
-{
+mrbc_static_method(Object, to_s){
   char buf[32];
   const char *s = buf;
 
@@ -879,7 +863,7 @@ static void c_object_to_s(struct VM *vm, mrbc_value v[], int argc)
 
 
 #ifdef MRBC_DEBUG
-static void c_object_instance_methods(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Object, instance_methods)
 {
   // TODO: check argument.
 
@@ -902,42 +886,9 @@ static void c_object_instance_methods(struct VM *vm, mrbc_value v[], int argc)
 }
 #endif
 
-
-static void mrbc_init_class_object(struct VM *vm)
-{
-  // Class
-  mrbc_class_object = mrbc_define_class(vm, "Object", 0);
-  // Methods
-  mrbc_define_method(vm, mrbc_class_object, "initialize", c_ineffect);
-  mrbc_define_method(vm, mrbc_class_object, "alias_method", c_object_alias_method);
-  mrbc_define_method(vm, mrbc_class_object, "p", c_object_p);
-  mrbc_define_method(vm, mrbc_class_object, "print", c_object_print);
-  mrbc_define_method(vm, mrbc_class_object, "puts", c_object_puts);
-  mrbc_define_method(vm, mrbc_class_object, "!", c_object_not);
-  mrbc_define_method(vm, mrbc_class_object, "!=", c_object_neq);
-  mrbc_define_method(vm, mrbc_class_object, "<=>", c_object_compare);
-  mrbc_define_method(vm, mrbc_class_object, "===", c_object_equal3);
-  mrbc_define_method(vm, mrbc_class_object, "class", c_object_class);
-  mrbc_define_method(vm, mrbc_class_object, "new", c_object_new);
-  mrbc_define_method(vm, mrbc_class_object, "attr_reader", c_object_attr_reader);
-  mrbc_define_method(vm, mrbc_class_object, "attr_accessor", c_object_attr_accessor);
-  mrbc_define_method(vm, mrbc_class_object, "is_a?", c_object_kind_of);
-  mrbc_define_method(vm, mrbc_class_object, "kind_of?", c_object_kind_of);
-
-
-#if MRBC_USE_STRING
-  mrbc_define_method(vm, mrbc_class_object, "inspect", c_object_to_s);
-  mrbc_define_method(vm, mrbc_class_object, "to_s", c_object_to_s);
-#endif
-
-#ifdef MRBC_DEBUG
-  mrbc_define_method(vm, mrbc_class_object, "instance_methods", c_object_instance_methods);
-#endif
-}
-
 // =============== ProcClass
 
-void c_proc_call(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Proc, call)
 {
   // self in block call
   mrbc_value *self = vm->callinfo_tail->current_regs;
@@ -971,7 +922,7 @@ void c_proc_call(struct VM *vm, mrbc_value v[], int argc)
 
 
 #if MRBC_USE_STRING
-static void c_proc_to_s(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Proc, to_s)
 {
   // (NOTE) address part assumes 32bit. but enough for this.
   char buf[32];
@@ -987,18 +938,6 @@ static void c_proc_to_s(struct VM *vm, mrbc_value v[], int argc)
 }
 #endif
 
-static void mrbc_init_class_proc(struct VM *vm)
-{
-  // Class
-  mrbc_class_proc= mrbc_define_class(vm, "Proc", mrbc_class_object);
-  // Methods
-  mrbc_define_method(vm, mrbc_class_proc, "call", c_proc_call);
-#if MRBC_USE_STRING
-  mrbc_define_method(vm, mrbc_class_proc, "inspect", c_proc_to_s);
-  mrbc_define_method(vm, mrbc_class_proc, "to_s", c_proc_to_s);
-#endif
-}
-
 
 //================================================================
 // Nil class
@@ -1006,7 +945,11 @@ static void mrbc_init_class_proc(struct VM *vm)
 //================================================================
 /*! (method) !
 */
-static void c_nil_false_not(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(NilClass, not)
+{
+  v[0].tt = MRBC_TT_TRUE;
+}
+mrbc_static_method(FalseClass, not)
 {
   v[0].tt = MRBC_TT_TRUE;
 }
@@ -1016,35 +959,30 @@ static void c_nil_false_not(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) inspect
 */
-static void c_nil_inspect(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(NilClass, inspect)
 {
   v[0] = mrbc_string_new_cstr(vm, "nil");
+}
+
+mrbc_static_method(TrueClass, inspect)
+{
+  return mrbc_static_method_sym(Object, to_s)(vm, v, argc);
+}
+
+mrbc_static_method(FalseClass, inspect)
+{
+  return mrbc_static_method_sym(Object, to_s)(vm, v, argc);
 }
 
 
 //================================================================
 /*! (method) to_s
 */
-static void c_nil_to_s(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(NilClass, to_s)
 {
   v[0] = mrbc_string_new(vm, NULL, 0);
 }
 #endif
-
-//================================================================
-/*! Nil class
-*/
-static void mrbc_init_class_nil(struct VM *vm)
-{
-  // Class
-  mrbc_class_nil = mrbc_define_class(vm, "NilClass", mrbc_class_object);
-  // Methods
-  mrbc_define_method(vm, mrbc_class_nil, "!", c_nil_false_not);
-#if MRBC_USE_STRING
-  mrbc_define_method(vm, mrbc_class_nil, "inspect", c_nil_inspect);
-  mrbc_define_method(vm, mrbc_class_nil, "to_s", c_nil_to_s);
-#endif
-}
 
 
 
@@ -1055,26 +993,11 @@ static void mrbc_init_class_nil(struct VM *vm)
 //================================================================
 /*! (method) to_s
 */
-static void c_false_to_s(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(FalseClass, to_s)
 {
   v[0] = mrbc_string_new_cstr(vm, "false");
 }
 #endif
-
-//================================================================
-/*! False class
-*/
-static void mrbc_init_class_false(struct VM *vm)
-{
-  // Class
-  mrbc_class_false = mrbc_define_class(vm, "FalseClass", mrbc_class_object);
-  // Methods
-  mrbc_define_method(vm, mrbc_class_false, "!", c_nil_false_not);
-#if MRBC_USE_STRING
-  mrbc_define_method(vm, mrbc_class_false, "inspect", c_false_to_s);
-  mrbc_define_method(vm, mrbc_class_false, "to_s", c_false_to_s);
-#endif
-}
 
 
 
@@ -1085,22 +1008,11 @@ static void mrbc_init_class_false(struct VM *vm)
 //================================================================
 /*! (method) to_s
 */
-static void c_true_to_s(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(TrueClass, to_s)
 {
   v[0] = mrbc_string_new_cstr(vm, "true");
 }
 #endif
-
-static void mrbc_init_class_true(struct VM *vm)
-{
-  // Class
-  mrbc_class_true = mrbc_define_class(vm, "TrueClass", mrbc_class_object);
-  // Methods
-#if MRBC_USE_STRING
-  mrbc_define_method(vm, mrbc_class_true, "inspect", c_true_to_s);
-  mrbc_define_method(vm, mrbc_class_true, "to_s", c_true_to_s);
-#endif
-}
 
 
 
@@ -1133,33 +1045,14 @@ static void mrbc_run_mrblib(void)
 }
 
 
-
+extern void mrbc_init_method_table(mrbc_vm* vm);
 
 //================================================================
 // initialize
 
 void mrbc_init_class(void)
 {
-  mrbc_init_class_object(0);
-  mrbc_init_class_nil(0);
-  mrbc_init_class_proc(0);
-  mrbc_init_class_false(0);
-  mrbc_init_class_true(0);
-
-  mrbc_init_class_fixnum(0);
-  mrbc_init_class_symbol(0);
-#if MRBC_USE_FLOAT
-  mrbc_init_class_float(0);
-#if MRBC_USE_MATH
-  mrbc_init_class_math(0);
-#endif
-#endif
-#if MRBC_USE_STRING
-  mrbc_init_class_string(0);
-#endif
-  mrbc_init_class_array(0);
-  mrbc_init_class_range(0);
-  mrbc_init_class_hash(0);
+  mrbc_init_method_table(0);
 
   mrbc_run_mrblib();
 }

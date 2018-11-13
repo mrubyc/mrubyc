@@ -32,6 +32,10 @@
 #include "c_array.h"
 #include "c_hash.h"
 
+#include <stdio.h>
+
+mrbc_static_method(Proc, call);
+
 
 static uint32_t free_vm_bitmap[MAX_VM_COUNT / 32 + 1];
 #define FREE_BITMAP_WIDTH 32
@@ -677,7 +681,7 @@ static inline int op_send_raw( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint1
     m->func(vm, regs + ra, rc);
 
     extern void c_proc_call(mrbc_vm *vm, mrbc_value v[], int argc);
-    if( m->func == c_proc_call ) return 0;
+    if( m->func == mrbc_static_method_sym(Proc, call) ) return 0;
 
     int release_reg = ra+1;
     while( release_reg <= bidx ) {
@@ -797,7 +801,7 @@ inline static int op_super( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint8_t 
     m->func(vm, regs + ra, rc);
 
     extern void c_proc_call(mrbc_vm *vm, mrbc_value v[], int argc);
-    if( m->func == c_proc_call ) return 0;
+    if( m->func == mrbc_static_method_sym(Proc, call) ) return 0;
 
     unsigned int release_reg = ra+1;
     while( release_reg <= ra+rc+1 ) {

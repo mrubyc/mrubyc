@@ -1,0 +1,282 @@
+Array:
+  new: true
+  add: '+'
+  get:
+    methods:
+      - '[]'
+      - at
+  set: '[]='
+  push:
+    methods:
+      - '<<'
+      - push
+  clear: true
+  delete_at: true
+  empty: 'empty?'
+  size:
+    methods:
+      - size
+      - length
+      - count
+  index: true
+  first: true
+  last: true
+  shift: true
+  unshift: true
+  dup: true
+  min: true
+  max: true
+  minmax: true
+  _features:
+    string:
+      inspect:
+        methods:
+          - inspect
+          - to_s
+      join: true
+
+Hash:
+  new: true
+  get: "[]"
+  set: "[]="
+  clear: true
+  dup: true
+  delete: true
+  empty: "empty?"
+  has_key: "has_key?"
+  has_value: "has_value?"
+  key: true
+  keys: true
+  size:
+    methods:
+      - size
+      - length
+      - count
+  merge: true
+  merge_self: "merge!"
+  to_h:
+    ineffect: true
+  values: true
+
+  _features:
+    string:
+      inspect:
+        methods:
+          - inspect
+          - to_s
+
+Math:
+  _feature: math
+  acos: true
+  acosh: true
+  asin: true
+  asinh: true
+  atan: true
+  atan2: true
+  atanh: true
+  cbrt: true
+  cos: true
+  cosh: true
+  erf: true
+  erfc: true
+  exp: true
+  hypot: true
+  ldexp: true
+  log: true
+  log10: true
+  log2: true
+  sin: true
+  sinh: true
+  sqrt: true
+  tan: true
+  tanh: true
+
+Fixnum:
+  bitref: "[]"
+  negative: "-@"
+  power: "**"
+  mod: "%"
+  and: "&"
+  or: "|"
+  xor: "^"
+  not: "~"
+  lshift: "<<"
+  rshift: ">>"
+  abs: true
+  to_i:
+    ineffect: true
+
+  _features:
+    float:
+      to_f: true
+    string:
+      chr: true
+      to_s:
+        methods:
+          - to_s
+          - inspect
+
+Float:
+  _feature: float
+  negative: "-@"
+  abs: true
+  to_i: true
+  to_f:
+    ineffect: true
+
+  _features:
+    string:
+      to_s:
+        methods:
+          - to_s
+          - inspect
+    meath:
+      power: "**"
+
+Range:
+  equal3: "==="
+  first: true
+  last: true
+  exclude_end: "exclude_end?"
+
+  _features:
+    string:
+      inspect:
+        methods:
+          - to_s
+          - inspect
+
+String:
+  _feature: string
+  add: "+"
+  mul: "*"
+  size:
+    methods:
+      - size
+      - length
+  to_i: true
+  to_s:
+    ineffect: true
+  append: "<<"
+  slice: "[]"
+  insert: "[]="
+  chomp: true
+  chomp_self: "chomp!"
+  dup: true
+  index: true
+  inspect: true
+  ord: true
+  split: true
+  lstrip: true
+  lstrip_self: "lstrip!"
+  rstrip: true
+  rstrip_self: "rstrip!"
+  to_sym:
+    methods:
+      - to_sym
+      - intern
+  tr: true
+  tr_self: "tr!"
+  start_with: "start_with?"
+  end_with: "end_with?"
+  include: "include?"
+
+  _features:
+    float:
+      to_f: true
+
+Symbol:
+  all_symbols: true
+
+  _features:
+    string:
+      inspect: true
+      to_s:
+        methods:
+          - to_s
+          - id2name
+  to_sym:
+    ineffect: true
+
+Object:
+  _super: false
+  # rrt
+  sleep: true
+  sleep_ms: true
+  relinquish: true
+  change_priority: true
+  suspend_task: true
+  resume_task: true
+  get_tcb: true
+  # standard library
+  initialize:
+    ineffect: true
+  alias_method: true
+  p: true
+  print: true
+  puts: true
+  not: "!"
+  neq: "!="
+  compare: "<=>"
+  equal3: "==="
+  class: true
+  new: true
+  attr_reader: true
+  attr_accessor: true
+  kind_of:
+    methods:
+      - "is_a?"
+      - "kind_of?"
+
+  _features:
+    string:
+      sprintf: true
+      printf: true
+      to_s:
+        methods:
+          - to_s
+          - inspect
+
+  instance_methods:
+    debug: true
+
+Proc:
+  call: true
+
+  _features:
+    string:
+      to_s:
+        methods:
+          - to_s
+          - inspect
+
+NilClass:
+  not: "!"
+
+  _features:
+    string:
+      inspect: true
+      to_s: true
+
+FalseClass:
+  not: "!"
+
+  _features:
+    string:
+      inspect: true
+      to_s: true
+
+TrueClass:
+  _features:
+    string:
+      inspect: true
+      to_s: true
+
+Mutex:
+  new: true
+  lock: true
+  unlock: true
+  try_lock: true
+
+VM:
+  tick: true

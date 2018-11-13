@@ -59,7 +59,6 @@ mrbc_value mrbc_hash_remove(mrbc_value *hash, mrbc_value *key);
 void mrbc_hash_clear(mrbc_value *hash);
 int mrbc_hash_compare(const mrbc_value *v1, const mrbc_value *v2);
 mrbc_value mrbc_hash_dup(struct VM *vm, mrbc_value *src);
-void mrbc_init_class_hash(struct VM *vm);
 
 
 

@@ -86,7 +86,6 @@ mrbc_value mrbc_send(struct VM *vm, mrbc_value *v, int reg_ofs, mrbc_value *recv
 int mrbc_p_sub(mrbc_value *v);
 int mrbc_print_sub(mrbc_value *v);
 int mrbc_puts_sub(mrbc_value *v);
-void c_proc_call(struct VM *vm, mrbc_value v[], int argc);
 void c_ineffect(struct VM *vm, mrbc_value v[], int argc);
 void mrbc_init_class(void);
 

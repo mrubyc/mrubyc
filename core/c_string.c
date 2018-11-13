@@ -354,7 +354,7 @@ int mrbc_string_chomp(mrbc_value *src)
 //================================================================
 /*! (method) +
 */
-static void c_string_add(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(String, add)
 {
   if( v[1].tt != MRBC_TT_STRING ) {
     console_print( "Not support STRING + Other\n" );
@@ -370,7 +370,7 @@ static void c_string_add(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) *
 */
-static void c_string_mul(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(String, mul)
 {
   if( v[1].tt != MRBC_TT_FIXNUM ) {
     console_print( "TypeError\n" );	// raise?
@@ -402,7 +402,7 @@ static void c_string_mul(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) size, length
 */
-static void c_string_size(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(String, size)
 {
   mrbc_int size = mrbc_string_size(&v[0]);
 
@@ -414,7 +414,7 @@ static void c_string_size(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) to_i
 */
-static void c_string_to_i(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(String, to_i)
 {
   int base = 10;
   if( argc ) {
@@ -434,7 +434,7 @@ static void c_string_to_i(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) to_f
 */
-static void c_string_to_f(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(String, to_f)
 {
   mrbc_float d = atof(mrbc_string_cstr(v));
 
@@ -446,7 +446,7 @@ static void c_string_to_f(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) <<
 */
-static void c_string_append(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(String, append)
 {
   if( !mrbc_string_append( &v[0], &v[1] ) ) {
     // raise ? ENOMEM
@@ -457,7 +457,7 @@ static void c_string_append(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) []
 */
-static void c_string_slice(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(String, slice)
 {
   mrbc_value *v1 = &v[1];
   mrbc_value *v2 = &v[2];
@@ -525,7 +525,7 @@ static void c_string_slice(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) []=
 */
-static void c_string_insert(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(String, insert)
 {
   int nth;
   int len;
@@ -583,7 +583,7 @@ static void c_string_insert(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) chomp
 */
-static void c_string_chomp(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(String, chomp)
 {
   mrbc_value ret = mrbc_string_dup(vm, &v[0]);
 
@@ -596,7 +596,7 @@ static void c_string_chomp(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) chomp!
 */
-static void c_string_chomp_self(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(String, chomp_self)
 {
   if( mrbc_string_chomp(&v[0]) == 0 ) {
     SET_RETURN( mrbc_nil_value() );
@@ -607,7 +607,7 @@ static void c_string_chomp_self(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) dup
 */
-static void c_string_dup(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(String, dup)
 {
   mrbc_value ret = mrbc_string_dup(vm, &v[0]);
 
@@ -618,7 +618,7 @@ static void c_string_dup(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) index
 */
-static void c_string_index(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(String, index)
 {
   int index;
   int offset;
@@ -649,7 +649,7 @@ static void c_string_index(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) inspect
 */
-static void c_string_inspect(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(String, inspect)
 {
   char buf[10] = "\\x";
   mrbc_value ret = mrbc_string_new_cstr(vm, "\"");
@@ -674,7 +674,7 @@ static void c_string_inspect(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) ord
 */
-static void c_string_ord(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(String, ord)
 {
   int i = mrbc_string_cstr(v)[0];
 
@@ -685,7 +685,7 @@ static void c_string_ord(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) split
 */
-static void c_string_split(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(String, split)
 {
   mrbc_value ret = mrbc_array_new(vm, 0);
   if( mrbc_string_size(&v[0]) == 0 ) goto DONE;
@@ -800,7 +800,7 @@ static void c_string_split(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) sprintf
 */
-static void c_object_sprintf(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Object, sprintf)
 {
   static const int BUF_INC_STEP = 32;	// bytes.
 
@@ -919,9 +919,9 @@ static void c_object_sprintf(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) printf
 */
-static void c_object_printf(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Object, printf)
 {
-  c_object_sprintf(vm, v, argc);
+  mrbc_static_method_sym(Object, sprintf)(vm, v, argc);
   console_nprint( mrbc_string_cstr(v), mrbc_string_size(v) );
   SET_NIL_RETURN();
 }
@@ -930,7 +930,7 @@ static void c_object_printf(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) lstrip
 */
-static void c_string_lstrip(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(String, lstrip)
 {
   mrbc_value ret = mrbc_string_dup(vm, &v[0]);
 
@@ -943,7 +943,7 @@ static void c_string_lstrip(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) lstrip!
 */
-static void c_string_lstrip_self(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(String, lstrip_self)
 {
   if( mrbc_string_strip(&v[0], 0x01) == 0 ) {	// 1: left side only
     SET_RETURN( mrbc_nil_value() );
@@ -954,7 +954,7 @@ static void c_string_lstrip_self(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) rstrip
 */
-static void c_string_rstrip(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(String, rstrip)
 {
   mrbc_value ret = mrbc_string_dup(vm, &v[0]);
 
@@ -967,7 +967,7 @@ static void c_string_rstrip(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) rstrip!
 */
-static void c_string_rstrip_self(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(String, rstrip_self)
 {
   if( mrbc_string_strip(&v[0], 0x02) == 0 ) {	// 2: right side only
     SET_RETURN( mrbc_nil_value() );
@@ -978,7 +978,7 @@ static void c_string_rstrip_self(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) strip
 */
-static void c_string_strip(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(String, strip)
 {
   mrbc_value ret = mrbc_string_dup(vm, &v[0]);
 
@@ -991,7 +991,7 @@ static void c_string_strip(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) strip!
 */
-static void c_string_strip_self(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(String, strip_self)
 {
   if( mrbc_string_strip(&v[0], 0x03) == 0 ) {	// 3: left and right
     SET_RETURN( mrbc_nil_value() );
@@ -1002,7 +1002,7 @@ static void c_string_strip_self(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) to_sym
 */
-static void c_string_to_sym(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(String, to_sym)
 {
   mrbc_value ret = mrbc_symbol_new(vm, mrbc_string_cstr(&v[0]));
 
@@ -1179,7 +1179,7 @@ static int tr_main( struct VM *vm, mrbc_value v[], int argc )
   return flag_changed;
 }
 
-static void c_string_tr(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(String, tr)
 {
   mrbc_value ret = mrbc_string_dup( vm, &v[0] );
   SET_RETURN( ret );
@@ -1190,7 +1190,7 @@ static void c_string_tr(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) tr!
 */
-static void c_string_tr_self(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(String, tr_self)
 {
   int flag_changed = tr_main(vm, v, argc);
 
@@ -1203,7 +1203,7 @@ static void c_string_tr_self(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) start_with?
 */
-static void c_string_start_with(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(String, start_with)
 {
   if( !(argc == 1 && v[1].tt == MRBC_TT_STRING)) {
     console_print("ArgumentError\n");	// raise?
@@ -1225,7 +1225,7 @@ static void c_string_start_with(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) end_with?
 */
-static void c_string_end_with(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(String, end_with)
 {
   if( !(argc == 1 && v[1].tt == MRBC_TT_STRING)) {
     console_print("ArgumentError\n");	// raise?
@@ -1248,7 +1248,7 @@ static void c_string_end_with(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) include?
 */
-static void c_string_include(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(String, include)
 {
   if( !(argc == 1 && v[1].tt == MRBC_TT_STRING)) {
     console_print("ArgumentError\n");	// raise?
@@ -1258,52 +1258,5 @@ static void c_string_include(struct VM *vm, mrbc_value v[], int argc)
   int ret = mrbc_string_index( &v[0], &v[1], 0 );
   SET_BOOL_RETURN(ret >= 0);
 }
-
-
-//================================================================
-/*! initialize
-*/
-void mrbc_init_class_string(struct VM *vm)
-{
-  mrbc_class_string = mrbc_define_class(vm, "String", mrbc_class_object);
-
-  mrbc_define_method(vm, mrbc_class_string, "+",	c_string_add);
-  mrbc_define_method(vm, mrbc_class_string, "*",	c_string_mul);
-  mrbc_define_method(vm, mrbc_class_string, "size",	c_string_size);
-  mrbc_define_method(vm, mrbc_class_string, "length",	c_string_size);
-  mrbc_define_method(vm, mrbc_class_string, "to_i",	c_string_to_i);
-  mrbc_define_method(vm, mrbc_class_string, "to_s",	c_ineffect);
-  mrbc_define_method(vm, mrbc_class_string, "<<",	c_string_append);
-  mrbc_define_method(vm, mrbc_class_string, "[]",	c_string_slice);
-  mrbc_define_method(vm, mrbc_class_string, "[]=",	c_string_insert);
-  mrbc_define_method(vm, mrbc_class_string, "chomp",	c_string_chomp);
-  mrbc_define_method(vm, mrbc_class_string, "chomp!",	c_string_chomp_self);
-  mrbc_define_method(vm, mrbc_class_string, "dup",	c_string_dup);
-  mrbc_define_method(vm, mrbc_class_string, "index",	c_string_index);
-  mrbc_define_method(vm, mrbc_class_string, "inspect",	c_string_inspect);
-  mrbc_define_method(vm, mrbc_class_string, "ord",	c_string_ord);
-  mrbc_define_method(vm, mrbc_class_string, "split",	c_string_split);
-  mrbc_define_method(vm, mrbc_class_string, "lstrip",	c_string_lstrip);
-  mrbc_define_method(vm, mrbc_class_string, "lstrip!",	c_string_lstrip_self);
-  mrbc_define_method(vm, mrbc_class_string, "rstrip",	c_string_rstrip);
-  mrbc_define_method(vm, mrbc_class_string, "rstrip!",	c_string_rstrip_self);
-  mrbc_define_method(vm, mrbc_class_string, "strip",	c_string_strip);
-  mrbc_define_method(vm, mrbc_class_string, "strip!",	c_string_strip_self);
-  mrbc_define_method(vm, mrbc_class_string, "to_sym",	c_string_to_sym);
-  mrbc_define_method(vm, mrbc_class_string, "intern",	c_string_to_sym);
-  mrbc_define_method(vm, mrbc_class_string, "tr",	c_string_tr);
-  mrbc_define_method(vm, mrbc_class_string, "tr!",	c_string_tr_self);
-  mrbc_define_method(vm, mrbc_class_string, "start_with?", c_string_start_with);
-  mrbc_define_method(vm, mrbc_class_string, "end_with?", c_string_end_with);
-  mrbc_define_method(vm, mrbc_class_string, "include?",	c_string_include);
-
-#if MRBC_USE_FLOAT
-  mrbc_define_method(vm, mrbc_class_string, "to_f",	c_string_to_f);
-#endif
-
-  mrbc_define_method(vm, mrbc_class_object, "sprintf",	c_object_sprintf);
-  mrbc_define_method(vm, mrbc_class_object, "printf",	c_object_printf);
-}
-
 
 #endif // MRBC_USE_STRING

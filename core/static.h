@@ -35,7 +35,12 @@ extern mrbc_class *mrbc_class_string;
 extern mrbc_class *mrbc_class_symbol;
 extern mrbc_class *mrbc_class_range;
 extern mrbc_class *mrbc_class_hash;
+extern mrbc_class *mrbc_class_mutex;
+extern mrbc_class *mrbc_class_vm;
 
+#define mrbc_static_method_sym(cls, sym) mrbc_methods_ ## cls ## _ ## sym
+
+#define mrbc_static_method(cls, sym) void  mrbc_static_method_sym(cls, sym)(mrbc_vm *vm, mrbc_value v[], int argc)
 
 void init_static(void);
 

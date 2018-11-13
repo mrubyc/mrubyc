@@ -26,7 +26,6 @@
 #include "class.h"
 #include "c_array.h"
 #include "c_hash.h"
-#include "c_numeric.h"
 #include "c_range.h"
 #include "c_string.h"
 

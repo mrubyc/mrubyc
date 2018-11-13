@@ -54,6 +54,10 @@ static volatile uint32_t tick_;
 
 
 /***** Global variables *****************************************************/
+mrbc_class *mrbc_class_mutex;
+mrbc_class *mrbc_class_vm;
+
+
 /***** Signal catching functions ********************************************/
 /***** Local functions ******************************************************/
 
@@ -155,7 +159,7 @@ static void q_delete_task(mrbc_tcb *p_tcb)
 /*! 一定時間停止（cruby互換）
 
 */
-static void c_sleep(mrbc_vm *vm, mrbc_value v[], int argc)
+mrbc_static_method(Object, sleep)
 {
   mrbc_tcb *tcb = VM2TCB(vm);
 
@@ -185,7 +189,7 @@ static void c_sleep(mrbc_vm *vm, mrbc_value v[], int argc)
 /*! 一定時間停止（ms単位）
 
 */
-static void c_sleep_ms(mrbc_vm *vm, mrbc_value v[], int argc)
+mrbc_static_method(Object, sleep_ms)
 {
   mrbc_tcb *tcb = VM2TCB(vm);
 
@@ -197,7 +201,7 @@ static void c_sleep_ms(mrbc_vm *vm, mrbc_value v[], int argc)
 /*! 実行権を手放す (BETA)
 
 */
-static void c_relinquish(mrbc_vm *vm, mrbc_value v[], int argc)
+mrbc_static_method(Object, relinquish)
 {
   mrbc_tcb *tcb = VM2TCB(vm);
 
@@ -209,7 +213,7 @@ static void c_relinquish(mrbc_vm *vm, mrbc_value v[], int argc)
 /*! プライオリティー変更
 
 */
-static void c_change_priority(mrbc_vm *vm, mrbc_value v[], int argc)
+mrbc_static_method(Object, change_priority)
 {
   mrbc_tcb *tcb = VM2TCB(vm);
 
@@ -221,7 +225,7 @@ static void c_change_priority(mrbc_vm *vm, mrbc_value v[], int argc)
 /*! 実行停止 (BETA)
 
 */
-static void c_suspend_task(mrbc_vm *vm, mrbc_value v[], int argc)
+mrbc_static_method(Object, suspend_task)
 {
   if( argc == 0 ) {
     mrbc_tcb *tcb = VM2TCB(vm);
@@ -238,7 +242,7 @@ static void c_suspend_task(mrbc_vm *vm, mrbc_value v[], int argc)
 /*! 実行再開 (BETA)
 
 */
-static void c_resume_task(mrbc_vm *vm, mrbc_value v[], int argc)
+mrbc_static_method(Object, resume_task)
 {
   if( v[1].tt != MRBC_TT_HANDLE ) return;	// error.
   mrbc_resume_task( (mrbc_tcb *)(v[1].handle) );
@@ -249,7 +253,7 @@ static void c_resume_task(mrbc_vm *vm, mrbc_value v[], int argc)
 /*! TCBを得る (BETA)
 
 */
-static void c_get_tcb(mrbc_vm *vm, mrbc_value v[], int argc)
+mrbc_static_method(Object, get_tcb)
 {
   mrbc_tcb *tcb = VM2TCB(vm);
 
@@ -264,7 +268,7 @@ static void c_get_tcb(mrbc_vm *vm, mrbc_value v[], int argc)
 /*! mutex constructor method
 
 */
-static void c_mutex_new(mrbc_vm *vm, mrbc_value v[], int argc)
+mrbc_static_method(Mutex, new)
 {
   *v = mrbc_instance_new(vm, v->cls, sizeof(mrbc_mutex));
   if( !v->instance ) return;
@@ -277,7 +281,7 @@ static void c_mutex_new(mrbc_vm *vm, mrbc_value v[], int argc)
 /*! mutex lock method
 
 */
-static void c_mutex_lock(mrbc_vm *vm, mrbc_value v[], int argc)
+mrbc_static_method(Mutex, lock)
 {
   int r = mrbc_mutex_lock( (mrbc_mutex *)v->instance->data, VM2TCB(vm) );
   if( r == 0 ) return;  // return self
@@ -291,7 +295,7 @@ static void c_mutex_lock(mrbc_vm *vm, mrbc_value v[], int argc)
 /*! mutex unlock method
 
 */
-static void c_mutex_unlock(mrbc_vm *vm, mrbc_value v[], int argc)
+mrbc_static_method(Mutex, unlock)
 {
   int r = mrbc_mutex_unlock( (mrbc_mutex *)v->instance->data, VM2TCB(vm) );
   if( r == 0 ) return;  // return self
@@ -305,7 +309,7 @@ static void c_mutex_unlock(mrbc_vm *vm, mrbc_value v[], int argc)
 /*! mutex trylock method
 
 */
-static void c_mutex_trylock(mrbc_vm *vm, mrbc_value v[], int argc)
+mrbc_static_method(Mutex, try_lock)
 {
   int r = mrbc_mutex_trylock( (mrbc_mutex *)v->instance->data, VM2TCB(vm) );
   if( r == 0 ) {
@@ -319,7 +323,7 @@ static void c_mutex_trylock(mrbc_vm *vm, mrbc_value v[], int argc)
 //================================================================
 /*! vm tick
 */
-static void c_vm_tick(mrbc_vm *vm, mrbc_value v[], int argc)
+mrbc_static_method(VM, tick)
 {
   SET_INT_RETURN(tick_);
 }
@@ -383,29 +387,6 @@ void mrbc_init(uint8_t *ptr, unsigned int size )
   mrbc_init_alloc(ptr, size);
   init_static();
   hal_init();
-
-
-  // TODO 関数呼び出しが、c_XXX => mrbc_XXX の daisy chain になっている。
-  //      不要な複雑さかもしれない。要リファクタリング。
-  mrbc_define_method(0, mrbc_class_object, "sleep",           c_sleep);
-  mrbc_define_method(0, mrbc_class_object, "sleep_ms",        c_sleep_ms);
-  mrbc_define_method(0, mrbc_class_object, "relinquish",      c_relinquish);
-  mrbc_define_method(0, mrbc_class_object, "change_priority", c_change_priority);
-  mrbc_define_method(0, mrbc_class_object, "suspend_task",    c_suspend_task);
-  mrbc_define_method(0, mrbc_class_object, "resume_task",     c_resume_task);
-  mrbc_define_method(0, mrbc_class_object, "get_tcb",	      c_get_tcb);
-
-
-  mrbc_class *c_mutex;
-  c_mutex = mrbc_define_class(0, "Mutex", mrbc_class_object);
-  mrbc_define_method(0, c_mutex, "new", c_mutex_new);
-  mrbc_define_method(0, c_mutex, "lock", c_mutex_lock);
-  mrbc_define_method(0, c_mutex, "unlock", c_mutex_unlock);
-  mrbc_define_method(0, c_mutex, "try_lock", c_mutex_trylock);
-
-  mrbc_class *c_vm;
-  c_vm = mrbc_define_class(0, "VM", mrbc_class_object);
-  mrbc_define_method(0, c_vm, "tick", c_vm_tick);
 }
 
 

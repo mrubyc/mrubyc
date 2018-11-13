@@ -39,7 +39,6 @@ mrbc_value mrbc_range_new(struct VM *vm, mrbc_value *first, mrbc_value *last, in
 void mrbc_range_delete(mrbc_value *v);
 void mrbc_range_clear_vm_id(mrbc_value *v);
 int mrbc_range_compare(const mrbc_value *v1, const mrbc_value *v2);
-void mrbc_init_class_range(struct VM *vm);
 
 
 //================================================================

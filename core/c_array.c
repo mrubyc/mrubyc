@@ -434,7 +434,7 @@ void mrbc_array_minmax(mrbc_value *ary, mrbc_value **pp_min_value, mrbc_value **
 //================================================================
 /*! method new
 */
-static void c_array_new(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Array, new)
 {
   /*
     in case of new()
@@ -488,7 +488,7 @@ static void c_array_new(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (operator) +
 */
-static void c_array_add(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Array, add)
 {
   if( GET_TT_ARG(1) != MRBC_TT_ARRAY ) {
     console_print( "TypeError\n" );	// raise?
@@ -521,7 +521,7 @@ static void c_array_add(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (operator) []
 */
-static void c_array_get(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Array, get)
 {
   /*
     in case of self[nth] -> object | nil
@@ -574,7 +574,7 @@ static void c_array_get(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (operator) []=
 */
-static void c_array_set(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Array, set)
 {
   /*
     in case of self[nth] = val
@@ -602,7 +602,7 @@ static void c_array_set(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) clear
 */
-static void c_array_clear(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Array, clear)
 {
   mrbc_array_clear(v);
 }
@@ -611,7 +611,7 @@ static void c_array_clear(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) delete_at
 */
-static void c_array_delete_at(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Array, delete_at)
 {
   mrbc_value val = mrbc_array_remove(v, GET_INT_ARG(1));
   SET_RETURN(val);
@@ -621,7 +621,7 @@ static void c_array_delete_at(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) empty?
 */
-static void c_array_empty(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Array, empty)
 {
   int n = mrbc_array_size(v);
 
@@ -636,7 +636,7 @@ static void c_array_empty(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) size,length,count
 */
-static void c_array_size(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Array, size)
 {
   int n = mrbc_array_size(v);
 
@@ -647,7 +647,7 @@ static void c_array_size(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) index
 */
-static void c_array_index(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Array, index)
 {
   mrbc_value *value = &GET_ARG(1);
   mrbc_value *data = v->array->data;
@@ -669,7 +669,7 @@ static void c_array_index(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) first
 */
-static void c_array_first(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Array, first)
 {
   mrbc_value val = mrbc_array_get(v, 0);
   mrbc_dup(&val);
@@ -680,7 +680,7 @@ static void c_array_first(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) last
 */
-static void c_array_last(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Array, last)
 {
   mrbc_value val = mrbc_array_get(v, -1);
   mrbc_dup(&val);
@@ -691,7 +691,7 @@ static void c_array_last(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) push
 */
-static void c_array_push(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Array, push)
 {
   mrbc_array_push(&v[0], &v[1]);	// raise? ENOMEM
   v[1].tt = MRBC_TT_EMPTY;
@@ -701,7 +701,7 @@ static void c_array_push(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) pop
 */
-static void c_array_pop(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Array, pop)
 {
   /*
     in case of pop() -> object | nil
@@ -729,7 +729,7 @@ static void c_array_pop(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) unshift
 */
-static void c_array_unshift(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Array, unshift)
 {
   mrbc_array_unshift(&v[0], &v[1]);	// raise? IndexError or ENOMEM
   v[1].tt = MRBC_TT_EMPTY;
@@ -739,7 +739,7 @@ static void c_array_unshift(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) shift
 */
-static void c_array_shift(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Array, shift)
 {
   /*
     in case of pop() -> object | nil
@@ -767,7 +767,7 @@ static void c_array_shift(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) dup
 */
-static void c_array_dup(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Array, dup)
 {
   mrbc_array *h = v[0].array;
 
@@ -791,7 +791,7 @@ static void c_array_dup(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) min
 */
-static void c_array_min(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Array, min)
 {
   // Subset of Array#min, not support min(n).
 
@@ -811,7 +811,7 @@ static void c_array_min(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) max
 */
-static void c_array_max(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Array, max)
 {
   // Subset of Array#max, not support max(n).
 
@@ -831,7 +831,7 @@ static void c_array_max(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) minmax
 */
-static void c_array_minmax(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Array, minmax)
 {
   // Subset of Array#minmax, not support minmax(n).
 
@@ -856,7 +856,7 @@ static void c_array_minmax(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) inspect
 */
-static void c_array_inspect(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Array, inspect)
 {
   mrbc_value ret = mrbc_string_new_cstr(vm, "[");
   if( !ret.string ) goto RETURN_NIL;		// ENOMEM
@@ -904,7 +904,7 @@ static void c_array_join_1(struct VM *vm, mrbc_value v[], int argc,
   }
 }
 
-static void c_array_join(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Array, join)
 {
   mrbc_value ret = mrbc_string_new(vm, NULL, 0);
   if( !ret.string ) goto RETURN_NIL;		// ENOMEM
@@ -923,42 +923,3 @@ static void c_array_join(struct VM *vm, mrbc_value v[], int argc)
 }
 
 #endif
-
-
-
-//================================================================
-/*! initialize
-*/
-void mrbc_init_class_array(struct VM *vm)
-{
-  mrbc_class_array = mrbc_define_class(vm, "Array", mrbc_class_object);
-
-  mrbc_define_method(vm, mrbc_class_array, "new", c_array_new);
-  mrbc_define_method(vm, mrbc_class_array, "+", c_array_add);
-  mrbc_define_method(vm, mrbc_class_array, "[]", c_array_get);
-  mrbc_define_method(vm, mrbc_class_array, "at", c_array_get);
-  mrbc_define_method(vm, mrbc_class_array, "[]=", c_array_set);
-  mrbc_define_method(vm, mrbc_class_array, "<<", c_array_push);
-  mrbc_define_method(vm, mrbc_class_array, "clear", c_array_clear);
-  mrbc_define_method(vm, mrbc_class_array, "delete_at", c_array_delete_at);
-  mrbc_define_method(vm, mrbc_class_array, "empty?", c_array_empty);
-  mrbc_define_method(vm, mrbc_class_array, "size", c_array_size);
-  mrbc_define_method(vm, mrbc_class_array, "length", c_array_size);
-  mrbc_define_method(vm, mrbc_class_array, "count", c_array_size);
-  mrbc_define_method(vm, mrbc_class_array, "index", c_array_index);
-  mrbc_define_method(vm, mrbc_class_array, "first", c_array_first);
-  mrbc_define_method(vm, mrbc_class_array, "last", c_array_last);
-  mrbc_define_method(vm, mrbc_class_array, "push", c_array_push);
-  mrbc_define_method(vm, mrbc_class_array, "pop", c_array_pop);
-  mrbc_define_method(vm, mrbc_class_array, "shift", c_array_shift);
-  mrbc_define_method(vm, mrbc_class_array, "unshift", c_array_unshift);
-  mrbc_define_method(vm, mrbc_class_array, "dup", c_array_dup);
-  mrbc_define_method(vm, mrbc_class_array, "min", c_array_min);
-  mrbc_define_method(vm, mrbc_class_array, "max", c_array_max);
-  mrbc_define_method(vm, mrbc_class_array, "minmax", c_array_minmax);
-#if MRBC_USE_STRING
-  mrbc_define_method(vm, mrbc_class_array, "inspect", c_array_inspect);
-  mrbc_define_method(vm, mrbc_class_array, "to_s", c_array_inspect);
-  mrbc_define_method(vm, mrbc_class_array, "join", c_array_join);
-#endif
-}

@@ -267,7 +267,7 @@ mrbc_value mrbc_hash_dup( struct VM *vm, mrbc_value *src )
 //================================================================
 /*! (method) new
 */
-static void c_hash_new(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Hash, new)
 {
   mrbc_value ret = mrbc_hash_new(vm, 0);
   SET_RETURN(ret);
@@ -277,7 +277,7 @@ static void c_hash_new(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (operator) []
 */
-static void c_hash_get(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Hash, get)
 {
   if( argc != 1 ) {
     return;	// raise ArgumentError.
@@ -292,7 +292,7 @@ static void c_hash_get(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (operator) []=
 */
-static void c_hash_set(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Hash, set)
 {
   if( argc != 2 ) {
     return;	// raise ArgumentError.
@@ -309,7 +309,7 @@ static void c_hash_set(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) clear
 */
-static void c_hash_clear(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Hash, clear)
 {
   mrbc_hash_clear(v);
 }
@@ -318,7 +318,7 @@ static void c_hash_clear(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) dup
 */
-static void c_hash_dup(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Hash, dup)
 {
   mrbc_value ret = mrbc_hash_dup( vm, &v[0] );
 
@@ -329,7 +329,7 @@ static void c_hash_dup(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) delete
 */
-static void c_hash_delete(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Hash, delete)
 {
   // TODO : now, support only delete(key) -> object
 
@@ -344,7 +344,7 @@ static void c_hash_delete(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) empty?
 */
-static void c_hash_empty(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Hash, empty)
 {
   int n = mrbc_hash_size(v);
 
@@ -359,7 +359,7 @@ static void c_hash_empty(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) has_key?
 */
-static void c_hash_has_key(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Hash, has_key)
 {
   mrbc_value *res = mrbc_hash_search(v, v+1);
 
@@ -374,7 +374,7 @@ static void c_hash_has_key(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) has_value?
 */
-static void c_hash_has_value(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Hash, has_value)
 {
   int ret = 0;
   mrbc_hash_iterator ite = mrbc_hash_iterator_new(&v[0]);
@@ -398,7 +398,7 @@ static void c_hash_has_value(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) key
 */
-static void c_hash_key(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Hash, key)
 {
   mrbc_value *ret = NULL;
   mrbc_hash_iterator ite = mrbc_hash_iterator_new(&v[0]);
@@ -423,7 +423,7 @@ static void c_hash_key(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) keys
 */
-static void c_hash_keys(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Hash, keys)
 {
   mrbc_value ret = mrbc_array_new( vm, mrbc_hash_size(v) );
   mrbc_hash_iterator ite = mrbc_hash_iterator_new(v);
@@ -441,7 +441,7 @@ static void c_hash_keys(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) size,length,count
 */
-static void c_hash_size(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Hash, size)
 {
   int n = mrbc_hash_size(v);
 
@@ -452,7 +452,7 @@ static void c_hash_size(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) merge
 */
-static void c_hash_merge(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Hash, merge)
 {
   mrbc_value ret = mrbc_hash_dup( vm, &v[0] );
   mrbc_hash_iterator ite = mrbc_hash_iterator_new(&v[1]);
@@ -471,7 +471,7 @@ static void c_hash_merge(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) merge!
 */
-static void c_hash_merge_self(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Hash, merge_self)
 {
   mrbc_hash_iterator ite = mrbc_hash_iterator_new(&v[1]);
 
@@ -487,7 +487,7 @@ static void c_hash_merge_self(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) values
 */
-static void c_hash_values(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Hash, values)
 {
   mrbc_value ret = mrbc_array_new( vm, mrbc_hash_size(v) );
   mrbc_hash_iterator ite = mrbc_hash_iterator_new(v);
@@ -506,7 +506,7 @@ static void c_hash_values(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) inspect
 */
-static void c_hash_inspect(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Hash, inspect)
 {
   mrbc_value ret = mrbc_string_new_cstr(vm, "{");
   if( !ret.string ) goto RETURN_NIL;		// ENOMEM
@@ -539,38 +539,3 @@ static void c_hash_inspect(struct VM *vm, mrbc_value v[], int argc)
   SET_NIL_RETURN();
 }
 #endif
-
-
-
-
-//================================================================
-/*! initialize
-*/
-void mrbc_init_class_hash(struct VM *vm)
-{
-  mrbc_class_hash = mrbc_define_class(vm, "Hash", mrbc_class_object);
-
-  mrbc_define_method(vm, mrbc_class_hash, "new",	c_hash_new);
-  mrbc_define_method(vm, mrbc_class_hash, "[]",		c_hash_get);
-  mrbc_define_method(vm, mrbc_class_hash, "[]=",	c_hash_set);
-  mrbc_define_method(vm, mrbc_class_hash, "clear",	c_hash_clear);
-  mrbc_define_method(vm, mrbc_class_hash, "dup",	c_hash_dup);
-  mrbc_define_method(vm, mrbc_class_hash, "delete",	c_hash_delete);
-  mrbc_define_method(vm, mrbc_class_hash, "empty?",	c_hash_empty);
-  mrbc_define_method(vm, mrbc_class_hash, "has_key?",	c_hash_has_key);
-  mrbc_define_method(vm, mrbc_class_hash, "has_value?",	c_hash_has_value);
-  mrbc_define_method(vm, mrbc_class_hash, "key",	c_hash_key);
-  mrbc_define_method(vm, mrbc_class_hash, "keys",	c_hash_keys);
-  mrbc_define_method(vm, mrbc_class_hash, "size",	c_hash_size);
-  mrbc_define_method(vm, mrbc_class_hash, "length",	c_hash_size);
-  mrbc_define_method(vm, mrbc_class_hash, "count",	c_hash_size);
-  mrbc_define_method(vm, mrbc_class_hash, "merge",	c_hash_merge);
-  mrbc_define_method(vm, mrbc_class_hash, "merge!",	c_hash_merge_self);
-  mrbc_define_method(vm, mrbc_class_hash, "to_h",	c_ineffect);
-  mrbc_define_method(vm, mrbc_class_hash, "values",	c_hash_values);
-#if MRBC_USE_STRING
-  mrbc_define_method(vm, mrbc_class_hash, "inspect",	c_hash_inspect);
-  mrbc_define_method(vm, mrbc_class_hash, "to_s",	c_hash_inspect);
-#endif
-
-}

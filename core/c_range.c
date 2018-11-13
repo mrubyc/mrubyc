@@ -18,6 +18,7 @@
 #include "class.h"
 #include "c_range.h"
 #include "c_string.h"
+#include "vm.h"
 #include "console.h"
 #include "mruby/opcode.h"
 
@@ -94,7 +95,7 @@ int mrbc_range_compare(const mrbc_value *v1, const mrbc_value *v2)
 //================================================================
 /*! (method) ===
 */
-static void c_range_equal3(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Range, equal3)
 {
   if( v[0].tt == MRBC_TT_CLASS ) {
     mrbc_value result = mrbc_send( vm, v, argc, &v[1], "kind_of?", 1, &v[0] );
@@ -117,7 +118,7 @@ static void c_range_equal3(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) first
 */
-static void c_range_first(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Range, first)
 {
   mrbc_value ret = mrbc_range_first(v);
   SET_RETURN(ret);
@@ -127,7 +128,7 @@ static void c_range_first(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) last
 */
-static void c_range_last(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Range, last)
 {
   mrbc_value ret = mrbc_range_last(v);
   SET_RETURN(ret);
@@ -138,7 +139,7 @@ static void c_range_last(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) exclude_end?
 */
-static void c_range_exclude_end(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Range, exclude_end)
 {
   int result = v->range->flag_exclude;
   SET_BOOL_RETURN( result );
@@ -150,7 +151,7 @@ static void c_range_exclude_end(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) inspect
 */
-static void c_range_inspect(struct VM *vm, mrbc_value v[], int argc)
+mrbc_static_method(Range, inspect)
 {
   mrbc_value ret = mrbc_string_new(vm, NULL, 0);
   if( !ret.string ) goto RETURN_NIL;		// ENOMEM
@@ -171,23 +172,3 @@ static void c_range_inspect(struct VM *vm, mrbc_value v[], int argc)
   SET_NIL_RETURN();
 }
 #endif
-
-
-
-//================================================================
-/*! initialize
-*/
-void mrbc_init_class_range(struct VM *vm)
-{
-  mrbc_class_range = mrbc_define_class(vm, "Range", mrbc_class_object);
-
-  mrbc_define_method(vm, mrbc_class_range, "===", c_range_equal3);
-  mrbc_define_method(vm, mrbc_class_range, "first", c_range_first);
-  mrbc_define_method(vm, mrbc_class_range, "last", c_range_last);
-  mrbc_define_method(vm, mrbc_class_range, "exclude_end?", c_range_exclude_end);
-
-#if MRBC_USE_STRING
-  mrbc_define_method(vm, mrbc_class_range, "inspect", c_range_inspect);
-  mrbc_define_method(vm, mrbc_class_range, "to_s", c_range_inspect);
-#endif
-}

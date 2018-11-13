@@ -47,7 +47,6 @@ int mrbc_string_append_cstr(mrbc_value *s1, const char *s2);
 int mrbc_string_index(const mrbc_value *src, const mrbc_value *pattern, int offset);
 int mrbc_string_strip(mrbc_value *src, int mode);
 int mrbc_string_chomp(mrbc_value *src);
-void mrbc_init_class_string(struct VM *vm);
 
 
 //================================================================
