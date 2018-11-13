@@ -961,7 +961,7 @@ static inline int op_blkpush( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_add( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb )
+static inline int op_add( mrbc_vm *vm, mrbc_value *regs, uint32_t ra )
 {
   if( regs[ra].tt == MRBC_TT_FIXNUM ) {
     if( regs[ra+1].tt == MRBC_TT_FIXNUM ) {	// in case of Fixnum, Fixnum
@@ -997,23 +997,23 @@ static inline int op_add( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t r
 /*!@brief
   Execute OP_ADDI
 
-  R(A) := R(A)+C (Syms[B]=:+)
+  R(A) := R(A)+B
 
   @param  vm    A pointer of VM.
   @param  code  bytecode
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_addi( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb, uint8_t rc )
+static inline int op_addi( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb )
 {
  if( regs[ra].tt == MRBC_TT_FIXNUM ) {
-    regs[ra].i += rc;
+    regs[ra].i += rb;
     return 0;
   }
 
 #if MRBC_USE_FLOAT
   if( regs[ra].tt == MRBC_TT_FLOAT ) {
-    regs[ra].d += rc;
+    regs[ra].d += rb;
     return 0;
   }
 #endif
@@ -1034,7 +1034,7 @@ static inline int op_addi( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t 
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_sub( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb )
+static inline int op_sub( mrbc_vm *vm, mrbc_value *regs, uint32_t ra )
 {
   if( regs[ra].tt == MRBC_TT_FIXNUM ) {
     if( regs[ra+1].tt == MRBC_TT_FIXNUM ) {	// in case of Fixnum, Fixnum
@@ -1071,23 +1071,23 @@ static inline int op_sub( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t r
 /*!@brief
   Execute OP_SUBI
 
-  R(A) := R(A)-C (Syms[B]=:-)
+  R(A) := R(A)-B
 
   @param  vm    A pointer of VM.
   @param  code  bytecode
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_subi( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb, uint8_t rc )
+static inline int op_subi( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb )
 {
   if( regs[ra].tt == MRBC_TT_FIXNUM ) {
-    regs[ra].i -= rc;
+    regs[ra].i -= rb;
     return 0;
   }
 
 #if MRBC_USE_FLOAT
   if( regs[ra].tt == MRBC_TT_FLOAT ) {
-    regs[ra].d -= rc;
+    regs[ra].d -= rb;
     return 0;
   }
 #endif
@@ -1101,14 +1101,14 @@ static inline int op_subi( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t 
 /*!@brief
   Execute OP_MUL
 
-  R(A) := R(A)*R(A+1) (Syms[B]=:*)
+  R(A) := R(A)*R(A+1)
 
   @param  vm    A pointer of VM.
   @param  code  bytecode
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_mul( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb )
+static inline int op_mul( mrbc_vm *vm, mrbc_value *regs, uint32_t ra )
 {
   if( regs[ra].tt == MRBC_TT_FIXNUM ) {
     if( regs[ra+1].tt == MRBC_TT_FIXNUM ) {	// in case of Fixnum, Fixnum
@@ -1145,14 +1145,14 @@ static inline int op_mul( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t r
 /*!@brief
   Execute OP_DIV
 
-  R(A) := R(A)/R(A+1) (Syms[B]=:/)
+  R(A) := R(A)/R(A+1)
 
   @param  vm    A pointer of VM.
   @param  code  bytecode
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_div( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb )
+static inline int op_div( mrbc_vm *vm, mrbc_value *regs, uint32_t ra )
 {
   if( regs[ra].tt == MRBC_TT_FIXNUM ) {
     if( regs[ra+1].tt == MRBC_TT_FIXNUM ) {	// in case of Fixnum, Fixnum
@@ -1189,14 +1189,14 @@ static inline int op_div( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t r
 /*!@brief
   Execute OP_EQ
 
-  R(A) := R(A)==R(A+1)  (Syms[B]=:==,C=1)
+  R(A) := R(A)==R(A+1)
 
   @param  vm    A pointer of VM.
   @param  code  bytecode
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_eq( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb )
+static inline int op_eq( mrbc_vm *vm, mrbc_value *regs, uint32_t ra )
 {
   int result = mrbc_compare(&regs[ra], &regs[ra+1]);
 
@@ -1212,14 +1212,14 @@ static inline int op_eq( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb
 /*!@brief
   Execute OP_LT
 
-  R(A) := R(A)<R(A+1)  (Syms[B]=:<,C=1)
+  R(A) := R(A)<R(A+1)
 
   @param  vm    A pointer of VM.
   @param  code  bytecode
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_lt( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb )
+static inline int op_lt( mrbc_vm *vm, mrbc_value *regs, uint32_t ra )
 {
   int result;
 
@@ -1261,14 +1261,14 @@ DONE:
 /*!@brief
   Execute OP_LE
 
-  R(A) := R(A)<=R(A+1)  (Syms[B]=:<=,C=1)
+  R(A) := R(A)<=R(A+1)
 
   @param  vm    A pointer of VM.
   @param  code  bytecode
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_le( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb )
+static inline int op_le( mrbc_vm *vm, mrbc_value *regs, uint32_t ra )
 {
   int result;
 
@@ -1310,14 +1310,14 @@ DONE:
 /*!@brief
   Execute OP_GT
 
-  R(A) := R(A)>=R(A+1) (Syms[B]=:>=,C=1)
+  R(A) := R(A)>=R(A+1)
 
   @param  vm    A pointer of VM.
   @param  code  bytecode
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_gt( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t rb )
+static inline int op_gt( mrbc_vm *vm, mrbc_value *regs, uint32_t ra )
 {
   int result;
 
@@ -1359,14 +1359,14 @@ DONE:
 /*!@brief
   Execute OP_GE
 
-  R(A) := R(A)>=R(A+1) (Syms[B]=:>=,C=1)
+  R(A) := R(A)>=R(A+1)
 
   @param  vm    A pointer of VM.
   @param  code  bytecode
   @param  regs  vm->regs + vm->reg_top
   @retval 0  No error.
 */
-static inline int op_ge( mrbc_vm *vm, mrbc_value *regs, uint32_t ra, uint16_t tb )
+static inline int op_ge( mrbc_vm *vm, mrbc_value *regs, uint32_t ra )
 {
   int result;
 
@@ -2033,17 +2033,17 @@ int mrbc_vm_run( struct VM *vm )
     CASE(ENTER, enter, W);
     CASE(RETURN, return, B);
     CASE(BLKPUSH, blkpush, BS);
-    CASE(ADD, add, BB);
-    CASE(ADDI, addi, BBB);
-    CASE(SUB, sub, BB);
-    CASE(SUBI, subi, BBB);
-    CASE(MUL, mul, BB);
-    CASE(DIV, div, BB);
-    CASE(EQ, eq, BB);
-    CASE(LT, lt, BB);
-    CASE(LE, le, BB);
-    CASE(GT, gt, BB);
-    CASE(GE, ge, BB);
+    CASE(ADD, add, B);
+    CASE(ADDI, addi, BB);
+    CASE(SUB, sub, B);
+    CASE(SUBI, subi, BB);
+    CASE(MUL, mul, B);
+    CASE(DIV, div, B);
+    CASE(EQ, eq, B);
+    CASE(LT, lt, B);
+    CASE(LE, le, B);
+    CASE(GT, gt, B);
+    CASE(GE, ge, B);
     CASE(ARRAY, array, BB);
     CASE(STRING, string, BB);
     CASE(STRCAT, strcat, B);
