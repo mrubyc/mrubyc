@@ -1,0 +1,28 @@
+{
+  "name": "mruby/c",
+  "repository":
+  {
+    "type": "git",
+    "url": "https://github.com/foo/bar.git"
+  },
+  "license": "BSD-3-Clause",
+  "examples": [
+    "sample_c/*.c"
+  ],
+  "build": {
+    "srcFilter": [
+      "+<*>",
+      "-<hal_*>",
+      "+<hal>"
+    ],
+    "extraScript": "platformio.py"
+  },
+  "frameworks": "*",
+  "platforms": [
+    "espressif32",
+    "native",
+    "linux_arm",
+    "linux_i686",
+    "linux_x86_64"
+  ]
+}
