@@ -4,7 +4,8 @@ from os import symlink, unlink
 
 # Initialize
 hal_symbol = abspath(join("src", "hal"))
-unlink(hal_symbol)
+if islink(hal_symbol):
+    unlink(hal_symbol)
 
 for item in env.get("CPPDEFINES", []):
     # Setup HAL
