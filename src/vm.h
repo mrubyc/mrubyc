@@ -79,7 +79,6 @@ typedef struct VM {
 
   mrbc_irep *pc_irep;   // PC
   uint8_t *inst;        // instruction
-  uint8_t ext_flag;     // 1:EXT1, 2:EXT2, 3:EXT3, 0:otherwize
 
   mrbc_value    regs[MAX_REGS_SIZE];
   mrbc_value   *current_regs;

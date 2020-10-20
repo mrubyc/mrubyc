@@ -16,7 +16,7 @@ all: $(OUTPUT)
 
 $(OUTPUT): $(SRC)
 	cat $(SRC) > mrblib.rb
-	$(MRBC) -E -Bmrblib_bytecode --remove-lv -o$(OUTPUT) mrblib.rb
+	$(MRBC) -Bmrblib_bytecode --remove-lv -o$(OUTPUT) mrblib.rb
 	rm -f mrblib.rb
 
 clean:

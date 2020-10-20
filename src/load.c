@@ -30,6 +30,13 @@
 
 
 
+// Skip padding
+static size_t skip_padding(const uint8_t *buf)
+{
+  const size_t align = 4;
+  return -(intptr_t)buf & (align-1);
+}
+
 //================================================================
 /*! Parse header section.
 
@@ -51,7 +58,7 @@ static int load_header(struct VM *vm, const uint8_t **pos)
 {
   const uint8_t *p = *pos;
 
-  if( memcmp(p, "RITE0006", 8) != 0 ) {
+  if( memcmp(p, "RITE01", 6) != 0 ) {
     mrbc_raise(vm, E_BYTECODE_ERROR, NULL);
     return -1;
   }
@@ -119,10 +126,11 @@ static mrbc_irep * load_irep_1(struct VM *vm, const uint8_t **pos)
   irep->nlocals = bin_to_uint16(p);	p += 2;
   irep->nregs = bin_to_uint16(p);	p += 2;
   irep->rlen = bin_to_uint16(p);	p += 2;
+  p += 2;   // clen [mruby3]
   irep->ilen = bin_to_uint32(p);	p += 4;
 
   // padding
-  p += (vm->mrb - p) & 0x03;
+  p += skip_padding(p);
 
   // allocate memory for child irep's pointers
   if( irep->rlen ) {
@@ -138,7 +146,7 @@ static mrbc_irep * load_irep_1(struct VM *vm, const uint8_t **pos)
   p += irep->ilen;
 
   // POOL BLOCK
-  irep->plen = bin_to_uint32(p);	p += 4;
+  irep->plen = bin_to_uint16(p);	p += 2;
   if( irep->plen ) {
     irep->pools = (mrbc_object**)mrbc_alloc(0, sizeof(void*) * irep->plen);
     if(irep->pools == NULL ) {
@@ -161,6 +169,7 @@ static mrbc_irep * load_irep_1(struct VM *vm, const uint8_t **pos)
     case 0: { // IREP_TT_STRING
       obj->tt = MRBC_TT_STRING;
       obj->str = (char*)p;
+      obj_size++;
     } break;
 #endif
     case 1: { // IREP_TT_FIXNUM
@@ -239,10 +248,11 @@ static mrbc_irep * load_irep_0(struct VM *vm, const uint8_t **pos)
 */
 static int load_irep(struct VM *vm, const uint8_t **pos)
 {
-  const uint8_t *p = *pos + 4;			// 4 = skip "IREP"
+  const uint8_t *p = *pos;                      // start at "IREP"
+  p += 4;		  	                // skip "IREP"
   int section_size = bin_to_uint32(p);
   p += 4;
-  if( memcmp(p, "0002", 4) != 0 ) {		// rite version
+  if( memcmp(p, "0300", 4) != 0 ) {		// rite version
     mrbc_raise(vm, E_BYTECODE_ERROR, NULL);
     return -1;
   }
