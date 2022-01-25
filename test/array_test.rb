@@ -139,6 +139,12 @@ class ArrayTest < MrubycTestCase
     assert_equal nil, a.pop()
     assert_equal [], a
 
+    a = [1,2,3,4]
+    assert_equal [2,3,4], a.pop(3)
+    assert_equal [1], a
+    assert_equal [1], a.pop(2)
+    assert_equal [], a
+
     a = []
     assert_equal [1], a << 1
     assert_equal [1,2], a << 2
