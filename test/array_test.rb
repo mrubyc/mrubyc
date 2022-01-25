@@ -66,6 +66,17 @@ class ArrayTest < MrubycTestCase
     assert_equal [99,88,nil,77], a
     a[-2] = 66
     assert_equal [99,88,66,77], a
+
+    assert_equal 44, a[6,50] = 44
+    assert_equal [99,88,66,77,nil,nil,44], a
+    a[2,1] = 77  
+    assert_equal [99,88,77,77,nil,nil,44], a
+    a[3,0] = 66
+    assert_equal [99,88,77,66,77,nil,nil,44], a
+    a[4,3] = 55
+    assert_equal [99,88,77,66,55,44], a
+    a[4,10] = 44
+    assert_equal [99,88,77,66,44], a
   end
 
   description "getter"
