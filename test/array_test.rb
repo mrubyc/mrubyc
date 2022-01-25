@@ -164,6 +164,12 @@ class ArrayTest < MrubycTestCase
     assert_equal [], a
     assert_equal nil, a.shift()
     assert_equal [], a
+
+    a = [1,2,3,4]
+    assert_equal [1,2,3], a.shift(3)
+    assert_equal [4], a
+    assert_equal [4], a.shift(2)
+    assert_equal [], a
   end
 
   description "dup"
