@@ -235,12 +235,31 @@ int mrbc_array_push(mrbc_value *ary, mrbc_value *set_val)
   @param  ary		pointer to target value
   @return		tail data or Nil
 */
-mrbc_value mrbc_array_pop(mrbc_value *ary)
+mrbc_value mrbc_array_pop(struct VM *vm, mrbc_value *ary, uint16_t len)
 {
   mrbc_array *h = ary->array;
 
-  if( h->n_stored <= 0 ) return mrbc_nil_value();
-  return h->data[--h->n_stored];
+  if ( len == 1 ){
+    if( h->n_stored <= 0 ) return mrbc_nil_value();
+    return h->data[--h->n_stored];
+
+  } else if ( len < 0 ) {
+    return mrbc_nil_value(); // raise ArgumentError?
+  
+  } else {
+
+    if( len > h->n_stored ) len = h->n_stored;
+    
+    mrbc_value arr = mrbc_array_new(vm, len);
+    mrbc_value *p = arr.array->data; 
+
+    uint16_t start = h->n_stored - len;
+    memmove(p, &h->data[start], sizeof(mrbc_value) * len );
+    
+    h->n_stored -= len;
+    arr.array->n_stored = len;
+    return arr;
+  }
 }
 
 
@@ -761,7 +780,7 @@ static void c_array_pop(struct VM *vm, mrbc_value v[], int argc)
     in case of pop() -> object | nil
   */
   if( argc == 0 ) {
-    mrbc_value val = mrbc_array_pop(v);
+    mrbc_value val = mrbc_array_pop(vm, v, 1);
     SET_RETURN(val);
     return;
   }
@@ -770,7 +789,9 @@ static void c_array_pop(struct VM *vm, mrbc_value v[], int argc)
     in case of pop(n) -> Array
   */
   if( argc == 1 && v[1].tt == MRBC_TT_FIXNUM ) {
-    // TODO: not implement yet.
+    mrbc_value val = mrbc_array_pop(vm, v, v[1].i);
+    SET_RETURN(val);
+    return;
   }
 
   /*
