@@ -44,7 +44,7 @@ mrbc_value mrbc_array_get(const mrbc_value *ary, int idx);
 int mrbc_array_push(mrbc_value *ary, mrbc_value *set_val);
 mrbc_value mrbc_array_pop(struct VM *vm, mrbc_value *ary, uint16_t len);
 int mrbc_array_unshift(mrbc_value *ary, mrbc_value *set_val);
-mrbc_value mrbc_array_shift(mrbc_value *ary);
+mrbc_value mrbc_array_shift(struct VM *vm, mrbc_value *ary, uint16_t len );
 int mrbc_array_insert(mrbc_value *ary, int idx, mrbc_value *set_val);
 mrbc_value mrbc_array_remove(mrbc_value *ary, int idx);
 void mrbc_array_clear(mrbc_value *ary);

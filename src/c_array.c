@@ -282,16 +282,32 @@ int mrbc_array_unshift(mrbc_value *ary, mrbc_value *set_val)
   @param  ary		pointer to target value
   @return		first data or Nil
 */
-mrbc_value mrbc_array_shift(mrbc_value *ary)
+mrbc_value mrbc_array_shift(struct VM *vm, mrbc_value *ary, uint16_t len)
 {
   mrbc_array *h = ary->array;
 
-  if( h->n_stored <= 0 ) return mrbc_nil_value();
+  if ( len == 1 ) {
+    if( h->n_stored <= 0 ) return mrbc_nil_value();
 
-  mrbc_value ret = h->data[0];
-  memmove(h->data, h->data+1, sizeof(mrbc_value) * --h->n_stored);
+    mrbc_value ret = h->data[0];
+    memmove(h->data, h->data+1, sizeof(mrbc_value) * --h->n_stored);
+    return ret;
 
-  return ret;
+  } else if ( len < 0 ) {
+    return mrbc_nil_value(); // raise ArgumentError?
+  
+  } else {
+
+    if( len > h->n_stored ) len = h->n_stored;
+
+    mrbc_value arr = mrbc_array_new(vm, len); 
+    memmove(arr.array->data, h->data, sizeof(mrbc_value) * len );
+    memmove(h->data, h->data+len, sizeof(mrbc_value) * len );
+
+    h->n_stored -= len;
+    arr.array->n_stored = len;
+    return arr;
+  }
 }
 
 
@@ -820,7 +836,7 @@ static void c_array_shift(struct VM *vm, mrbc_value v[], int argc)
     in case of pop() -> object | nil
   */
   if( argc == 0 ) {
-    mrbc_value val = mrbc_array_shift(v);
+    mrbc_value val = mrbc_array_shift(vm, v, 1);
     SET_RETURN(val);
     return;
   }
@@ -829,7 +845,9 @@ static void c_array_shift(struct VM *vm, mrbc_value v[], int argc)
     in case of pop(n) -> Array
   */
   if( argc == 1 && v[1].tt == MRBC_TT_FIXNUM ) {
-    // TODO: not implement yet.
+    mrbc_value val = mrbc_array_shift(vm, v, v[1].i);
+    SET_RETURN(val);
+    return;
   }
 
   /*
