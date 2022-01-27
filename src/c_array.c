@@ -676,7 +676,7 @@ static void c_array_set(struct VM *vm, mrbc_value v[], int argc)
     // just ignore length
     if ( start >= size ) {
       mrbc_array_set(v, start, &v[3]);	// raise? IndexError or ENOMEM
-      v[2].tt = MRBC_TT_EMPTY;
+      v[3].tt = MRBC_TT_EMPTY;
       return;
     }
 
@@ -684,7 +684,7 @@ static void c_array_set(struct VM *vm, mrbc_value v[], int argc)
     // just replace
     if ( start < size && len == 1 ) {
       mrbc_array_set(v, start, &v[3]);	// raise? IndexError or ENOMEM
-      v[2].tt = MRBC_TT_EMPTY;
+      v[3].tt = MRBC_TT_EMPTY;
       return;
     }
 
@@ -692,7 +692,7 @@ static void c_array_set(struct VM *vm, mrbc_value v[], int argc)
     // just insert
     if ( start < size && len == 0 ) {
       mrbc_array_insert(v, start, &v[3]);	// raise? IndexError or ENOMEM
-      v[2].tt = MRBC_TT_EMPTY;
+      v[3].tt = MRBC_TT_EMPTY;
       return;
     } 
     
@@ -701,7 +701,7 @@ static void c_array_set(struct VM *vm, mrbc_value v[], int argc)
       mrbc_array_set(v, start, &v[3]);	// raise? IndexError or ENOMEM
       v->array->n_stored = start + 1;
 
-      v[2].tt = MRBC_TT_EMPTY;
+      v[3].tt = MRBC_TT_EMPTY;
       return;
 
     } else {
@@ -711,7 +711,7 @@ static void c_array_set(struct VM *vm, mrbc_value v[], int argc)
       memmove(p+start+1, p+start+len, sizeof(mrbc_value) * (size-start-len));
       v->array->n_stored -= len-1;
 
-      v[2].tt = MRBC_TT_EMPTY;
+      v[3].tt = MRBC_TT_EMPTY;
       return;
     }
 
