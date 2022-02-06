@@ -21,6 +21,7 @@
 
 /***** Local headers ********************************************************/
 #include "value.h"
+#include "symbol.h"
 #include "class.h"
 #include "c_string.h"
 #include "c_range.h"
@@ -104,8 +105,16 @@ int mrbc_compare(const mrbc_value *v1, const mrbc_value *v2)
     return 0;
 
   case MRBC_TT_FIXNUM:
-  case MRBC_TT_SYMBOL:
     return mrbc_fixnum(*v1) - mrbc_fixnum(*v2);
+
+  case MRBC_TT_SYMBOL: {
+    const char *str1 = mrbc_symid_to_str(mrbc_symbol(*v1));
+    const char *str2 = mrbc_symid_to_str(mrbc_symbol(*v2));
+    int diff = strlen(str1) - strlen(str2);
+    int len = diff < 0 ? strlen(str1) : strlen(str2);
+    int res = memcmp(str1, str2, len);
+    return (res != 0) ? res : diff;
+  }
 
 #if MRBC_USE_FLOAT
   case MRBC_TT_FLOAT:
