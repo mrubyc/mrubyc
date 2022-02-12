@@ -619,6 +619,35 @@ static inline int op_getconst( mrbc_vm *vm, mrbc_value *regs )
   mrbc_class *cls = NULL;
   mrbc_value *v;
 
+#define _GET_CLASS_CONST \
+    v = mrbc_get_class_const(cls, sym_id); \
+    if( v != NULL ) goto DONE;
+
+  if( vm->callinfo_tail ) {
+    // class environment
+    if( vm->target_class != vm->callinfo_tail->target_class ) {
+      // case 1: Normal class constant
+      cls = vm->target_class;
+      _GET_CLASS_CONST;
+
+      // case 2: Nested class constant
+      if( vm->callinfo_tail->target_class != mrbc_class_object ) {
+        cls = vm->callinfo_tail->target_class;
+        _GET_CLASS_CONST;
+        mrbc_callinfo *tmp_ci = vm->callinfo_tail;
+        while( tmp_ci->prev ) {
+          cls = tmp_ci->prev->target_class;
+          _GET_CLASS_CONST;
+          tmp_ci = tmp_ci->prev;
+        }
+      }
+
+      // case 3: Subclass constant
+      // in order to be same with mruby's behavior (rather than CRuby)
+      // We place it after `mrbc_get_const`
+    }
+  }
+
   if( vm->callinfo_tail ) cls = vm->callinfo_tail->own_class;
   while( cls != NULL ) {
     v = mrbc_get_class_const(cls, sym_id);
@@ -627,7 +656,24 @@ static inline int op_getconst( mrbc_vm *vm, mrbc_value *regs )
   }
 
   v = mrbc_get_const(sym_id);
-  if( v == NULL ) {		// raise?
+  if( v != NULL ) goto DONE;
+
+  // case 3: Subclass constant
+  if( vm->callinfo_tail ) {
+    // class environment
+    if( vm->target_class != vm->callinfo_tail->target_class ) {
+      // To find super class
+      cls = vm->target_class->super;
+      while( cls != NULL ) {
+        _GET_CLASS_CONST;
+        cls = cls->super;
+      }
+    }
+  }
+
+#undef _GET_CLASS_CONST
+
+  if( v == NULL ) { // raise?
     console_printf( "NameError: uninitialized constant %s\n", sym_name );
     return 0;
   }
