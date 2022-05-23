@@ -47,6 +47,7 @@
 /***** System headers *******************************************************/
 #include "vm_config.h"
 #include <stdint.h>
+#include <types.h>
 #include <string.h>
 #include <assert.h>
 

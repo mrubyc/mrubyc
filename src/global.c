@@ -11,6 +11,7 @@
   </pre>
 */
 
+#include <types.h>
 #include "vm_config.h"
 #include "value.h"
 #include "global.h"
