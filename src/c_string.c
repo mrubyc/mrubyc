@@ -17,6 +17,7 @@
 #include <string.h>
 #include <limits.h>
 #include <assert.h>
+#include <memory.h>
 
 #include "alloc.h"
 #include "value.h"

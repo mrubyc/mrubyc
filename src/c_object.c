@@ -15,10 +15,12 @@
 /***** Feature test switches ************************************************/
 /***** System headers *******************************************************/
 #include "vm_config.h"
+#include <types.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 #include <assert.h>
+#include <memory.h>
 
 /***** Local headers ********************************************************/
 #include "alloc.h"

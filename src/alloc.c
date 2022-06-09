@@ -50,6 +50,7 @@
 #include <types.h>
 #include <string.h>
 #include <assert.h>
+#include <memory.h>
 
 /***** Local headers ********************************************************/
 #include "alloc.h"
@@ -91,8 +92,8 @@
    Choose large one from sizeof(FREE_BLOCK) or (1 << MRBC_ALLOC_IGNORE_LSBS)
 */
 #if !defined(MRBC_MIN_MEMORY_BLOCK_SIZE)
-#define MRBC_MIN_MEMORY_BLOCK_SIZE sizeof(FREE_BLOCK)
-// #define MRBC_MIN_MEMORY_BLOCK_SIZE (1 << MRBC_ALLOC_IGNORE_LSBS)
+// #define MRBC_MIN_MEMORY_BLOCK_SIZE sizeof(FREE_BLOCK)
+#define MRBC_MIN_MEMORY_BLOCK_SIZE (1 << MRBC_ALLOC_IGNORE_LSBS)
 #endif
 
 
@@ -205,7 +206,9 @@ typedef struct MEMORY_POOL {
   uint16_t free_fli_bitmap;
   uint8_t  free_sli_bitmap[MRBC_ALLOC_FLI_BIT_WIDTH +1+1];
 						// +1=bit_width, +1=sentinel
-  uint8_t  pad[3]; // for alignment compatibility on 16bit and 32bit machines
+  uint8_t  pad[5]; // for alignment compatibility on 16bit and 32bit machines
+
+ //  uint8_t  pad[5]; // hmm, for some reason, size is 342, so let's add 2...
 
   // free memory block index
   FREE_BLOCK *free_blocks[SIZE_FREE_BLOCKS +1];	// +1=sentinel
@@ -411,17 +414,27 @@ static inline void merge_block(FREE_BLOCK *target, FREE_BLOCK *next)
 */
 void mrbc_init_alloc(void *ptr, unsigned int size)
 {
+  char buf[64];
+  VDP_drawText("in init alloc0", 1, 1);
   assert( MRBC_MIN_MEMORY_BLOCK_SIZE >= sizeof(FREE_BLOCK) );
   assert( MRBC_MIN_MEMORY_BLOCK_SIZE >= (1 << MRBC_ALLOC_IGNORE_LSBS) );
+  sprintf(buf, "size mem is %d", (sizeof(MEMORY_POOL)));
+  VDP_drawText(buf, 1, 2);
   assert( (sizeof(MEMORY_POOL) & 0x03) == 0 );
+  VDP_drawText("in init alloc3", 1, 4);
   assert( size != 0 );
+  VDP_drawText("in init alloc4", 1, 5);
   assert( size <= (MRBC_ALLOC_MEMSIZE_T)(~0) );
+  VDP_drawText("after asserts.", 1, 6);
 
   if( memory_pool != NULL ) return;
+  VDP_drawText("after null check.", 1, 7);
   size &= ~(unsigned int)0x03;	// align 4 byte.
   memory_pool = ptr;
   memset( memory_pool, 0, sizeof(MEMORY_POOL) );
-  memory_pool->size = size;
+  sprintf(buf, "MRBC_ALLOC_MEMSIZE_T is: %d", sizeof(MRBC_ALLOC_MEMSIZE_T));
+  VDP_drawText(buf, 1, 8);
+  memory_pool->size = size; // this causes an issue??
 
   // initialize memory pool
   //  large free block + zero size used block (sentinel).
@@ -463,6 +476,9 @@ void mrbc_cleanup_alloc(void)
 */
 void * mrbc_raw_alloc(unsigned int size)
 {
+  // can I just use platform's malloc?
+  return malloc(size);
+/*
   MEMORY_POOL *pool = memory_pool;
   MRBC_ALLOC_MEMSIZE_T alloc_size = size + sizeof(USED_BLOCK);
 
@@ -565,6 +581,7 @@ void * mrbc_raw_alloc(unsigned int size)
 #endif
 
   return (uint8_t *)target + sizeof(USED_BLOCK);
+*/
 }
 
 
@@ -625,6 +642,8 @@ void * mrbc_raw_alloc_no_free(unsigned int size)
 */
 void mrbc_raw_free(void *ptr)
 {
+  free(ptr);
+  /*
   MEMORY_POOL *pool = memory_pool;
 
   // get target block
@@ -652,6 +671,7 @@ void mrbc_raw_free(void *ptr)
 
   // target, add to index
   add_free_block( pool, target );
+  */
 }
 
 

@@ -12,8 +12,10 @@
 */
 
 #include "vm_config.h"
+#include <types.h>
 #include <string.h>
 #include <assert.h>
+#include <memory.h>
 
 #include "alloc.h"
 #include "value.h"

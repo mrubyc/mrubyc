@@ -30,7 +30,9 @@ extern "C" {
 #endif
 /***** Constant values ******************************************************/
 /***** Macros ***************************************************************/
+// #if MRBC_USE_FLOAT
 #define MRBC_CLASS(cls)	((mrbc_class *)(&mrbc_class_##cls))
+// #endif /* MRBC_USE_FLOAT */
 
 
 /***** Typedefs *************************************************************/
@@ -116,7 +118,9 @@ extern struct RBuiltinClass mrbc_class_NilClass;
 extern struct RBuiltinClass mrbc_class_FalseClass;
 extern struct RBuiltinClass mrbc_class_TrueClass;
 extern struct RBuiltinClass mrbc_class_Integer;
+#if MRBC_USE_FLOAT
 extern struct RBuiltinClass mrbc_class_Float;
+#endif /* MRBC_USE_FLOAT */
 extern struct RBuiltinClass mrbc_class_Symbol;
 extern struct RBuiltinClass mrbc_class_Proc;
 extern struct RBuiltinClass mrbc_class_Array;

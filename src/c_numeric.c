@@ -13,7 +13,8 @@
 
 
 #include "vm_config.h"
-#include <stdio.h>
+#include <types.h>
+// #include <stdio.h>
 #include <limits.h>
 #if MRBC_USE_FLOAT
 #include <math.h>

@@ -15,8 +15,11 @@
 /***** System headers *******************************************************/
 #include "vm_config.h"
 #include <stdint.h>
+#include <types.h>
 #include <string.h>
 #include <assert.h>
+#include <stddef.h>
+#include <memory.h>
 
 /***** Local headers ********************************************************/
 #include "alloc.h"
@@ -50,7 +53,9 @@ mrbc_class * const mrbc_class_tbl[MRBC_TT_MAXVAL+1] = {
   MRBC_CLASS(FalseClass),	// MRBC_TT_FALSE     = 2,
   MRBC_CLASS(TrueClass),	// MRBC_TT_TRUE	     = 3,
   MRBC_CLASS(Integer),		// MRBC_TT_INTEGER   = 4,
+#if MRBC_USE_FLOAT
   MRBC_CLASS(Float),		// MRBC_TT_FLOAT     = 5,
+#endif /* MRBC_USE_FLOAT */
   MRBC_CLASS(Symbol),		// MRBC_TT_SYMBOL    = 6,
   0,				// MRBC_TT_CLASS     = 7,
   0,				// MRBC_TT_OBJECT    = 8,
@@ -449,8 +454,11 @@ static void mrbc_run_mrblib(const uint8_t bytecode[])
 
   mrbc_load_mrb(vm, bytecode);
   mrbc_vm_begin(vm);
+  // VDP_drawText("in run mrblib2", 10, 7);
   mrbc_vm_run(vm);
+  // VDP_drawText("in run mrblib3", 10, 7);
   mrbc_vm_end(vm);
+  // VDP_drawText("in run mrblib4", 10, 8);
 
   // instead of mrbc_vm_close()
   mrbc_raw_free( vm->top_irep );	// free only top-level mrbc_irep.
@@ -547,5 +555,6 @@ void mrbc_init_class(void)
   cls.cls = MRBC_CLASS(ZeroDivisionError);
   mrbc_set_const( MRBC_SYM(ZeroDivisionError), &cls );
 
+  // VDP_drawText("before run mrblib.", 10, 5);
   mrbc_run_mrblib(mrblib_bytecode);
 }

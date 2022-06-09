@@ -14,6 +14,7 @@
 /***** Feature test switches ************************************************/
 /***** System headers *******************************************************/
 #include "vm_config.h"
+#include <types.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
@@ -131,27 +132,36 @@ static mrbc_irep * load_irep_1(struct VM *vm, const uint8_t *bin, int *len, int 
   irep.inst = (uint8_t *)p;
   assert( sizeof(mrbc_irep_catch_handler) == 13 );
 
+  // VDP_drawText("load_irep_1 03", 10, 13);
   // POOL block
   p += irep.ilen + sizeof(mrbc_irep_catch_handler) * irep.clen;
   irep.pool = p;
   irep.plen = bin_to_uint16(p);		p += 2;
 
+  // VDP_drawText("load_irep_1 03.0", 10, 13);
   // skip pool
   for( i = 0; i < irep.plen; i++ ) {
     int siz = 0;
+  // char foo[64];
     switch( *p++ ) {
     case IREP_TT_STR:
     case IREP_TT_SSTR:	siz = bin_to_uint16(p) + 3;	break;
-    case IREP_TT_INT32:	siz = 4;	break;
+    case IREP_TT_INT32:	siz = 4;
+    break;
     case IREP_TT_INT64:
     case IREP_TT_FLOAT:	siz = 8;	break;
     default:
+  // sprintf(foo, "*bin: %d  ", (*bin));
+  // VDP_drawText(foo, 10, 13);
+  // sprintf(foo, "*(--p): %X  ", *(--p));
+  // VDP_drawText(foo, 10, 14);
       assert(!"Loader unknown TT found.");
       return NULL;
     }
     p += siz;
   }
 
+  // VDP_drawText("load_irep_1 04", 10, 13);
   // # of symbols, offset of tbl_ireps.
   irep.slen = bin_to_uint16(p);		p += 2;
   int siz = sizeof(mrbc_sym) * irep.slen + sizeof(uint16_t) * irep.plen;

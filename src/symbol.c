@@ -14,10 +14,13 @@
 /***** Feature test switches ************************************************/
 /***** System headers *******************************************************/
 #include "vm_config.h"
+#include <stddef.h>
+#include <types.h>
 #include <stdint.h>
 #include <string.h>
 #include <limits.h>
 #include <assert.h>
+#include <memory.h>
 
 /***** Local headers ********************************************************/
 #define MRBC_DEFINE_SYMBOL_TABLE

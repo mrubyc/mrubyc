@@ -15,6 +15,7 @@
 /***** Feature test switches ************************************************/
 /***** System headers *******************************************************/
 #include "vm_config.h"
+#include <types.h>
 #include <string.h>
 #include <assert.h>
 

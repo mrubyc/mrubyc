@@ -16,6 +16,7 @@
 #include "vm_config.h"
 #include <types.h>
 #include <string.h>
+#include <memory.h>
 
 /***** Local headers ********************************************************/
 #include "alloc.h"

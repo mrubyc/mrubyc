@@ -12,6 +12,8 @@
 */
 
 #include "vm_config.h"
+#include <types.h>
+#include <memory.h>
 #include <string.h>
 #include <assert.h>
 

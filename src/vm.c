@@ -20,6 +20,7 @@
 #include <types.h>
 #include <string.h>
 #include <assert.h>
+#include <memory.h>
 
 /***** Local headers ********************************************************/
 #include "alloc.h"
@@ -111,6 +112,10 @@ static void send_by_name( struct VM *vm, mrbc_sym sym_id, int a, int c )
   mrbc_class *cls = find_class_by_object(recv);
   mrbc_method method;
   if( mrbc_find_method( &method, cls, sym_id ) == 0 ) {
+  // char buf[64];
+  // sprintf(buf, "WTF - recv is %s   ...", mrbc_symid_to_str(cls->sym_id));
+  // VDP_drawText(buf, 1, 1);
+
     mrbc_printf("Undefined local variable or method '%s' for %s\n",
 		mrbc_symid_to_str(sym_id), mrbc_symid_to_str( cls->sym_id ));
     return;
@@ -2195,7 +2200,11 @@ static inline void op_apost( mrbc_vm *vm, mrbc_value *regs EXT )
     regs[a].array->n_stored = ary_size;
 
   } else {
+//    char buf[128];
+ //   sprintf(buf, "else bloc, len: %d, pre: %d, post: %d", len, pre, post);
+  //VDP_drawText(buf, 1, 17);
     assert(!"Not support this case in op_apost.");
+ //  VDP_drawText("after assert", 10, 18);
     // empty
     regs[a] = mrbc_array_new(vm, 0);
   }
@@ -2653,10 +2662,16 @@ int mrbc_vm_run( struct VM *vm )
 #define EXT
 #endif
 
+char i = 0;
   while( 1 ) {
     mrbc_value *regs = vm->cur_regs;
     uint8_t op = *vm->inst++;		// Dispatch
 
+  i ++;
+  if(i >= 20) i = 0;
+  // char buf[64];
+  // sprintf(buf, "in vm run, op: %d, 0x%X", op, op);
+  // VDP_drawText(buf, 1, i);
     switch( op ) {
     case OP_NOP:        op_nop       (vm, regs EXT); break;
     case OP_MOVE:       op_move      (vm, regs EXT); break;

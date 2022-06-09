@@ -33,7 +33,7 @@
 
 // memory management
 //  MRBC_ALLOC_16BIT or MRBC_ALLOC_24BIT
-#define MRBC_ALLOC_24BIT
+#define MRBC_ALLOC_16BIT
 
 
 // Console new-line mode.
@@ -83,8 +83,8 @@
 /* Word alignment
    If 32bit and/or 64bit alignment is required, enable the following line.
 */
-// #define MRBC_REQUIRE_32BIT_ALIGNMENT
-#define MRBC_REQUIRE_64BIT_ALIGNMENT
+#define MRBC_REQUIRE_32BIT_ALIGNMENT
+// #define MRBC_REQUIRE_64BIT_ALIGNMENT
 
 // Debug code.
 #if !defined(NDEBUG)

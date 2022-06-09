@@ -17,6 +17,7 @@
 /***** System headers *******************************************************/
 #include <stdint.h>
 #include <stdarg.h>
+#include <types.h>
 #include <string.h>
 #include <assert.h>
 #if MRBC_USE_FLOAT
@@ -24,6 +25,7 @@
 #endif
 
 /***** Local headers ********************************************************/
+#include "compat.h"
 #include "hal_selector.h"
 #include "value.h"
 #include "class.h"
