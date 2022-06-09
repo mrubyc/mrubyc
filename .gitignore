@@ -5,6 +5,7 @@ sample_concurrent
 sample_myclass
 sample_no_scheduler
 mrbc
+out/
 
 # hal
 #src/hal
