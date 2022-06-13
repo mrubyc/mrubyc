@@ -48,7 +48,7 @@
 */
 // USE Float. Support Float class.
 #if !defined(MRBC_USE_FLOAT)
-#define MRBC_USE_FLOAT 2
+#define MRBC_USE_FLOAT 0
 #endif
 
 // Use math. Support Math class.
@@ -77,7 +77,7 @@
    Define either MRBC_BIG_ENDIAN or MRBC_LITTLE_ENDIAN.
 */
 #if !defined(MRBC_BIG_ENDIAN) && !defined(MRBC_LITTLE_ENDIAN)
-# define MRBC_LITTLE_ENDIAN
+# define MRBC_BIG_ENDIAN
 #endif
 
 /* Word alignment
