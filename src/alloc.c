@@ -206,7 +206,7 @@ typedef struct MEMORY_POOL {
   uint16_t free_fli_bitmap;
   uint8_t  free_sli_bitmap[MRBC_ALLOC_FLI_BIT_WIDTH +1+1];
 						// +1=bit_width, +1=sentinel
-  uint8_t  pad[5]; // for alignment compatibility on 16bit and 32bit machines
+  uint8_t  pad[3]; // for alignment compatibility on 16bit and 32bit machines
 
  //  uint8_t  pad[5]; // hmm, for some reason, size is 342, so let's add 2...
 
@@ -226,7 +226,7 @@ typedef struct MEMORY_POOL {
 /***** Function prototypes **************************************************/
 /***** Local variables ******************************************************/
 // memory pool
-static MEMORY_POOL *memory_pool;
+// static MEMORY_POOL *memory_pool;
 
 
 /***** Global variables *****************************************************/
@@ -273,6 +273,7 @@ static inline int nlz8(uint8_t x)
   @param  alloc_size	alloc size
   @retval unsigned int	index of free_blocks
 */
+/*
 static inline unsigned int calc_index(MRBC_ALLOC_MEMSIZE_T alloc_size)
 {
   // check overflow
@@ -298,6 +299,7 @@ static inline unsigned int calc_index(MRBC_ALLOC_MEMSIZE_T alloc_size)
 
   return index;
 }
+*/
 
 
 //================================================================
@@ -306,6 +308,7 @@ static inline unsigned int calc_index(MRBC_ALLOC_MEMSIZE_T alloc_size)
   @param  pool		Pointer to memory pool.
   @param  target	Pointer to target block.
 */
+/*
 static void add_free_block(MEMORY_POOL *pool, FREE_BLOCK *target)
 {
   SET_FREE_BLOCK(target);
@@ -334,6 +337,7 @@ static void add_free_block(MEMORY_POOL *pool, FREE_BLOCK *target)
           BLOCK_SIZE(target) - sizeof(FREE_BLOCK) );
 #endif
 }
+*/
 
 
 //================================================================
@@ -342,6 +346,7 @@ static void add_free_block(MEMORY_POOL *pool, FREE_BLOCK *target)
   @param  pool		Pointer to memory pool.
   @param  target	pointer to target block.
 */
+/*
 static void remove_free_block(MEMORY_POOL *pool, FREE_BLOCK *target)
 {
   // top of linked list?
@@ -364,6 +369,7 @@ static void remove_free_block(MEMORY_POOL *pool, FREE_BLOCK *target)
     target->next_free->prev_free = target->prev_free;
   }
 }
+*/
 
 
 //================================================================
@@ -374,6 +380,7 @@ static void remove_free_block(MEMORY_POOL *pool, FREE_BLOCK *target)
   @retval NULL		no split.
   @retval FREE_BLOCK *	pointer to splitted free block.
 */
+/*
 static inline FREE_BLOCK* split_block(FREE_BLOCK *target, MRBC_ALLOC_MEMSIZE_T size)
 {
   assert( BLOCK_SIZE(target) >= size );
@@ -387,6 +394,7 @@ static inline FREE_BLOCK* split_block(FREE_BLOCK *target, MRBC_ALLOC_MEMSIZE_T s
 
   return split;
 }
+*/
 
 
 //================================================================
@@ -396,6 +404,7 @@ static inline FREE_BLOCK* split_block(FREE_BLOCK *target, MRBC_ALLOC_MEMSIZE_T s
   @param  target	pointer to free block 1
   @param  next	pointer to free block 2
 */
+/*
 static inline void merge_block(FREE_BLOCK *target, FREE_BLOCK *next)
 {
   assert(target < next);
@@ -403,6 +412,7 @@ static inline void merge_block(FREE_BLOCK *target, FREE_BLOCK *next)
   // merge target and next
   target->size += BLOCK_SIZE(next);		// copy a size but save flags.
 }
+*/
 
 
 /***** Global functions *****************************************************/
@@ -412,6 +422,7 @@ static inline void merge_block(FREE_BLOCK *target, FREE_BLOCK *next)
   @param  ptr	pointer to free memory block.
   @param  size	size. (max 64KB. see MRBC_ALLOC_MEMSIZE_T)
 */
+/*
 void mrbc_init_alloc(void *ptr, unsigned int size)
 {
   char buf[64];
@@ -450,11 +461,13 @@ void mrbc_init_alloc(void *ptr, unsigned int size)
 
   add_free_block( memory_pool, free_block );
 }
+*/
 
 
 //================================================================
 /*! cleanup memory pool
 */
+/*
 void mrbc_cleanup_alloc(void)
 {
 #if defined(MRBC_DEBUG)
@@ -465,6 +478,7 @@ void mrbc_cleanup_alloc(void)
 
   memory_pool = 0;
 }
+*/
 
 
 //================================================================
@@ -477,7 +491,8 @@ void mrbc_cleanup_alloc(void)
 void * mrbc_raw_alloc(unsigned int size)
 {
   // can I just use platform's malloc?
-  return malloc(size);
+  MRBC_ALLOC_MEMSIZE_T alloc_size = size + (-size & 3);	// align 4 byte
+  return malloc(alloc_size);
 /*
   MEMORY_POOL *pool = memory_pool;
   MRBC_ALLOC_MEMSIZE_T alloc_size = size + sizeof(USED_BLOCK);
@@ -592,8 +607,13 @@ void * mrbc_raw_alloc(unsigned int size)
   @return void * pointer to allocated memory.
   @retval NULL	error.
 */
+
 void * mrbc_raw_alloc_no_free(unsigned int size)
 {
+  // let's just try the regular malloc and see what happens...
+  MRBC_ALLOC_MEMSIZE_T alloc_size = size + (-size & 3);	// align 4 byte
+  return mrbc_raw_alloc(alloc_size);
+  /*
   MEMORY_POOL *pool = memory_pool;
   MRBC_ALLOC_MEMSIZE_T alloc_size = size + (-size & 3);	// align 4 byte
 
@@ -632,7 +652,9 @@ void * mrbc_raw_alloc_no_free(unsigned int size)
 
  FALLBACK:
   return mrbc_raw_alloc(alloc_size);
+  */
 }
+
 
 
 //================================================================
@@ -685,6 +707,17 @@ void mrbc_raw_free(void *ptr)
 */
 void * mrbc_raw_realloc(void *ptr, unsigned int size)
 {
+  // platform realloc causes address error? Let's try a naive implementation for now...
+  MRBC_ALLOC_MEMSIZE_T alloc_size = size + (-size & 3);	// align 4 byte
+  void *newptr =  malloc(alloc_size);
+  if( newptr == NULL ) return NULL;  // ENOMEM
+  memcpy(newptr, ptr, size);
+  char buf[48];
+  free(ptr);
+  return newptr;
+  //return ptr;
+  //return realloc(ptr, alloc_size);
+  /*
   MEMORY_POOL *pool = memory_pool;
   USED_BLOCK *target = (USED_BLOCK *)((uint8_t *)ptr - sizeof(USED_BLOCK));
   MRBC_ALLOC_MEMSIZE_T alloc_size = size + sizeof(USED_BLOCK);
@@ -741,6 +774,7 @@ void * mrbc_raw_realloc(void *ptr, unsigned int size)
 
     return new_ptr;
   }
+  */
 }
 
 
@@ -769,6 +803,7 @@ void * mrbc_alloc(const struct VM *vm, unsigned int size)
 
   @param  vm	pointer to VM.
 */
+/*
 void mrbc_free_all(const struct VM *vm)
 {
   MEMORY_POOL *pool = memory_pool;
@@ -786,6 +821,7 @@ void mrbc_free_all(const struct VM *vm)
     target = next;
   }
 }
+*/
 
 
 //================================================================
@@ -818,6 +854,8 @@ int mrbc_get_vm_id(void *ptr)
 
   @param  ret		pointer to return value.
 */
+
+/*
 void mrbc_alloc_statistics( struct MRBC_ALLOC_STATISTICS *ret )
 {
   MEMORY_POOL *pool = memory_pool;
@@ -842,6 +880,8 @@ void mrbc_alloc_statistics( struct MRBC_ALLOC_STATISTICS *ret )
     block = PHYS_NEXT(block);
   }
 }
+*/
+
 
 
 #if defined(MRBC_DEBUG)
@@ -850,6 +890,7 @@ void mrbc_alloc_statistics( struct MRBC_ALLOC_STATISTICS *ret )
 /*! print memory block for debug.
 
 */
+/*
 void mrbc_alloc_print_memory_pool( void )
 {
   int i;
@@ -925,6 +966,7 @@ void mrbc_alloc_print_memory_pool( void )
     block = PHYS_NEXT(block);
   }
 }
+*/
 
 #endif // defined(MRBC_DEBUG)
 #endif // !defined(MRBC_ALLOC_LIBC)
