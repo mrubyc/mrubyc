@@ -30,9 +30,7 @@ extern "C" {
 #endif
 /***** Constant values ******************************************************/
 /***** Macros ***************************************************************/
-// #if MRBC_USE_FLOAT
 #define MRBC_CLASS(cls)	((mrbc_class *)(&mrbc_class_##cls))
-// #endif /* MRBC_USE_FLOAT */
 
 
 /***** Typedefs *************************************************************/
@@ -118,9 +116,7 @@ extern struct RBuiltinClass mrbc_class_NilClass;
 extern struct RBuiltinClass mrbc_class_FalseClass;
 extern struct RBuiltinClass mrbc_class_TrueClass;
 extern struct RBuiltinClass mrbc_class_Integer;
-#if MRBC_USE_FLOAT
 extern struct RBuiltinClass mrbc_class_Float;
-#endif /* MRBC_USE_FLOAT */
 extern struct RBuiltinClass mrbc_class_Symbol;
 extern struct RBuiltinClass mrbc_class_Proc;
 extern struct RBuiltinClass mrbc_class_Array;
@@ -176,6 +172,9 @@ static inline mrbc_class *find_class_by_object(const mrbc_value *obj)
   assert( mrbc_type(*obj) >= 0 );
   assert( mrbc_type(*obj) <= MRBC_TT_MAXVAL );
 
+      char buf[64];
+      snprintf(buf, 63, "obj's mrbc_type is: %d", mrbc_type(*obj));
+      VDP_drawText(buf, 1, 6);
   mrbc_class *cls = mrbc_class_tbl[ mrbc_type(*obj) ];
   if( !cls ) {
     switch( mrbc_type(*obj) ) {

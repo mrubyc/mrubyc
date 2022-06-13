@@ -53,9 +53,7 @@ mrbc_class * const mrbc_class_tbl[MRBC_TT_MAXVAL+1] = {
   MRBC_CLASS(FalseClass),	// MRBC_TT_FALSE     = 2,
   MRBC_CLASS(TrueClass),	// MRBC_TT_TRUE	     = 3,
   MRBC_CLASS(Integer),		// MRBC_TT_INTEGER   = 4,
-#if MRBC_USE_FLOAT
   MRBC_CLASS(Float),		// MRBC_TT_FLOAT     = 5,
-#endif /* MRBC_USE_FLOAT */
   MRBC_CLASS(Symbol),		// MRBC_TT_SYMBOL    = 6,
   0,				// MRBC_TT_CLASS     = 7,
   0,				// MRBC_TT_OBJECT    = 8,
