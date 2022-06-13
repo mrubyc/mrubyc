@@ -25,6 +25,7 @@ int hal_write(int fd, const void *buf, int nbytes) {
 
     // fd values are just ignored
     snprintf(str, len, "%s", bufcpy);
+    VDP_drawText("                                     ", 1, line);
     VDP_drawText(str, 1, ++line);
 
     bufcpy += 37;
