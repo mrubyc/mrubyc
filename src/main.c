@@ -6,7 +6,7 @@
 
 typedef char s8;
 
-static void c_myclass_func(mrb_vm *vm, mrb_value *v, int argc)
+static void c_megamrbc_draw_text(mrb_vm *vm, mrb_value *v, int argc)
 {
   char *ptr = mrbc_string_cstr(&v[1]);
   char x = mrbc_integer(v[2]);
@@ -16,10 +16,22 @@ static void c_myclass_func(mrb_vm *vm, mrb_value *v, int argc)
   VDP_drawText(buf, x, y);
 }
 
+static void c_megamrbc_read_joypad(mrb_vm *vm, mrb_value *v, int argc) {
+  uint16_t pad_num = mrbc_integer(v[1]);
+  uint16_t value = JOY_readJoypad(pad_num);
+  SET_INT_RETURN(value);
+}
+
+static void c_megamrbc_wait_vblank(mrb_vm *vm, mrb_value *v, int argc) {
+  SYS_doVBlankProcess();
+}
+
 void make_class(mrb_vm *vm)
 {
   mrb_class *cls = mrbc_define_class(vm, "MegaMrbc", mrbc_class_object);
-  mrbc_define_method(vm, cls, "draw_text", c_myclass_func);
+  mrbc_define_method(vm, cls, "draw_text", c_megamrbc_draw_text);
+  mrbc_define_method(vm, cls, "read_joypad", c_megamrbc_read_joypad);
+  mrbc_define_method(vm, cls, "wait_vblank", c_megamrbc_wait_vblank);
 }
 
 void mrubyc(uint8_t *mrbbuf)
@@ -59,12 +71,7 @@ int main(void) {
 
   mrubyc( mrbsrc );
 
-  return 0;
-}
-
-void joypad_loop() {
   uint16_t i, value;
-
   while(TRUE)
   {
 
@@ -76,4 +83,6 @@ void joypad_loop() {
     }
     SYS_doVBlankProcess();
   }
+
+  return 0;
 }
