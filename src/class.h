@@ -172,9 +172,6 @@ static inline mrbc_class *find_class_by_object(const mrbc_value *obj)
   assert( mrbc_type(*obj) >= 0 );
   assert( mrbc_type(*obj) <= MRBC_TT_MAXVAL );
 
-      char buf[64];
-      snprintf(buf, 63, "obj's mrbc_type is: %d", mrbc_type(*obj));
-      VDP_drawText(buf, 1, 6);
   mrbc_class *cls = mrbc_class_tbl[ mrbc_type(*obj) ];
   if( !cls ) {
     switch( mrbc_type(*obj) ) {
