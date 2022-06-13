@@ -2662,16 +2662,10 @@ int mrbc_vm_run( struct VM *vm )
 #define EXT
 #endif
 
-char i = 0;
   while( 1 ) {
     mrbc_value *regs = vm->cur_regs;
     uint8_t op = *vm->inst++;		// Dispatch
 
-  i ++;
-  if(i >= 20) i = 0;
-  // char buf[64];
-  // sprintf(buf, "in vm run, op: %d, 0x%X", op, op);
-  // VDP_drawText(buf, 1, i);
     switch( op ) {
     case OP_NOP:        op_nop       (vm, regs EXT); break;
     case OP_MOVE:       op_move      (vm, regs EXT); break;
