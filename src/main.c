@@ -8,7 +8,7 @@ typedef char s8;
 
 static void c_myclass_func(mrb_vm *vm, mrb_value *v, int argc)
 {
-  VDP_drawText("Myclass.func called.", 8, 2);
+  VDP_drawText("MegaMrbc.func called.", 8, 2);
   char *ptr = mrbc_string_cstr(&v[1]);
   char buf[32];
   snprintf(buf, 31, "%s", ptr);
@@ -17,7 +17,7 @@ static void c_myclass_func(mrb_vm *vm, mrb_value *v, int argc)
 
 void make_class(mrb_vm *vm)
 {
-  mrb_class *cls = mrbc_define_class(vm, "MyClass", mrbc_class_object);
+  mrb_class *cls = mrbc_define_class(vm, "MegaMrbc", mrbc_class_object);
   mrbc_define_method(vm, cls, "func", c_myclass_func);
 }
 

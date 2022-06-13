@@ -1,4 +1,4 @@
-# MyClass.func("Hello, Megadrive from ruby/c")
+# MegaMrbc.func("Hello, Megadrive from ruby/c")
 
 class Game
   def main
@@ -12,10 +12,12 @@ class GameRound
   def self.game_loop
     running = true
     while running do
-      #MyClass.func("Hello, Megadrive from ruby/c")
-      pad_state = joypad_state(0);
-      draw_text("Joypad state: #{pad_state}")
-      #wait_vsync
+      [0,1].each do |i|
+        #MegaMrbc.func("Hello, Megadrive from ruby/c")
+        pad_state = joypad_state(i);
+        draw_text("Joypad state: #{pad_state}")
+        wait_vsync
+      end
     end
   end
 
@@ -24,7 +26,7 @@ class GameRound
   end
 
   def self.draw_text(str)
-    MyClass.func(str)
+    MegaMrbc.func(str)
   end
 
   def self.wait_vsync
