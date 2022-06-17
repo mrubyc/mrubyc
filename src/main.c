@@ -374,7 +374,7 @@ void set_up_colours() {
   VDP_setPaletteColor(1, RGB24_TO_VDPCOLOR(0x222222)); // dark grey
   VDP_setPaletteColor(2, RGB24_TO_VDPCOLOR(0x6AAA64)); // green
   VDP_setPaletteColor(3, RGB24_TO_VDPCOLOR(0xC9B458)); // yellow
-  VDP_setPaletteColor(4, RGB24_TO_VDPCOLOR(0x787C7E)); // grey
+  VDP_setPaletteColor(4, RGB24_TO_VDPCOLOR(0x888C8E)); // grey
   VDP_setPaletteColor(5, RGB24_TO_VDPCOLOR(0x2222AA)); // blue
 }
 
@@ -383,7 +383,7 @@ int main(void) {
   VDP_setScreenWidth320();
   VDP_setHInterrupt(0);
   VDP_setHilightShadow(0);
-  PAL_setColor(15, 0x0222); // default text colour
+  PAL_setColor(15, 0x0000); // default text colour
   VDP_setTextPalette(0);
   PAL_setColor(0, 0x0EEE);
   VDP_resetSprites();
