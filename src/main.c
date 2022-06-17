@@ -7,9 +7,9 @@
 
 typedef char s8;
 
-// Sprites for rectangles
+// Sprites in code
 
-enum rect_parts { tl, tc, tr, l, c, r, bl, bc, br };
+enum rect_parts { tl, horiz, vert };
 
 const u32 top_left[8] =
   {
@@ -23,7 +23,7 @@ const u32 top_left[8] =
     0x00011000
   };
 
-const u32 top_centre[8] =
+const u32 horizontal[8] =
   {
     0x00000000,
     0x00000000,
@@ -35,19 +35,7 @@ const u32 top_centre[8] =
     0x00000000
   };
 
-const u32 top_right[8] =
-  {
-    0x00000000,
-    0x00000000,
-    0x00000000,
-    0x11111000,
-    0x11111000,
-    0x00011000,
-    0x00011000,
-    0x00011000
-  };
-
-const u32 left[8] =
+const u32 vertical[8] =
   {
     0x00011000,
     0x00011000,
@@ -57,46 +45,6 @@ const u32 left[8] =
     0x00011000,
     0x00011000,
     0x00011000
-  };
-
-const u32 centre[8] =
-  {
-    0x00000000,
-    0x00000000,
-    0x00000000,
-    0x00000000,
-    0x00000000,
-    0x00000000,
-    0x00000000,
-    0x00000000
-  };
-
-const u32 *right = left;
-
-const u32 bottom_left[8] =
-  {
-    0x00011000,
-    0x00011000,
-    0x00011000,
-    0x00011111,
-    0x00011111,
-    0x00000000,
-    0x00000000,
-    0x00000000
-  };
-
-const u32 *bottom_centre = top_centre;
-
-const u32 bottom_right[8] =
-  {
-    0x00011000,
-    0x00011000,
-    0x00011000,
-    0x11111000,
-    0x11111000,
-    0x00000000,
-    0x00000000,
-    0x00000000
   };
 
 const u32 cursor[8] =
@@ -159,7 +107,7 @@ const u32 grey[8] =
     0x44444444
   };
 
-const u32 clear[8] =
+const u32 blank[8] =
   {
     0x00000000,
     0x00000000,
@@ -171,24 +119,19 @@ const u32 clear[8] =
     0x00000000
   };
 
+enum other_sprites_enum { csr, tck, grn, ylw, gry, blnk };
+
 void load_tiles() {
   VDP_loadTileData(top_left, TILE_USERINDEX + tl, 1, 0);
-  VDP_loadTileData(top_centre, TILE_USERINDEX + tc, 1, 0);
-  VDP_loadTileData(top_right, TILE_USERINDEX + tr, 1, 0);
-  VDP_loadTileData(left, TILE_USERINDEX + l, 1, 0);
-  VDP_loadTileData(centre, TILE_USERINDEX + c, 1, 0);
-  VDP_loadTileData(right, TILE_USERINDEX + r, 1, 0);
-  VDP_loadTileData(bottom_left, TILE_USERINDEX + bl, 1, 0);
-  VDP_loadTileData(bottom_centre, TILE_USERINDEX + bc, 1, 0);
-  VDP_loadTileData(bottom_right, TILE_USERINDEX + br, 1, 0);
+  VDP_loadTileData(horizontal, TILE_USERINDEX + horiz, 1, 0);
+  VDP_loadTileData(vertical, TILE_USERINDEX + vert, 1, 0);
 
-  // this one is after the parts...
-  VDP_loadTileData( cursor, TILE_USERINDEX + br + 1, 1, 0);
-  VDP_loadTileData( tick, TILE_USERINDEX + br + 2, 1, 0);
-  VDP_loadTileData( green, TILE_USERINDEX + br + 3, 1, 0);
-  VDP_loadTileData( yellow, TILE_USERINDEX + br + 4, 1, 0);
-  VDP_loadTileData( grey, TILE_USERINDEX + br + 5, 1, 0);
-  VDP_loadTileData( clear, TILE_USERINDEX + br + 6, 1, 0);
+  VDP_loadTileData( cursor, TILE_USERINDEX + vert + 1 + csr, 1, 0);
+  VDP_loadTileData( tick, TILE_USERINDEX + vert + 1 + tck, 1, 0);
+  VDP_loadTileData( green, TILE_USERINDEX + vert + 1 + grn, 1, 0);
+  VDP_loadTileData( yellow, TILE_USERINDEX + vert + 1 + ylw, 1, 0);
+  VDP_loadTileData( grey, TILE_USERINDEX + vert + 1 + gry, 1, 0);
+  VDP_loadTileData( blank, TILE_USERINDEX + vert + 1 + blnk, 1, 0);
 }
 
 static void c_megamrbc_draw_text(mrb_vm *vm, mrb_value *v, int argc)
@@ -208,53 +151,39 @@ static void c_megamrbc_draw_top_left(mrb_vm *vm, mrb_value *v, int argc)
   VDP_setTileMapXY(BG_B, TILE_USERINDEX+tl, x, y);
 }
 
-static void c_megamrbc_draw_top_centre(mrb_vm *vm, mrb_value *v, int argc)
+static void c_megamrbc_draw_horizontal(mrb_vm *vm, mrb_value *v, int argc)
 {
   char x = mrbc_integer(v[1]);
   char y = mrbc_integer(v[2]);
-  VDP_setTileMapXY(BG_B, TILE_USERINDEX+tc, x, y);
+  VDP_setTileMapXY(BG_B, TILE_USERINDEX+horiz, x, y);
 }
 
 static void c_megamrbc_draw_top_right(mrb_vm *vm, mrb_value *v, int argc)
 {
   char x = mrbc_integer(v[1]);
   char y = mrbc_integer(v[2]);
-  VDP_setTileMapXY(BG_B, TILE_USERINDEX+tr, x, y);
+  VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(0,1,0,1, TILE_USERINDEX+tl), x, y);
 }
 
-static void c_megamrbc_draw_left(mrb_vm *vm, mrb_value *v, int argc)
+static void c_megamrbc_draw_vertical(mrb_vm *vm, mrb_value *v, int argc)
 {
   char x = mrbc_integer(v[1]);
   char y = mrbc_integer(v[2]);
-  VDP_setTileMapXY(BG_B, TILE_USERINDEX+l, x, y);
-}
-
-static void c_megamrbc_draw_right(mrb_vm *vm, mrb_value *v, int argc)
-{
-  char x = mrbc_integer(v[1]);
-  char y = mrbc_integer(v[2]);
-  VDP_setTileMapXY(BG_B, TILE_USERINDEX+r, x, y);
+  VDP_setTileMapXY(BG_B, TILE_USERINDEX+vert, x, y);
 }
 
 static void c_megamrbc_draw_bottom_left(mrb_vm *vm, mrb_value *v, int argc)
 {
   char x = mrbc_integer(v[1]);
   char y = mrbc_integer(v[2]);
-  VDP_setTileMapXY(BG_B, TILE_USERINDEX+bl, x, y);
-}
-
-static void c_megamrbc_draw_bottom_centre(mrb_vm *vm, mrb_value *v, int argc)
-{
-  char x = mrbc_integer(v[1]);
-  char y = mrbc_integer(v[2]);
-  VDP_setTileMapXY(BG_B, TILE_USERINDEX+bc, x, y);
+  VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(0,1,1,0, TILE_USERINDEX+tl), x, y);
 }
 
 static void c_megamrbc_draw_bottom_right(mrb_vm *vm, mrb_value *v, int argc)
 {
   char x = mrbc_integer(v[1]);
   char y = mrbc_integer(v[2]);
-  VDP_setTileMapXY(BG_B, TILE_USERINDEX+br, x, y);
+  VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(0,1,1,1, TILE_USERINDEX+tl), x, y);
 }
 
 static void c_megamrbc_read_joypad(mrb_vm *vm, mrb_value *v, int argc) {
@@ -272,10 +201,10 @@ static void c_megamrbc_show_cursor(mrb_vm *vm, mrb_value *v, int argc) {
   uint8_t y = mrbc_integer(v[2]);
   uint16_t x_px = x * 8;
   uint16_t y_px = y * 8;
-  VDP_setSpriteFull(0, x_px, y_px, SPRITE_SIZE(1,1), TILE_ATTR_FULL(0,1,0,0,TILE_USERINDEX + br + 1), 1);
-  VDP_setSpriteFull(1, x_px+16, y_px, SPRITE_SIZE(1,1), TILE_ATTR_FULL(0,1,0,1,TILE_USERINDEX + br + 1), 2);
-  VDP_setSpriteFull(2, x_px, y_px+16, SPRITE_SIZE(1,1), TILE_ATTR_FULL(0,1,1,0,TILE_USERINDEX + br + 1), 3);
-  VDP_setSprite(3, x_px+16, y_px+16, SPRITE_SIZE(1,1), TILE_ATTR_FULL(0,1,1,1,TILE_USERINDEX + br + 1));
+  VDP_setSpriteFull(0, x_px, y_px, SPRITE_SIZE(1,1), TILE_ATTR_FULL(0,1,0,0,TILE_USERINDEX + vert + 1), 1);
+  VDP_setSpriteFull(1, x_px+16, y_px, SPRITE_SIZE(1,1), TILE_ATTR_FULL(0,1,0,1,TILE_USERINDEX + vert + 1), 2);
+  VDP_setSpriteFull(2, x_px, y_px+16, SPRITE_SIZE(1,1), TILE_ATTR_FULL(0,1,1,0,TILE_USERINDEX + vert + 1), 3);
+  VDP_setSprite(3, x_px+16, y_px+16, SPRITE_SIZE(1,1), TILE_ATTR_FULL(0,1,1,1,TILE_USERINDEX + vert + 1));
   VDP_updateSprites(4, 1);
 }
 
@@ -284,7 +213,7 @@ static void c_megamrbc_show_tick(mrb_vm *vm, mrb_value *v, int argc) {
   uint8_t y = mrbc_integer(v[2]);
   uint16_t x_px = (x + 1) * 8;
   uint16_t y_px = (y + 1) * 8;
-  VDP_setTileMapXY(BG_B, TILE_USERINDEX+br+2, x, y);
+  VDP_setTileMapXY(BG_B, TILE_USERINDEX + vert + 1 + tck, x, y);
 }
 
 static void c_megamrbc_draw_green_square(mrb_vm *vm, mrb_value *v, int argc) {
@@ -292,7 +221,7 @@ static void c_megamrbc_draw_green_square(mrb_vm *vm, mrb_value *v, int argc) {
   uint8_t y = mrbc_integer(v[2]);
   uint16_t x_px = (x + 1) * 8;
   uint16_t y_px = (y + 1) * 8;
-  VDP_setTileMapXY(BG_B, TILE_USERINDEX+br+3, x, y);
+  VDP_setTileMapXY(BG_B, TILE_USERINDEX + vert + 1 + grn, x, y);
 }
 
 static void c_megamrbc_draw_yellow_square(mrb_vm *vm, mrb_value *v, int argc) {
@@ -300,7 +229,7 @@ static void c_megamrbc_draw_yellow_square(mrb_vm *vm, mrb_value *v, int argc) {
   uint8_t y = mrbc_integer(v[2]);
   uint16_t x_px = (x + 1) * 8;
   uint16_t y_px = (y + 1) * 8;
-  VDP_setTileMapXY(BG_B, TILE_USERINDEX+br+4, x, y);
+  VDP_setTileMapXY(BG_B, TILE_USERINDEX + vert + 1 + ylw, x, y);
 }
 
 static void c_megamrbc_draw_grey_square(mrb_vm *vm, mrb_value *v, int argc) {
@@ -308,7 +237,7 @@ static void c_megamrbc_draw_grey_square(mrb_vm *vm, mrb_value *v, int argc) {
   uint8_t y = mrbc_integer(v[2]);
   uint16_t x_px = (x + 1) * 8;
   uint16_t y_px = (y + 1) * 8;
-  VDP_setTileMapXY(BG_B, TILE_USERINDEX+br+5, x, y);
+  VDP_setTileMapXY(BG_B, TILE_USERINDEX + vert + 1 + gry, x, y);
 }
 
 static void c_megamrbc_clear_screen(mrb_vm *vm, mrb_value *v, int argc) {
@@ -316,8 +245,8 @@ static void c_megamrbc_clear_screen(mrb_vm *vm, mrb_value *v, int argc) {
   uint8_t y = 0;
   for(y = 0; y < 28; y++) {
     for(x = 0; x < 40; x++) {
-      VDP_setTileMapXY(BG_B, TILE_USERINDEX+br+6, x, y);
-      VDP_setTileMapXY(BG_A, TILE_USERINDEX+br+6, x, y);
+      VDP_setTileMapXY(BG_B, TILE_USERINDEX + vert + 1 + blnk, x, y);
+      VDP_setTileMapXY(BG_A, TILE_USERINDEX + vert + 1 + blnk, x, y);
     }
   }
 }
@@ -328,12 +257,10 @@ void make_class(mrb_vm *vm)
   mrb_class *cls = mrbc_define_class(vm, "MegaMrbc", mrbc_class_object);
   mrbc_define_method(vm, cls, "draw_text", c_megamrbc_draw_text);
   mrbc_define_method(vm, cls, "draw_top_left", c_megamrbc_draw_top_left);
-  mrbc_define_method(vm, cls, "draw_top_centre", c_megamrbc_draw_top_centre);
+  mrbc_define_method(vm, cls, "draw_horizontal", c_megamrbc_draw_horizontal);
   mrbc_define_method(vm, cls, "draw_top_right", c_megamrbc_draw_top_right);
-  mrbc_define_method(vm, cls, "draw_left", c_megamrbc_draw_left);
-  mrbc_define_method(vm, cls, "draw_right", c_megamrbc_draw_right);
+  mrbc_define_method(vm, cls, "draw_vertical", c_megamrbc_draw_vertical);
   mrbc_define_method(vm, cls, "draw_bottom_left", c_megamrbc_draw_bottom_left);
-  mrbc_define_method(vm, cls, "draw_bottom_centre", c_megamrbc_draw_bottom_centre);
   mrbc_define_method(vm, cls, "draw_bottom_right", c_megamrbc_draw_bottom_right);
   mrbc_define_method(vm, cls, "read_joypad", c_megamrbc_read_joypad);
   mrbc_define_method(vm, cls, "wait_vblank", c_megamrbc_wait_vblank);
@@ -370,6 +297,17 @@ void mrubyc(uint8_t *mrbbuf)
 
 extern const uint8_t mrbsrc[];
 
+void init_screen() {
+  // Initialise screen
+  VDP_setScreenWidth320();
+  VDP_setHInterrupt(0);
+  VDP_setHilightShadow(0);
+  PAL_setColor(15, 0x0000); // default text colour
+  VDP_setTextPalette(0);
+  PAL_setColor(0, 0x0EEE);
+  VDP_resetSprites();
+}
+
 void set_up_colours() {
   VDP_setPaletteColor(1, RGB24_TO_VDPCOLOR(0x222222)); // dark grey
   VDP_setPaletteColor(2, RGB24_TO_VDPCOLOR(0x6AAA64)); // green
@@ -379,14 +317,7 @@ void set_up_colours() {
 }
 
 int main(void) {
-  // Initialise screen
-  VDP_setScreenWidth320();
-  VDP_setHInterrupt(0);
-  VDP_setHilightShadow(0);
-  PAL_setColor(15, 0x0000); // default text colour
-  VDP_setTextPalette(0);
-  PAL_setColor(0, 0x0EEE);
-  VDP_resetSprites();
+  init_screen();
 
   set_up_colours();
   load_tiles();

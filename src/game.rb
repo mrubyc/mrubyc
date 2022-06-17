@@ -234,12 +234,12 @@ class GameRound
   # draws a 3x3 rectangle with x, y as top-left
   def draw_rect(x, y)
     MegaMrbc.draw_top_left(x, y)
-    MegaMrbc.draw_top_centre(x + 1, y)
+    MegaMrbc.draw_horizontal(x + 1, y)
     MegaMrbc.draw_top_right(x + 2, y)
-    MegaMrbc.draw_left(x, y + 1)
-    MegaMrbc.draw_right(x + 2, y + 1)
+    MegaMrbc.draw_vertical(x, y + 1)
+    MegaMrbc.draw_vertical(x + 2, y + 1)
     MegaMrbc.draw_bottom_left(x, y + 2)
-    MegaMrbc.draw_bottom_centre(x + 1, y + 2)
+    MegaMrbc.draw_horizontal(x + 1, y + 2)
     MegaMrbc.draw_bottom_right(x + 2, y + 2)
   end
 
