@@ -15,9 +15,8 @@ end
 class Game
   def main
     while true do
-      draw_text("press start", 0, 10)
       wait_start
-      draw_text("           ", 0, 10)
+      MegaMrbc.clear_screen
       GameRound.new.game_loop
     end
   end
@@ -25,11 +24,20 @@ class Game
   def wait_start
     state = 0
     prev = 0
+    count = 0
     while true do
+      if count / 30 >= 1 # switch every 0.5s
+        draw_text("Press start", 1, 10)
+      else
+        draw_text("           ", 1, 10)
+      end
       state = joypad_state(0)
       break if (state & 0x80 & ~prev) != 0
+      count = 0 if count > 60 # count resets at 60
+      count += 1
       wait_vblank
     end
+    draw_text("           ", 0, 10)
   end
 end
 
@@ -44,9 +52,10 @@ class GameRound
     @answer = "MRUBY"
     @curr_x = 0
     @curr_y = 0
-    # current buffer is always 5 in length
+    # current_buf is always 5 in length
     @curr_buf = "     "
     @curr_index = 0
+    @green_chars = "     "
     draw_grid(12, 0)
     draw_kb(5, 19)
     draw_tick
@@ -55,26 +64,30 @@ class GameRound
     pad_state = 0
     running = true
     while running do
-      # draw_text("#{@curr_x}, #{@curr_y}", 0, 0)
-      # draw_text("#{@curr_buf}", 0, 2)
       MegaMrbc.show_cursor(@curr_x * 3 + 5, @curr_y * 3 + 19)
       pad_state = joypad_state(0)
       render_guess
-      # draw_text("#{pad_state}", 0, 1)
       move_cursor(pad_state, prev_state)
       won = accept_letter(pad_state, prev_state)
       if won
-        # finish game
-        draw_text("YOU WIN!", 0, 4)
+        render_you_win
         break
-      elsif @curr_index > 2 # 5
-        draw_text("GAME OVER!", 0, 3)
+      elsif @curr_index > 5
+        render_game_over
         break
-      # game over
       end
       prev_state = pad_state
       wait_vblank
     end
+    MegaMrbc.show_cursor(40, 29) # out of screen (hide cursor)
+  end
+
+  def render_you_win
+    draw_text("YOU WIN!", 1, 3)
+  end
+
+  def render_game_over
+    draw_text("GAME OVER!", 1, 3)
   end
 
   def accept_letter(state, prev)
@@ -91,8 +104,6 @@ class GameRound
           @curr_index += 1
         end
       elsif len < 5
-        #draw_text("adding letter #{c}", 0, 6)
-        #draw_text("state, prev #{state}, #{prev}    ", 0, 7)
         @curr_buf[len] = c
       end
     end
@@ -112,11 +123,45 @@ class GameRound
   def colourise_guess
     [0, 1, 2, 3, 4].each do |i|
       if @curr_buf[i] == @answer[i]
-        # green
-        MegaMrbc.draw_green_square(13 + 3 * i, @curr_index * 3 + 1)
+        make_char_green(i)
       elsif @answer.include? @curr_buf[i]
-        # yellow
-        MegaMrbc.draw_yellow_square(13 + 3 * i, @curr_index * 3 + 1)
+        make_char_yellow(i)
+      else
+        make_char_grey(i)
+      end
+    end
+  end
+
+  def make_char_green(i)
+    MegaMrbc.draw_green_square(13 + 3 * i, @curr_index * 3 + 1)
+    [0, 1, 2].each do |y|
+      [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].each do |x|
+        if KEYBOARD[y] && KEYBOARD[y][x] == @curr_buf[i]
+          @green_chars[i] = @curr_buf[i]
+          MegaMrbc.draw_green_square(x * 3 + 6, y * 3 + 20)
+        end
+      end
+    end
+  end
+
+  def make_char_yellow(i)
+    MegaMrbc.draw_yellow_square(13 + 3 * i, @curr_index * 3 + 1)
+    [0, 1, 2].each do |y|
+      [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].each do |x|
+        if KEYBOARD[y] && KEYBOARD[y][x] == @curr_buf[i] && !@green_chars.include?(@curr_buf[i])
+          MegaMrbc.draw_yellow_square(x * 3 + 6, y * 3 + 20)
+        end
+      end
+    end
+  end
+
+  def make_char_grey(i)
+    MegaMrbc.draw_grey_square(13 + 3 * i, @curr_index * 3 + 1)
+    [0, 1, 2].each do |y|
+      [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].each do |x|
+        if KEYBOARD[y] && KEYBOARD[y][x] == @curr_buf[i]
+          MegaMrbc.draw_grey_square(x * 3 + 6, y * 3 + 20)
+        end
       end
     end
   end

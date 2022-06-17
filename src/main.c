@@ -106,8 +106,8 @@ const u32 cursor[8] =
     0x00000000,
     0x00000000,
     0x00000000,
-    0x00000000,
-    0x00000055,
+    0x00000050,
+    0x00000555,
     0x00000050
   };
 
@@ -147,6 +147,30 @@ const u32 yellow[8] =
     0x33333333
   };
 
+const u32 grey[8] =
+  {
+    0x44444444,
+    0x44444444,
+    0x44444444,
+    0x44444444,
+    0x44444444,
+    0x44444444,
+    0x44444444,
+    0x44444444
+  };
+
+const u32 clear[8] =
+  {
+    0x00000000,
+    0x00000000,
+    0x00000000,
+    0x00000000,
+    0x00000000,
+    0x00000000,
+    0x00000000,
+    0x00000000
+  };
+
 void load_tiles() {
   VDP_loadTileData(top_left, TILE_USERINDEX + tl, 1, 0);
   VDP_loadTileData(top_centre, TILE_USERINDEX + tc, 1, 0);
@@ -163,6 +187,8 @@ void load_tiles() {
   VDP_loadTileData( tick, TILE_USERINDEX + br + 2, 1, 0);
   VDP_loadTileData( green, TILE_USERINDEX + br + 3, 1, 0);
   VDP_loadTileData( yellow, TILE_USERINDEX + br + 4, 1, 0);
+  VDP_loadTileData( grey, TILE_USERINDEX + br + 5, 1, 0);
+  VDP_loadTileData( clear, TILE_USERINDEX + br + 6, 1, 0);
 }
 
 static void c_megamrbc_draw_text(mrb_vm *vm, mrb_value *v, int argc)
@@ -277,6 +303,26 @@ static void c_megamrbc_draw_yellow_square(mrb_vm *vm, mrb_value *v, int argc) {
   VDP_setTileMapXY(BG_B, TILE_USERINDEX+br+4, x, y);
 }
 
+static void c_megamrbc_draw_grey_square(mrb_vm *vm, mrb_value *v, int argc) {
+  uint8_t x = mrbc_integer(v[1]);
+  uint8_t y = mrbc_integer(v[2]);
+  uint16_t x_px = (x + 1) * 8;
+  uint16_t y_px = (y + 1) * 8;
+  VDP_setTileMapXY(BG_B, TILE_USERINDEX+br+5, x, y);
+}
+
+static void c_megamrbc_clear_screen(mrb_vm *vm, mrb_value *v, int argc) {
+  uint8_t x = 0;
+  uint8_t y = 0;
+  for(y = 0; y < 28; y++) {
+    for(x = 0; x < 40; x++) {
+      VDP_setTileMapXY(BG_B, TILE_USERINDEX+br+6, x, y);
+      VDP_setTileMapXY(BG_A, TILE_USERINDEX+br+6, x, y);
+    }
+  }
+}
+
+
 void make_class(mrb_vm *vm)
 {
   mrb_class *cls = mrbc_define_class(vm, "MegaMrbc", mrbc_class_object);
@@ -295,6 +341,8 @@ void make_class(mrb_vm *vm)
   mrbc_define_method(vm, cls, "show_tick", c_megamrbc_show_tick);
   mrbc_define_method(vm, cls, "draw_green_square", c_megamrbc_draw_green_square);
   mrbc_define_method(vm, cls, "draw_yellow_square", c_megamrbc_draw_yellow_square);
+  mrbc_define_method(vm, cls, "draw_grey_square", c_megamrbc_draw_grey_square);
+  mrbc_define_method(vm, cls, "clear_screen", c_megamrbc_clear_screen);
 }
 
 void mrubyc(uint8_t *mrbbuf)
