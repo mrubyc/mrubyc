@@ -88,6 +88,8 @@ class GameRound
 
   def render_game_over
     draw_text("GAME OVER!", 1, 3)
+    draw_text("Anwser is:", 1, 5)
+    draw_text("  #{@answer}", 1, 6)
   end
 
   def accept_letter(state, prev)
