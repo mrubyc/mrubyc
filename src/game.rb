@@ -26,6 +26,7 @@ class Game
     prev = 0
     count = 0
     while true do
+      MegaMrbc.call_rand # help random seem more random
       if count / 30 >= 1 # switch every 0.5s
         draw_text("Press start", 1, 10)
       else
@@ -49,7 +50,8 @@ class GameRound
   ]
 
   def game_loop
-    @answer = "MRUBY"
+    # @answer = "MRUBY"
+    @answer = MegaMrbc.random_answer
     @curr_x = 0
     @curr_y = 0
     # current_buf is always 5 in length
@@ -97,19 +99,34 @@ class GameRound
       c = current_char(@curr_x, @curr_y)
       len = @curr_buf.strip.length
       if c == "<"
+        clear_invalid_word
         @curr_buf[len-1] = " " if len > 0
       elsif c == " "
         if len == 5
-          colourise_guess # unimplemented
-          return true if @curr_buf == @answer
-          reset_buf
-          @curr_index += 1
+          if MegaMrbc.is_word?(@curr_buf)
+            colourise_guess
+            return true if @curr_buf == @answer
+            reset_buf
+            @curr_index += 1
+          else
+            render_invalid_word
+          end
         end
       elsif len < 5
         @curr_buf[len] = c
       end
     end
     return false
+  end
+
+  def render_invalid_word
+    draw_text("Not in", 0, 3)
+    draw_text("   word list", 0, 4)
+  end
+
+  def clear_invalid_word
+    draw_text("      ", 0, 3)
+    draw_text("            ", 0, 4)
   end
 
   def current_char(x, y)

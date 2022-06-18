@@ -7,6 +7,9 @@
 
 typedef char s8;
 
+extern const char *wordlist[];
+extern const char *answerlist[];
+
 // Sprites in code
 
 enum rect_parts { tl, horiz, vert };
@@ -54,9 +57,9 @@ const u32 cursor[8] =
     0x00000000,
     0x00000000,
     0x00000000,
-    0x00000050,
-    0x00000555,
-    0x00000050
+    0x00000030,
+    0x00000333,
+    0x00000030
   };
 
 const u32 tick[8] =
@@ -71,7 +74,7 @@ const u32 tick[8] =
     0x00000000
   };
 
-const u32 green[8] =
+const u32 bgcolour[8] =
   {
     0x22222222,
     0x22222222,
@@ -81,30 +84,6 @@ const u32 green[8] =
     0x22222222,
     0x22222222,
     0x22222222
-  };
-
-const u32 yellow[8] =
-  {
-    0x33333333,
-    0x33333333,
-    0x33333333,
-    0x33333333,
-    0x33333333,
-    0x33333333,
-    0x33333333,
-    0x33333333
-  };
-
-const u32 grey[8] =
-  {
-    0x44444444,
-    0x44444444,
-    0x44444444,
-    0x44444444,
-    0x44444444,
-    0x44444444,
-    0x44444444,
-    0x44444444
   };
 
 const u32 blank[8] =
@@ -119,7 +98,7 @@ const u32 blank[8] =
     0x00000000
   };
 
-enum other_sprites_enum { csr, tck, grn, ylw, gry, blnk };
+enum other_sprites_enum { csr, tck, bgcol, blnk };
 
 void load_tiles() {
   VDP_loadTileData(top_left, TILE_USERINDEX + tl, 1, 0);
@@ -128,12 +107,11 @@ void load_tiles() {
 
   VDP_loadTileData( cursor, TILE_USERINDEX + vert + 1 + csr, 1, 0);
   VDP_loadTileData( tick, TILE_USERINDEX + vert + 1 + tck, 1, 0);
-  VDP_loadTileData( green, TILE_USERINDEX + vert + 1 + grn, 1, 0);
-  VDP_loadTileData( yellow, TILE_USERINDEX + vert + 1 + ylw, 1, 0);
-  VDP_loadTileData( grey, TILE_USERINDEX + vert + 1 + gry, 1, 0);
+  VDP_loadTileData( bgcolour, TILE_USERINDEX + vert + 1 + bgcol, 1, 0);
   VDP_loadTileData( blank, TILE_USERINDEX + vert + 1 + blnk, 1, 0);
 }
 
+// C functions to be called from mruby
 static void c_megamrbc_draw_text(mrb_vm *vm, mrb_value *v, int argc)
 {
   char *ptr = mrbc_string_cstr(&v[1]);
@@ -221,7 +199,7 @@ static void c_megamrbc_draw_green_square(mrb_vm *vm, mrb_value *v, int argc) {
   uint8_t y = mrbc_integer(v[2]);
   uint16_t x_px = (x + 1) * 8;
   uint16_t y_px = (y + 1) * 8;
-  VDP_setTileMapXY(BG_B, TILE_USERINDEX + vert + 1 + grn, x, y);
+  VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(0, 0, 0, 0, TILE_USERINDEX + vert + 1 + bgcol), x, y);
 }
 
 static void c_megamrbc_draw_yellow_square(mrb_vm *vm, mrb_value *v, int argc) {
@@ -229,7 +207,7 @@ static void c_megamrbc_draw_yellow_square(mrb_vm *vm, mrb_value *v, int argc) {
   uint8_t y = mrbc_integer(v[2]);
   uint16_t x_px = (x + 1) * 8;
   uint16_t y_px = (y + 1) * 8;
-  VDP_setTileMapXY(BG_B, TILE_USERINDEX + vert + 1 + ylw, x, y);
+  VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(1, 0, 0, 0, TILE_USERINDEX + vert + 1 + bgcol), x, y);
 }
 
 static void c_megamrbc_draw_grey_square(mrb_vm *vm, mrb_value *v, int argc) {
@@ -237,7 +215,7 @@ static void c_megamrbc_draw_grey_square(mrb_vm *vm, mrb_value *v, int argc) {
   uint8_t y = mrbc_integer(v[2]);
   uint16_t x_px = (x + 1) * 8;
   uint16_t y_px = (y + 1) * 8;
-  VDP_setTileMapXY(BG_B, TILE_USERINDEX + vert + 1 + gry, x, y);
+  VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(2, 0, 0, 0, TILE_USERINDEX + vert + 1 + bgcol), x, y);
 }
 
 static void c_megamrbc_clear_screen(mrb_vm *vm, mrb_value *v, int argc) {
@@ -249,6 +227,38 @@ static void c_megamrbc_clear_screen(mrb_vm *vm, mrb_value *v, int argc) {
       VDP_setTileMapXY(BG_A, TILE_USERINDEX + vert + 1 + blnk, x, y);
     }
   }
+}
+
+static void c_megamrbc_is_word(mrb_vm *vm, mrb_value *v, int argc)
+{
+  char *word = mrbc_string_cstr(&v[1]);
+  char **words = wordlist;
+  int isWord = 0;
+  uint8_t value = 0;
+
+  while(*words != NULL) {
+    if(strncmp(*words, word, 5) == 0) {
+      value = 1;
+    }
+    words++;
+  }
+  SET_BOOL_RETURN(value);
+}
+
+static void c_megamrbc_random_answer(mrb_vm *vm, mrb_value *v, int argc) {
+  char **answers = answerlist;
+  uint16_t len = 686; // hardcoded answer list size for now
+
+  uint16_t idx = rand() % len;
+
+  // Uncomment if you want to show answer
+  // VDP_drawText(answers[idx], 0, 11);
+
+  SET_RETURN( mrbc_string_new_cstr( vm, answerlist[idx] ) );
+}
+
+static void c_megamrbc_call_rand(mrb_vm *vm, mrb_value *v, int argc) {
+  rand();
 }
 
 
@@ -270,6 +280,9 @@ void make_class(mrb_vm *vm)
   mrbc_define_method(vm, cls, "draw_yellow_square", c_megamrbc_draw_yellow_square);
   mrbc_define_method(vm, cls, "draw_grey_square", c_megamrbc_draw_grey_square);
   mrbc_define_method(vm, cls, "clear_screen", c_megamrbc_clear_screen);
+  mrbc_define_method(vm, cls, "is_word?", c_megamrbc_is_word);
+  mrbc_define_method(vm, cls, "random_answer", c_megamrbc_random_answer);
+  mrbc_define_method(vm, cls, "call_rand", c_megamrbc_call_rand);
 }
 
 void mrubyc(uint8_t *mrbbuf)
@@ -310,10 +323,13 @@ void init_screen() {
 
 void set_up_colours() {
   VDP_setPaletteColor(1, RGB24_TO_VDPCOLOR(0x222222)); // dark grey
+
+  // background colours
   VDP_setPaletteColor(2, RGB24_TO_VDPCOLOR(0x6AAA64)); // green
-  VDP_setPaletteColor(3, RGB24_TO_VDPCOLOR(0xC9B458)); // yellow
-  VDP_setPaletteColor(4, RGB24_TO_VDPCOLOR(0x888C8E)); // grey
-  VDP_setPaletteColor(5, RGB24_TO_VDPCOLOR(0x2222AA)); // blue
+  VDP_setPaletteColor(2 + 16, RGB24_TO_VDPCOLOR(0xC9B458)); // yellow
+  VDP_setPaletteColor(2 + 32, RGB24_TO_VDPCOLOR(0x888C8E)); // grey
+
+  VDP_setPaletteColor(3, RGB24_TO_VDPCOLOR(0x2222AA)); // blue
 }
 
 int main(void) {
