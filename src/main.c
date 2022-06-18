@@ -5,6 +5,13 @@
 
 #define int8_t s8
 
+#define VFLIP 1
+#define VNOFLIP 0
+#define HFLIP 1
+#define HNOFLIP 0
+#define HIPRIO 1
+#define LOPRIO 0
+
 typedef char s8;
 
 extern const char *wordlist[];
@@ -140,7 +147,7 @@ static void c_megamrbc_draw_top_right(mrb_vm *vm, mrb_value *v, int argc)
 {
   char x = mrbc_integer(v[1]);
   char y = mrbc_integer(v[2]);
-  VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(0,1,0,1, TILE_USERINDEX+tl), x, y);
+  VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(0,HIPRIO,VNOFLIP,HFLIP, TILE_USERINDEX+tl), x, y);
 }
 
 static void c_megamrbc_draw_vertical(mrb_vm *vm, mrb_value *v, int argc)
@@ -154,14 +161,14 @@ static void c_megamrbc_draw_bottom_left(mrb_vm *vm, mrb_value *v, int argc)
 {
   char x = mrbc_integer(v[1]);
   char y = mrbc_integer(v[2]);
-  VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(0,1,1,0, TILE_USERINDEX+tl), x, y);
+  VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(0,HIPRIO,VFLIP,HNOFLIP, TILE_USERINDEX+tl), x, y);
 }
 
 static void c_megamrbc_draw_bottom_right(mrb_vm *vm, mrb_value *v, int argc)
 {
   char x = mrbc_integer(v[1]);
   char y = mrbc_integer(v[2]);
-  VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(0,1,1,1, TILE_USERINDEX+tl), x, y);
+  VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(0,HIPRIO,VFLIP,HFLIP, TILE_USERINDEX+tl), x, y);
 }
 
 static void c_megamrbc_read_joypad(mrb_vm *vm, mrb_value *v, int argc) {
@@ -179,10 +186,10 @@ static void c_megamrbc_show_cursor(mrb_vm *vm, mrb_value *v, int argc) {
   uint8_t y = mrbc_integer(v[2]);
   uint16_t x_px = x * 8;
   uint16_t y_px = y * 8;
-  VDP_setSpriteFull(0, x_px, y_px, SPRITE_SIZE(1,1), TILE_ATTR_FULL(0,1,0,0,TILE_USERINDEX + vert + 1), 1);
-  VDP_setSpriteFull(1, x_px+16, y_px, SPRITE_SIZE(1,1), TILE_ATTR_FULL(0,1,0,1,TILE_USERINDEX + vert + 1), 2);
-  VDP_setSpriteFull(2, x_px, y_px+16, SPRITE_SIZE(1,1), TILE_ATTR_FULL(0,1,1,0,TILE_USERINDEX + vert + 1), 3);
-  VDP_setSprite(3, x_px+16, y_px+16, SPRITE_SIZE(1,1), TILE_ATTR_FULL(0,1,1,1,TILE_USERINDEX + vert + 1));
+  VDP_setSpriteFull(0, x_px, y_px, SPRITE_SIZE(1,1), TILE_ATTR_FULL(0,HIPRIO,VNOFLIP,HNOFLIP,TILE_USERINDEX + vert + 1), 1);
+  VDP_setSpriteFull(1, x_px+16, y_px, SPRITE_SIZE(1,1), TILE_ATTR_FULL(0,HIPRIO,VNOFLIP,HFLIP,TILE_USERINDEX + vert + 1), 2);
+  VDP_setSpriteFull(2, x_px, y_px+16, SPRITE_SIZE(1,1), TILE_ATTR_FULL(0,HIPRIO,VFLIP,HNOFLIP,TILE_USERINDEX + vert + 1), 3);
+  VDP_setSprite(3, x_px+16, y_px+16, SPRITE_SIZE(1,1), TILE_ATTR_FULL(0,HIPRIO,VFLIP,HFLIP,TILE_USERINDEX + vert + 1));
   VDP_updateSprites(4, 1);
 }
 
@@ -199,7 +206,7 @@ static void c_megamrbc_draw_green_square(mrb_vm *vm, mrb_value *v, int argc) {
   uint8_t y = mrbc_integer(v[2]);
   uint16_t x_px = (x + 1) * 8;
   uint16_t y_px = (y + 1) * 8;
-  VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(0, 0, 0, 0, TILE_USERINDEX + vert + 1 + bgcol), x, y);
+  VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(0, LOPRIO, VNOFLIP, HNOFLIP, TILE_USERINDEX + vert + 1 + bgcol), x, y);
 }
 
 static void c_megamrbc_draw_yellow_square(mrb_vm *vm, mrb_value *v, int argc) {
@@ -207,7 +214,7 @@ static void c_megamrbc_draw_yellow_square(mrb_vm *vm, mrb_value *v, int argc) {
   uint8_t y = mrbc_integer(v[2]);
   uint16_t x_px = (x + 1) * 8;
   uint16_t y_px = (y + 1) * 8;
-  VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(1, 0, 0, 0, TILE_USERINDEX + vert + 1 + bgcol), x, y);
+  VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(1, LOPRIO, VNOFLIP, HNOFLIP, TILE_USERINDEX + vert + 1 + bgcol), x, y);
 }
 
 static void c_megamrbc_draw_grey_square(mrb_vm *vm, mrb_value *v, int argc) {
@@ -215,7 +222,7 @@ static void c_megamrbc_draw_grey_square(mrb_vm *vm, mrb_value *v, int argc) {
   uint8_t y = mrbc_integer(v[2]);
   uint16_t x_px = (x + 1) * 8;
   uint16_t y_px = (y + 1) * 8;
-  VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(2, 0, 0, 0, TILE_USERINDEX + vert + 1 + bgcol), x, y);
+  VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(2, LOPRIO, VNOFLIP, HNOFLIP, TILE_USERINDEX + vert + 1 + bgcol), x, y);
 }
 
 static void c_megamrbc_clear_screen(mrb_vm *vm, mrb_value *v, int argc) {
