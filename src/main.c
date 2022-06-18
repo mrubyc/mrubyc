@@ -81,12 +81,48 @@ const u32 tick[8] =
     0x00000000
   };
 
-const u32 bgcolour[8] =
+const u32 bg_full[8] =
   {
     0x22222222,
     0x22222222,
     0x22222222,
     0x22222222,
+    0x22222222,
+    0x22222222,
+    0x22222222,
+    0x22222222
+  };
+
+const u32 bg_left[8] =
+  {
+    0x00002222,
+    0x00002222,
+    0x00002222,
+    0x00002222,
+    0x00002222,
+    0x00002222,
+    0x00002222,
+    0x00002222
+  };
+
+const u32 bg_top_left[8] =
+  {
+    0x00000000,
+    0x00000000,
+    0x00000000,
+    0x00000000,
+    0x00002222,
+    0x00002222,
+    0x00002222,
+    0x00002222
+  };
+
+const u32 bg_top[8] =
+  {
+    0x00000000,
+    0x00000000,
+    0x00000000,
+    0x00000000,
     0x22222222,
     0x22222222,
     0x22222222,
@@ -105,7 +141,7 @@ const u32 blank[8] =
     0x00000000
   };
 
-enum other_sprites_enum { csr, tck, bgcol, blnk };
+enum other_sprites_enum { csr, tck, bgfull, bgl, bgtl, bgt, blnk };
 
 void load_tiles() {
   VDP_loadTileData(top_left, TILE_USERINDEX + tl, 1, 0);
@@ -114,7 +150,10 @@ void load_tiles() {
 
   VDP_loadTileData( cursor, TILE_USERINDEX + vert + 1 + csr, 1, 0);
   VDP_loadTileData( tick, TILE_USERINDEX + vert + 1 + tck, 1, 0);
-  VDP_loadTileData( bgcolour, TILE_USERINDEX + vert + 1 + bgcol, 1, 0);
+  VDP_loadTileData( bg_full, TILE_USERINDEX + vert + 1 + bgfull, 1, 0);
+  VDP_loadTileData( bg_left, TILE_USERINDEX + vert + 1 + bgl, 1, 0);
+  VDP_loadTileData( bg_top_left, TILE_USERINDEX + vert + 1 + bgtl, 1, 0);
+  VDP_loadTileData( bg_top, TILE_USERINDEX + vert + 1 + bgt, 1, 0);
   VDP_loadTileData( blank, TILE_USERINDEX + vert + 1 + blnk, 1, 0);
 }
 
@@ -133,42 +172,42 @@ static void c_megamrbc_draw_top_left(mrb_vm *vm, mrb_value *v, int argc)
 {
   char x = mrbc_integer(v[1]);
   char y = mrbc_integer(v[2]);
-  VDP_setTileMapXY(BG_B, TILE_USERINDEX+tl, x, y);
+  VDP_setTileMapXY(BG_A, TILE_USERINDEX+tl, x, y);
 }
 
 static void c_megamrbc_draw_horizontal(mrb_vm *vm, mrb_value *v, int argc)
 {
   char x = mrbc_integer(v[1]);
   char y = mrbc_integer(v[2]);
-  VDP_setTileMapXY(BG_B, TILE_USERINDEX+horiz, x, y);
+  VDP_setTileMapXY(BG_A, TILE_USERINDEX+horiz, x, y);
 }
 
 static void c_megamrbc_draw_top_right(mrb_vm *vm, mrb_value *v, int argc)
 {
   char x = mrbc_integer(v[1]);
   char y = mrbc_integer(v[2]);
-  VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(0,HIPRIO,VNOFLIP,HFLIP, TILE_USERINDEX+tl), x, y);
+  VDP_setTileMapXY(BG_A, TILE_ATTR_FULL(0,HIPRIO,VNOFLIP,HFLIP, TILE_USERINDEX+tl), x, y);
 }
 
 static void c_megamrbc_draw_vertical(mrb_vm *vm, mrb_value *v, int argc)
 {
   char x = mrbc_integer(v[1]);
   char y = mrbc_integer(v[2]);
-  VDP_setTileMapXY(BG_B, TILE_USERINDEX+vert, x, y);
+  VDP_setTileMapXY(BG_A, TILE_USERINDEX+vert, x, y);
 }
 
 static void c_megamrbc_draw_bottom_left(mrb_vm *vm, mrb_value *v, int argc)
 {
   char x = mrbc_integer(v[1]);
   char y = mrbc_integer(v[2]);
-  VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(0,HIPRIO,VFLIP,HNOFLIP, TILE_USERINDEX+tl), x, y);
+  VDP_setTileMapXY(BG_A, TILE_ATTR_FULL(0,HIPRIO,VFLIP,HNOFLIP, TILE_USERINDEX+tl), x, y);
 }
 
 static void c_megamrbc_draw_bottom_right(mrb_vm *vm, mrb_value *v, int argc)
 {
   char x = mrbc_integer(v[1]);
   char y = mrbc_integer(v[2]);
-  VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(0,HIPRIO,VFLIP,HFLIP, TILE_USERINDEX+tl), x, y);
+  VDP_setTileMapXY(BG_A, TILE_ATTR_FULL(0,HIPRIO,VFLIP,HFLIP, TILE_USERINDEX+tl), x, y);
 }
 
 static void c_megamrbc_read_joypad(mrb_vm *vm, mrb_value *v, int argc) {
@@ -201,28 +240,32 @@ static void c_megamrbc_show_tick(mrb_vm *vm, mrb_value *v, int argc) {
   VDP_setTileMapXY(BG_B, TILE_USERINDEX + vert + 1 + tck, x, y);
 }
 
-static void c_megamrbc_draw_green_square(mrb_vm *vm, mrb_value *v, int argc) {
+static void draw_colour_square(uint8_t palette_num, mrb_vm *vm, mrb_value *v, int argc) {
   uint8_t x = mrbc_integer(v[1]);
   uint8_t y = mrbc_integer(v[2]);
   uint16_t x_px = (x + 1) * 8;
   uint16_t y_px = (y + 1) * 8;
-  VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(0, LOPRIO, VNOFLIP, HNOFLIP, TILE_USERINDEX + vert + 1 + bgcol), x, y);
+  VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(palette_num, LOPRIO, VNOFLIP, HNOFLIP, TILE_USERINDEX + vert + 1 + bgtl), x-1, y-1);
+  VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(palette_num, LOPRIO, VNOFLIP, HNOFLIP, TILE_USERINDEX + vert + 1 + bgt), x, y-1);
+  VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(palette_num, LOPRIO, VNOFLIP, HFLIP, TILE_USERINDEX + vert + 1 + bgtl), x+1, y-1);
+  VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(palette_num, LOPRIO, VNOFLIP, HNOFLIP, TILE_USERINDEX + vert + 1 + bgl), x-1, y);
+  VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(palette_num, LOPRIO, VNOFLIP, HNOFLIP, TILE_USERINDEX + vert + 1 + bgfull), x, y);
+  VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(palette_num, LOPRIO, VNOFLIP, HFLIP, TILE_USERINDEX + vert + 1 + bgl), x+1, y);
+  VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(palette_num, LOPRIO, VFLIP, HNOFLIP, TILE_USERINDEX + vert + 1 + bgtl), x-1, y+1);
+  VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(palette_num, LOPRIO, VFLIP, HNOFLIP, TILE_USERINDEX + vert + 1 + bgt), x, y+1);
+  VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(palette_num, LOPRIO, VFLIP, HFLIP, TILE_USERINDEX + vert + 1 + bgtl), x+1, y+1);
+}
+
+static void c_megamrbc_draw_green_square(mrb_vm *vm, mrb_value *v, int argc) {
+  draw_colour_square(0, vm, v, argc);
 }
 
 static void c_megamrbc_draw_yellow_square(mrb_vm *vm, mrb_value *v, int argc) {
-  uint8_t x = mrbc_integer(v[1]);
-  uint8_t y = mrbc_integer(v[2]);
-  uint16_t x_px = (x + 1) * 8;
-  uint16_t y_px = (y + 1) * 8;
-  VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(1, LOPRIO, VNOFLIP, HNOFLIP, TILE_USERINDEX + vert + 1 + bgcol), x, y);
+  draw_colour_square(1, vm, v, argc);
 }
 
 static void c_megamrbc_draw_grey_square(mrb_vm *vm, mrb_value *v, int argc) {
-  uint8_t x = mrbc_integer(v[1]);
-  uint8_t y = mrbc_integer(v[2]);
-  uint16_t x_px = (x + 1) * 8;
-  uint16_t y_px = (y + 1) * 8;
-  VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(2, LOPRIO, VNOFLIP, HNOFLIP, TILE_USERINDEX + vert + 1 + bgcol), x, y);
+  draw_colour_square(2, vm, v, argc);
 }
 
 static void c_megamrbc_clear_screen(mrb_vm *vm, mrb_value *v, int argc) {
@@ -292,7 +335,7 @@ void make_class(mrb_vm *vm)
   mrbc_define_method(vm, cls, "call_rand", c_megamrbc_call_rand);
 }
 
-void mrubyc(uint8_t *mrbbuf)
+void mrubyc(const uint8_t *mrbbuf)
 {
   mrbc_init_global();
   mrbc_init_class();
