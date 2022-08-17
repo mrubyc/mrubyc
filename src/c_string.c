@@ -597,7 +597,7 @@ static void c_string_insert(struct VM *vm, mrbc_value v[], int argc)
     return;
   }
 
-  int len3 = len1 + len2 - len;			// filal length.
+  int len3 = len1 + len2 - len;			// final length.
   uint8_t *str = v->string->data;
   if( len1 < len3 ) {
     str = mrbc_realloc(vm, str, len3+1);	// expand
