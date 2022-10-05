@@ -33,4 +33,45 @@ class String
     self
   end
 
+  #
+  # ljust
+  #
+  def ljust(width, padding = ' ')
+    __ljust_rjust_argcheck(width, padding)
+    result = self.dup
+    return result if width <= length
+    while true
+      padding.each_char do |char|
+        result << char
+        return result if result.length == width
+      end
+    end
+  end
+
+  #
+  # rjust
+  #
+  def rjust(width, padding = ' ')
+    __ljust_rjust_argcheck(width, padding)
+    return self.dup if width <= length
+    rlen = width - length
+    rstr = ""
+    while true
+      rstr << padding
+      break if rlen <= rstr.length
+    end
+    rstr[0, rlen] + self
+  end
+
+  # private
+
+    def __ljust_rjust_argcheck(width, padding)
+      if padding.length == 0
+        raise ArgumentError, "zero width padding"
+      end
+      unless width.kind_of?(Integer)
+        raise TypeError, "no implicit conversion into Integer"
+      end
+    end
+
 end
