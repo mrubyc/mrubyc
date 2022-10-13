@@ -328,7 +328,7 @@ int mrbc_p_sub(const mrbc_value *v)
 
   case MRBC_TT_SYMBOL:{
     const char *s = mrbc_symbol_cstr( v );
-    char *fmt = strchr(s, ':') ? "\":%s\"" : ":%s";
+    const char *fmt = strchr(s, ':') ? "\":%s\"" : ":%s";
     mrbc_printf(fmt, s);
   } break;
 
@@ -363,8 +363,8 @@ int mrbc_p_sub(const mrbc_value *v)
 
 #if 0
   // display reference counter
-  if( mrbc_type(*v) >= MRBC_TT_OBJECT ) {
-    mrbc_printf("(%d)", v->instance->ref_count);
+  if( mrbc_type(*v) > MRBC_TT_INC_DEC_THRESHOLD ) {
+    mrbc_printf("(%d)", v->obj->ref_count);
   }
 #endif
 
