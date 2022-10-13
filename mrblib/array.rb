@@ -113,6 +113,7 @@ class Array
 
     raise ArgumentError
   end
+  alias find_index index
 
   #
   # reject!
