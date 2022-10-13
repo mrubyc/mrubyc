@@ -807,35 +807,20 @@ static void c_array_size(struct VM *vm, mrbc_value v[], int argc)
 
 
 //================================================================
-/*! (method) index
+/*! (method) include?
 */
-static void c_array_index(struct VM *vm, mrbc_value v[], int argc)
+static void c_array_include(struct VM *vm, mrbc_value v[], int argc)
 {
-  mrbc_value *value = &v[1];
-  mrbc_value *data = v->array->data;
-  int n = v->array->n_stored;
+  const mrbc_value *value = &v[1];
+  const mrbc_value *data = v[0].array->data;
+  int n = v[0].array->n_stored;
   int i;
 
   for( i = 0; i < n; i++ ) {
     if( mrbc_compare(&data[i], value) == 0 ) break;
   }
 
-  if( i < n ) {
-    SET_INT_RETURN(i);
-  } else {
-    SET_NIL_RETURN();
-  }
-}
-
-
-//================================================================
-/*! (method) include?
-*/
-static void c_array_include(struct VM *vm, mrbc_value v[], int argc)
-{
-  c_array_index(vm, v, argc);
-
-  SET_BOOL_RETURN( mrbc_type(v[0]) == MRBC_TT_INTEGER );
+  SET_BOOL_RETURN( i < n );
 }
 
 
@@ -1115,7 +1100,6 @@ static void c_array_join(struct VM *vm, mrbc_value v[], int argc)
   METHOD( "size",	c_array_size )
   METHOD( "length",	c_array_size )
   METHOD( "count",	c_array_size )
-  METHOD( "index",	c_array_index )
   METHOD( "include?",	c_array_include )
   METHOD( "first",	c_array_first )
   METHOD( "last",	c_array_last )
