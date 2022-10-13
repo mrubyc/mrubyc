@@ -10,6 +10,37 @@
 class Array
 
   #
+  # any?
+  #
+  def any?( *pattern, &block )
+    i = 0
+
+    # case of any? {|item| ... } -> bool
+    if block
+      while i < length
+        return true  if yield self[i]
+        i += 1
+      end
+
+    # case of any?(pattern) -> bool
+    elsif !pattern.empty?
+      while i < length
+        return true  if pattern[0] === self[i]
+        i += 1
+      end
+
+    # case of any? -> bool
+    else
+      while i < length
+        return true  if self[i]
+        i += 1
+      end
+    end
+
+    return false
+  end
+
+  #
   # collect
   #
   def collect
