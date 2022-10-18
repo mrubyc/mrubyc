@@ -107,7 +107,7 @@ mrbc_class * mrbc_define_class(struct VM *vm, const char *name, mrbc_class *supe
   if( vm && mrbc_type(vm->cur_regs[0]) == MRBC_TT_CLASS ) {
     // For nested class
     //   so, not in TOPLEVEL, register to class constant
-    assert(vm->target_class);
+    assert(vm->target_class == vm->cur_regs[0].cls );
     mrbc_set_class_const(vm->target_class, sym_id,
 			 &(mrbc_value){.tt = MRBC_TT_CLASS, .cls = cls});
   } else {
