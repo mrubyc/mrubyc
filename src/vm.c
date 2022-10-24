@@ -2429,6 +2429,8 @@ static inline void op_class( mrbc_vm *vm, mrbc_value *regs EXT )
 
   const char *class_name = mrbc_irep_symbol_cstr(vm->cur_irep, b);
   mrbc_class *super = (regs[a+1].tt == MRBC_TT_CLASS) ? regs[a+1].cls : 0;
+
+  // check unsupported pattern.
   if( super ) {
     int i;
     for( i = 1; i < MRBC_TT_MAXVAL; i++ ) {
@@ -2439,8 +2441,9 @@ static inline void op_class( mrbc_vm *vm, mrbc_value *regs EXT )
     }
   }
 
+  // define a new class (or get an already defined class)
   mrbc_class *cls = mrbc_define_class(vm, class_name, super);
-  if( !cls ) return;		// ENOMEM
+  if( !cls ) return;
 
   // (note)
   //  regs[a] was set to NIL by compiler. So, no need to release regs[a].
