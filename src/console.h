@@ -71,6 +71,7 @@ typedef struct RPrintf {
 /***** Global variables *****************************************************/
 /***** Function prototypes **************************************************/
 void mrbc_putchar(char c);
+void mrbc_print_nested_symbol(mrbc_sym sym_id);
 void mrbc_nprint(const char *str, int size);
 void mrbc_printf(const char *fstr, ...);
 void mrbc_asprintf(char **buf, int bufsiz, const char *fstr, ...);

@@ -36,6 +36,7 @@
 #include "c_array.h"
 #include "c_hash.h"
 #include "c_range.h"
+#include "global.h"
 
 
 /***** Constant values ******************************************************/
@@ -107,50 +108,6 @@ static int mrbc_printf_sub_output_arg( mrbc_printf_t *pf, va_list *ap )
 }
 
 
-//================================================================
-/*! display class name with nested
-
-  @param  sym_id	class's symbol id to print.
-  @note
-    see make_class_const_s() function in global.c
-*/
-static void mrbc_print_sub_classname( mrbc_sym sym_id )
-{
-  const char *s = mrbc_symid_to_str(sym_id);
-  assert(s);
-
-  // normal case
-  if( 'A' <= s[0] && s[0] <= 'Z' ) {
-    mrbc_printf("%s", s );
-    return;
-  }
-
-  // nested case
-  if( '0' <= s[0] && s[0] <= ('9'+6) ) {
-    static const int w = sizeof(mrbc_sym) * 2;
-    assert( strlen(s) >= w );
-
-    mrbc_sym id = 0;
-    int i;
-    for( i = 0; i < w; i++ ) {
-      id = (id << 4) + (s[i] - '0');
-    }
-    mrbc_print_sub_classname( id );
-    mrbc_print("::");
-
-    id = 0;
-    for( i = 0; i < w; i++ ) {
-      id = (id << 4) + (s[i + w] - '0');
-    }
-    mrbc_print_sub_classname( id );
-    return;
-  }
-
-  // else
-  assert(!"Failed. Internal const table data was broken.");
-}
-
-
 /***** Global functions *****************************************************/
 
 //================================================================
@@ -171,6 +128,29 @@ void mrbc_putchar(char c)
 #else
     hal_write(1, &c, 1);
 #endif
+}
+
+
+//================================================================
+/*! display symbol name with nested.
+
+  @param  sym_id	symbol ID to print.
+*/
+void mrbc_print_nested_symbol(mrbc_sym sym_id)
+{
+  // normal case
+  if( !mrbc_is_nested_symid(sym_id) ) {
+    mrbc_printf("%s", mrbc_symid_to_str(sym_id));
+    return;
+  }
+
+  // nested case
+  mrbc_sym id1, id2;
+  mrbc_separate_nested_symid( sym_id, &id1, &id2 );
+
+  mrbc_print_nested_symbol( id1 );
+  mrbc_print("::");
+  mrbc_print_nested_symbol( id2 );
 }
 
 
@@ -460,11 +440,11 @@ int mrbc_print_sub(const mrbc_value *v)
   case MRBC_TT_FLOAT:	mrbc_printf("%g", v->d);	break;
 #endif
   case MRBC_TT_SYMBOL:  mrbc_print(mrbc_symbol_cstr(v));		break;
-  case MRBC_TT_CLASS:	mrbc_print_sub_classname( v->cls->sym_id );	break;
+  case MRBC_TT_CLASS:	mrbc_print_nested_symbol( v->cls->sym_id );	break;
 
   case MRBC_TT_OBJECT:
     mrbc_printf("#<");
-    mrbc_print_sub_classname( find_class_by_object(v)->sym_id );
+    mrbc_print_nested_symbol( find_class_by_object(v)->sym_id );
     mrbc_printf(":%08x>", v->instance );
     break;
 
