@@ -2404,6 +2404,21 @@ static inline void op_range_exc( mrbc_vm *vm, mrbc_value *regs EXT )
 
 
 //================================================================
+/*! OP_OCLASS
+
+  R[a] = ::Object
+*/
+static inline void op_oclass( mrbc_vm *vm, mrbc_value *regs EXT )
+{
+  FETCH_B();
+
+  mrbc_decref(&regs[a]);
+  regs[a].tt = MRBC_TT_CLASS;
+  regs[a].cls = mrbc_class_object;
+}
+
+
+//================================================================
 /*! OP_CLASS
 
   R[a] = newclass(R[a],Syms[b],R[a+1])
@@ -2726,7 +2741,7 @@ int mrbc_vm_run( struct VM *vm )
     case OP_METHOD:     op_method     (vm, regs EXT); break;
     case OP_RANGE_INC:  op_range_inc  (vm, regs EXT); break;
     case OP_RANGE_EXC:  op_range_exc  (vm, regs EXT); break;
-    case OP_OCLASS:     op_unsupported(vm, regs EXT); break; // not implemented.
+    case OP_OCLASS:     op_oclass     (vm, regs EXT); break;
     case OP_CLASS:      op_class      (vm, regs EXT); break;
     case OP_MODULE:     op_unsupported(vm, regs EXT); break; // not implemented.
     case OP_EXEC:       op_exec       (vm, regs EXT); break;
