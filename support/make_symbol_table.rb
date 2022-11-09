@@ -11,23 +11,20 @@
 # ruby make_symbol_table.rb [option]
 #
 #  -o output filename.
-#  -i input symbol list filename.
+#  -i input filename.
 #  -a Targets all .c files in the current directory.
 #  -v verbose
+#  --path-c /path/to/*.c
+#  --path-rb /path/to/*.rb
 #
 
 require "optparse"
+require "ripper"
 require_relative "common_sub"
 
 APPEND_SYMBOL = [
   "",   # To make zero an error (reserved) value.
-
-  "+", "-", "*", "/", "initialize", "collect", "map",
-  "collect!", "map!", "delete_if", "each", "each_index",
-  "each_with_index", "reject!", "reject", "sort!", "sort", "times",
-  "loop", "each_byte", "each_char",
-  "PI", "E",
-  "RUBY_VERSION", "MRUBY_VERSION", "MRUBYC_VERSION", "RUBY_ENGINE",
+  "+", "-", "*", "/", "initialize", "PI", "E",
 ]
 
 
@@ -35,7 +32,7 @@ APPEND_SYMBOL = [
 # verbose print
 #
 def vp( s, level = 1 )
-  STDERR.puts s  if $options[:v] >= level
+  STDERR.puts s  if $opts[:v] >= level
 end
 
 
@@ -44,12 +41,14 @@ end
 #
 def get_options
   opt = OptionParser.new
-  ret = {:i=>[], :v=>0}
+  ret = {:in_files=>[], :path_c=>[], :path_rb=>[], :v=>0}
 
-  opt.on("-i input file") {|v| ret[:i] << v }
-  opt.on("-o output file") {|v| ret[:o] = v }
-  opt.on("-a", "targets all .c files") {|v| ret[:a] = v }
-  opt.on("-v", "verbose mode") {|v| ret[:v] += 1 }
+  opt.on("-i input file(s)") {|v| ret[:in_files] << v }
+  opt.on("-o output file") {|v| ret[:out_file] = v }
+  opt.on("-a", "--all", "targets all .c files") {|v| ret[:all] = v }
+  opt.on("-v", "--verbose", "verbose mode") {|v| ret[:v] += 1 }
+  opt.on("--path-c path", "path to target .c files") {|v| ret[:path_c] << v}
+  opt.on("--path-rb path", "path to target .rb files") {|v| ret[:path_rb] << v}
   opt.parse!(ARGV)
   return ret
 
@@ -60,9 +59,39 @@ end
 
 
 ##
+# find source files
+#
+def find_sources( opts, mode )
+  case mode
+  when :c
+    ext = ".c"
+    glob_ext = "*.c"
+    opt_path = :path_c
+  when :rb
+    ext = ".rb"
+    glob_ext = "*.rb"
+    opt_path = :path_rb
+  else
+    raise "mode error."
+  end
+
+  ret = opts[:in_files].select {|filename|
+    File.extname(filename) == ext
+  }
+
+  ret.concat( Dir.glob( glob_ext))  if opts[:all]
+  opts[opt_path].each {|path|
+    ret.concat( Dir.glob( File.join( path, glob_ext )))
+  }
+
+  return ret
+end
+
+
+##
 # read *.c file and extract symbols.
 #
-def fetch_builtin_symbol( filename )
+def fetch_builtin_symbol_c( filename )
   ret = []
   vp("Process '#{filename}'")
 
@@ -84,12 +113,64 @@ end
 
 
 ##
+# read *.rb file and extract symbols.
+#
+def fetch_builtin_symbol_rb( filename )
+  ret = []
+  vp("Process '#{filename}'")
+
+  File.open( filename ) {|file|
+    s_exp = Ripper.sexp( File.read(file))
+    _parse_rb_sexp( s_exp[1], ret )
+  }
+
+  return ret
+end
+
+
+##
+# (sub) parse ruby s-exp
+#
+def _parse_rb_sexp( s_exp, res )
+  s_exp.each {|s_exp1|
+    case s_exp1[0]
+    when :def, :alias
+      s_exp2 = s_exp1.flatten
+      idx = s_exp2.find_index(:@ident)
+      if idx
+        vp("Found method #{s_exp2[idx+1]}")
+        res << s_exp2[idx+1]
+      end
+
+    when :class
+      s_exp1.each {|s_exp2|
+        next if !s_exp2.is_a?(Array)
+
+        if s_exp2[0] == :const_ref && s_exp2[1][0] == :@const
+          vp("Found class #{s_exp2[1][1]}")
+          res << s_exp2[1][1]
+        elsif s_exp2[0] == :bodystmt
+          _parse_rb_sexp( s_exp2[1], res )
+        end
+      }
+
+    when :assign
+      if s_exp1[1][0] == :var_field && s_exp1[1][1][0] == :@const
+        vp("Found constant #{s_exp1[1][1][1]}")
+        res << s_exp1[1][1][1]
+      end
+    end
+  }
+end
+
+
+##
 # write symbol table file.
 #
 def write_file( all_symbols )
-  vp("Output file '#{$options[:o] || "STDOUT"}'")
+  vp("Output file '#{$opts[:out_file] || "STDOUT"}'")
   begin
-    file = $options[:o] ? File.open( $options[:o], "w" ) : $stdout
+    file = $opts[:out_file] ? File.open( $opts[:out_file], "w" ) : $stdout
   rescue Errno::ENOENT
     puts "File can't open. #{output_filename}"
     exit 1
@@ -105,7 +186,7 @@ def write_file( all_symbols )
   all_symbols.each_with_index {|s,i|
     s1 = %!  "#{s}",!
     s1 << "\t" * ([3 - s1.size / 8, 1].max)
-    s1 << "// MRBC_SYMID_#{rename_for_symbol(s)} = #{i}"
+    s1 << "// MRBC_SYMID_#{rename_for_symbol(s)} = #{i}(0x#{i.to_s(16)})"
     file.puts s1
   }
   file.puts "};"
@@ -123,30 +204,32 @@ def write_file( all_symbols )
   file.puts "#define MRBC_SYM(sym) MRBC_SYMID_##sym"
   file.puts "#endif"
 
-  file.close  if $options[:o]
+  file.close  if $opts[:out_file]
 end
 
 
 ##
 # main
 #
-$options = get_options()
-exit if !$options
+$opts = get_options()
+exit if !$opts
 
-# read source file(s)
-if !$options[:i].empty?
-  source_files = $options[:i]
-elsif $options[:a]
-  source_files = Dir.glob("*.c")
-else
+source_files_c = find_sources( $opts, :c )
+source_files_rb = find_sources( $opts, :rb )
+if source_files_c.empty? && source_files_rb.empty?
   STDERR.puts "File not given."
   exit 1
 end
 
 all_symbols = []
-source_files.each {|filename|
-  all_symbols.concat( fetch_builtin_symbol( filename ) )
+source_files_c.each {|filename|
+  all_symbols.concat( fetch_builtin_symbol_c( filename ) )
 }
+
+source_files_rb.each {|filename|
+  all_symbols.concat( fetch_builtin_symbol_rb( filename ) )
+}
+
 all_symbols.concat( APPEND_SYMBOL )
 all_symbols.sort!
 all_symbols.uniq!

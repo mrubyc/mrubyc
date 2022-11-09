@@ -53,7 +53,7 @@ AUTOGEN_METHOD_TABLE = _autogen_class_array.h _autogen_class_exception.h \
 #AUTOGEN_METHOD_SRCS = c_array.c c_hash.c c_math.c c_numeric.c c_object.c c_range.c c_string.c error.c
 
 $(AUTOGEN_SYMBOL_TABLE): $(AUTOGEN_METHOD_TABLE)
-	$(MAKE_SYMBOL_TABLE) -a -o $(AUTOGEN_SYMBOL_TABLE)
+	$(MAKE_SYMBOL_TABLE) --path-c . --path-rb ../mrblib -o $(AUTOGEN_SYMBOL_TABLE)
 
 _autogen_class_array.h:		$(AUTOGEN_METHOD_SRCS)
 	$(MAKE_METHOD_TABLE) c_array.c
