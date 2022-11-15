@@ -345,7 +345,12 @@ void mrbc_p(const mrbc_value *v)
  */
 int mrbc_p_sub(const mrbc_value *v)
 {
-  switch( mrbc_type(*v) ){
+  if( !v ) {
+    mrbc_print("(null)");	// wrong things are happen. but it give me a clue.
+    return 0;
+  }
+
+  switch( mrbc_type(*v) ) {
   case MRBC_TT_NIL:
     mrbc_print("nil");
     break;
