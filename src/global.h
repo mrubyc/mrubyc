@@ -18,6 +18,7 @@
 /***** System headers *******************************************************/
 /***** Local headers ********************************************************/
 #include "value.h"
+#include "symbol.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,10 +36,23 @@ mrbc_value *mrbc_get_class_const(const struct RClass *cls, mrbc_sym sym_id);
 int mrbc_set_global(mrbc_sym sym_id, mrbc_value *v);
 mrbc_value *mrbc_get_global(mrbc_sym sym_id);
 void mrbc_global_clear_vm_id(void);
+void mrbc_separate_nested_symid(mrbc_sym sym_id, mrbc_sym *id1, mrbc_sym *id2);
 void mrbc_global_debug_dump(void);
 
 
 /***** Inline functions *****************************************************/
+//================================================================
+/*! is nested symbol ID ?
+
+  @param  sym_id	target symbol ID.
+  @return int		result.
+*/
+static inline int mrbc_is_nested_symid(mrbc_sym sym_id)
+{
+  const char *s = mrbc_symid_to_str(sym_id);
+
+  return ('0' <= s[0] && s[0] <= ('9'+6));
+}
 
 #ifdef __cplusplus
 }

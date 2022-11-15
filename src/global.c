@@ -44,7 +44,7 @@ static mrbc_kv_handle handle_global;	//!< for global variables.
   @param  id1		parent class symbol id
   @param  id2		target symbol id
 */
-static void make_class_const_s( char *buf, mrbc_sym id1, mrbc_sym id2 )
+static void make_nested_symbol_s( char *buf, mrbc_sym id1, mrbc_sym id2 )
 {
   static const int w = sizeof(mrbc_sym) * 2;
   char *p = buf + w * 2;
@@ -104,7 +104,7 @@ int mrbc_set_class_const( const struct RClass *cls, mrbc_sym sym_id, mrbc_value 
 {
   char buf[sizeof(mrbc_sym)*4+1];
 
-  make_class_const_s( buf, cls->sym_id, sym_id );
+  make_nested_symbol_s( buf, cls->sym_id, sym_id );
   mrbc_sym id = mrbc_symbol( mrbc_symbol_new( 0, buf ));
   if( v->tt == MRBC_TT_CLASS ) {
     v->cls->sym_id = id;
@@ -137,7 +137,7 @@ mrbc_value * mrbc_get_class_const( const struct RClass *cls, mrbc_sym sym_id )
 {
   char buf[sizeof(mrbc_sym)*4+1];
 
-  make_class_const_s( buf, cls->sym_id, sym_id );
+  make_nested_symbol_s( buf, cls->sym_id, sym_id );
   mrbc_sym id = mrbc_search_symid(buf);
   if( id < 0 ) return NULL;
 
@@ -184,6 +184,28 @@ void mrbc_global_clear_vm_id(void)
 #endif
 
 
+//================================================================
+/*! separate nested symbol ID
+*/
+void mrbc_separate_nested_symid(mrbc_sym sym_id, mrbc_sym *id1, mrbc_sym *id2)
+{
+  static const int w = sizeof(mrbc_sym) * 2;
+  const char *s = mrbc_symid_to_str(sym_id);
+
+  assert( mrbc_is_nested_symid( sym_id ));
+  assert( strlen(s) == w*2 );
+
+  *id1 = *id2 = 0;
+  int i = 0;
+  while( i < w ) {
+    *id1 = (*id1 << 4) + (s[i++] - '0');
+  }
+  while( i < w*2 ) {
+    *id2 = (*id2 << 4) + (s[i++] - '0');
+  }
+}
+
+
 #ifdef MRBC_DEBUG
 //================================================================
 /*! debug dump all const and global tables.
@@ -192,16 +214,29 @@ void mrbc_global_debug_dump(void)
 {
   mrbc_print("<< Const table dump. >>\n(s_id:identifier = value)\n");
   mrbc_kv_iterator ite = mrbc_kv_iterator_new( &handle_const );
+
   while( mrbc_kv_i_has_next( &ite ) ) {
     const mrbc_kv *kv = mrbc_kv_i_next( &ite );
     const char *s = mrbc_symid_to_str(kv->sym_id);
 
-    mrbc_printf(" %04x:%s = ", kv->sym_id, s );
+    mrbc_printf(" %04x:%s", kv->sym_id, s );
+    if( mrbc_is_nested_symid(kv->sym_id) ) {
+      mrbc_printf("(");
+      mrbc_print_nested_symbol( kv->sym_id );
+      mrbc_printf(")");
+    }
+
+    if( kv->value.tt == MRBC_TT_CLASS ) {
+      mrbc_printf("\n");
+      continue;
+    }
+
+    mrbc_printf(" = ");
     mrbc_p_sub( &kv->value );
     if( mrbc_type(kv->value) <= MRBC_TT_INC_DEC_THRESHOLD ) {
-      mrbc_printf(" .tt=%d\n", mrbc_type(kv->value));
+      mrbc_printf(".tt=%d\n", mrbc_type(kv->value));
     } else {
-      mrbc_printf(" .tt=%d refcnt=%d\n", mrbc_type(kv->value), kv->value.obj->ref_count);
+      mrbc_printf(".tt=%d.ref=%d\n", mrbc_type(kv->value), kv->value.obj->ref_count);
     }
   }
 
