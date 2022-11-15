@@ -158,8 +158,6 @@ static void c_sleep(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   mrbc_tcb *tcb = VM2TCB(vm);
 
-  mrbc_int_t sec;
-
   if( argc == 0 ) {
     mrbc_suspend_task(tcb);
     return;
@@ -167,17 +165,23 @@ static void c_sleep(mrbc_vm *vm, mrbc_value v[], int argc)
 
   switch( mrbc_type(v[1]) ) {
   case MRBC_TT_INTEGER:
+  {
+    mrbc_int_t sec;
     sec = mrbc_integer(v[1]);
     SET_INT_RETURN(sec);
     mrbc_sleep_ms(tcb, sec * 1000);
     break;
+  }
 
 #if MRBC_USE_FLOAT
   case MRBC_TT_FLOAT:
+  {
+    mrbc_float_t sec;
     sec = mrbc_float(v[1]);
     SET_INT_RETURN(sec);
-    mrbc_sleep_ms(tcb, (mrbc_int_t)(sec) * 1000);
+    mrbc_sleep_ms(tcb, (mrbc_int_t)(sec * 1000));
     break;
+  }
 #endif
 
   default:
