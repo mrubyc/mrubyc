@@ -107,6 +107,50 @@ static int mrbc_printf_sub_output_arg( mrbc_printf_t *pf, va_list *ap )
 }
 
 
+//================================================================
+/*! display class name with nested
+
+  @param  sym_id	class's symbol id to print.
+  @note
+    see make_class_const_s() function in global.c
+*/
+static void mrbc_print_sub_classname( mrbc_sym sym_id )
+{
+  const char *s = mrbc_symid_to_str(sym_id);
+  assert(s);
+
+  // normal case
+  if( 'A' <= s[0] && s[0] <= 'Z' ) {
+    mrbc_printf("%s", s );
+    return;
+  }
+
+  // nested case
+  if( '0' <= s[0] && s[0] <= ('9'+6) ) {
+    static const int w = sizeof(mrbc_sym) * 2;
+    assert( strlen(s) >= w );
+
+    mrbc_sym id = 0;
+    int i;
+    for( i = 0; i < w; i++ ) {
+      id = (id << 4) + (s[i] - '0');
+    }
+    mrbc_print_sub_classname( id );
+    mrbc_print("::");
+
+    id = 0;
+    for( i = 0; i < w; i++ ) {
+      id = (id << 4) + (s[i + w] - '0');
+    }
+    mrbc_print_sub_classname( id );
+    return;
+  }
+
+  // else
+  assert(!"Failed. Internal const table data was broken.");
+}
+
+
 /***** Global functions *****************************************************/
 
 //================================================================
@@ -406,8 +450,8 @@ int mrbc_print_sub(const mrbc_value *v)
 {
   int ret = 0;
 
-  switch( mrbc_type(*v) ){
-  case MRBC_TT_EMPTY:	mrbc_print("(empty)");	break;
+  switch( mrbc_type(*v) ) {
+  case MRBC_TT_EMPTY:	mrbc_print("(empty)");		break;
   case MRBC_TT_NIL:					break;
   case MRBC_TT_FALSE:	mrbc_print("false");		break;
   case MRBC_TT_TRUE:	mrbc_print("true");		break;
@@ -415,17 +459,13 @@ int mrbc_print_sub(const mrbc_value *v)
 #if MRBC_USE_FLOAT
   case MRBC_TT_FLOAT:	mrbc_printf("%g", v->d);	break;
 #endif
-  case MRBC_TT_SYMBOL:
-    mrbc_print(mrbc_symbol_cstr(v));
-    break;
-
-  case MRBC_TT_CLASS:
-    mrbc_print(mrbc_symid_to_str(v->cls->sym_id));
-    break;
+  case MRBC_TT_SYMBOL:  mrbc_print(mrbc_symbol_cstr(v));		break;
+  case MRBC_TT_CLASS:	mrbc_print_sub_classname( v->cls->sym_id );	break;
 
   case MRBC_TT_OBJECT:
-    mrbc_printf("#<%s:%08x>",
-	mrbc_symid_to_str( find_class_by_object(v)->sym_id ), v->instance );
+    mrbc_printf("#<");
+    mrbc_print_sub_classname( find_class_by_object(v)->sym_id );
+    mrbc_printf(":%08x>", v->instance );
     break;
 
   case MRBC_TT_PROC:

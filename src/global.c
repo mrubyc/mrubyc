@@ -36,6 +36,33 @@ static mrbc_kv_handle handle_global;	//!< for global variables.
 /***** Global variables *****************************************************/
 /***** Signal catching functions ********************************************/
 /***** Local functions ******************************************************/
+
+//================================================================
+/*! make internal use strings for class constant
+
+  @param  buf		output buffer.
+  @param  id1		parent class symbol id
+  @param  id2		target symbol id
+*/
+static void make_class_const_s( char *buf, mrbc_sym id1, mrbc_sym id2 )
+{
+  static const int w = sizeof(mrbc_sym) * 2;
+  char *p = buf + w * 2;
+  *p = 0;
+
+  int i;
+  for( i = w; i > 0; i-- ) {
+    *--p = '0' + (id2 & 0x0f);
+    id2 >>= 4;
+  }
+
+  for( i = w; i > 0; i-- ) {
+    *--p = '0' + (id1 & 0x0f);
+    id1 >>= 4;
+  }
+}
+
+
 /***** Global functions *****************************************************/
 
 //================================================================
@@ -75,22 +102,15 @@ int mrbc_set_const( mrbc_sym sym_id, mrbc_value *v )
 */
 int mrbc_set_class_const( const struct RClass *cls, mrbc_sym sym_id, mrbc_value *v )
 {
-  char buf[10];
-  mrbc_sym id = cls->sym_id;
-  int i;
+  char buf[sizeof(mrbc_sym)*4+1];
 
-  for( i = 3; i >= 0; i-- ) {
-    buf[i] = '0' + (id & 0x0f);
-    id >>= 4;
+  make_class_const_s( buf, cls->sym_id, sym_id );
+  mrbc_sym id = mrbc_symbol( mrbc_symbol_new( 0, buf ));
+  if( v->tt == MRBC_TT_CLASS ) {
+    v->cls->sym_id = id;
   }
-  id = sym_id;
-  for( i = 7; i >= 4; i-- ) {
-    buf[i] = '0' + (id & 0x0f);
-    id >>= 4;
-  }
-  buf[8] = 0;
 
-  return mrbc_set_const( mrbc_symbol( mrbc_symbol_new( 0, buf )), v);
+  return mrbc_set_const( id, v );
 }
 
 
@@ -115,21 +135,10 @@ mrbc_value * mrbc_get_const( mrbc_sym sym_id )
 */
 mrbc_value * mrbc_get_class_const( const struct RClass *cls, mrbc_sym sym_id )
 {
-  char buf[10];
-  mrbc_sym id = cls->sym_id;
-  int i;
-  for( i = 3; i >= 0; i-- ) {
-    buf[i] = '0' + (id & 0x0f);
-    id >>= 4;
-  }
-  id = sym_id;
-  for( i = 7; i >= 4; i-- ) {
-    buf[i] = '0' + (id & 0x0f);
-    id >>= 4;
-  }
-  buf[8] = 0;
+  char buf[sizeof(mrbc_sym)*4+1];
 
-  id = mrbc_search_symid(buf);
+  make_class_const_s( buf, cls->sym_id, sym_id );
+  mrbc_sym id = mrbc_search_symid(buf);
   if( id < 0 ) return NULL;
 
   mrbc_value *v = mrbc_kv_get( &handle_const, id );
@@ -187,18 +196,7 @@ void mrbc_global_debug_dump(void)
     const mrbc_kv *kv = mrbc_kv_i_next( &ite );
     const char *s = mrbc_symid_to_str(kv->sym_id);
 
-    if( s && '0' <= s[0] && s[0] <= '9' ) {
-      mrbc_sym id;
-      const char *s1, *s2;
-
-      id = (s[0]-'0') << 12 | (s[1]-'0') << 8 | (s[2]-'0') << 4 | (s[3]-'0');
-      s1 = mrbc_symid_to_str(id);
-      id = (s[4]-'0') << 12 | (s[5]-'0') << 8 | (s[6]-'0') << 4 | (s[7]-'0');
-      s2 = mrbc_symid_to_str(id);
-      mrbc_printf(" %04x:%s (%s::%s) = ", kv->sym_id, s, s1, s2 );
-    } else {
-      mrbc_printf(" %04x:%s = ", kv->sym_id, s );
-    }
+    mrbc_printf(" %04x:%s = ", kv->sym_id, s );
     mrbc_p_sub( &kv->value );
     if( mrbc_type(kv->value) <= MRBC_TT_INC_DEC_THRESHOLD ) {
       mrbc_printf(" .tt=%d\n", mrbc_type(kv->value));

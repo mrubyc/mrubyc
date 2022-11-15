@@ -86,10 +86,21 @@ mrbc_class * mrbc_define_class(struct VM *vm, const char *name, mrbc_class *supe
   }
 
   // already defined?
-  mrbc_value *val = mrbc_get_const(sym_id);
-  if( val ) {
-    assert( mrbc_type(*val) == MRBC_TT_CLASS );
-    return val->cls;
+  {
+    const mrbc_value *val;
+
+    // nested class?
+    if( vm && mrbc_type(vm->cur_regs[0]) == MRBC_TT_CLASS ) {
+      assert(vm->target_class == vm->cur_regs[0].cls );
+      val = mrbc_get_class_const( vm->target_class, sym_id );
+    } else {
+      val = mrbc_get_const(sym_id);
+    }
+
+    if( val ) {
+      assert( mrbc_type(*val) == MRBC_TT_CLASS );
+      return val->cls;
+    }
   }
 
   // create a new class.
@@ -104,15 +115,13 @@ mrbc_class * mrbc_define_class(struct VM *vm, const char *name, mrbc_class *supe
   cls->name = name;
 #endif
 
+  // register to global constant
   if( vm && mrbc_type(vm->cur_regs[0]) == MRBC_TT_CLASS ) {
-    // For nested class
-    //   so, not in TOPLEVEL, register to class constant
-    assert(vm->target_class);
-    mrbc_set_class_const(vm->target_class, sym_id,
-			 &(mrbc_value){.tt = MRBC_TT_CLASS, .cls = cls});
+    // (note) override cls->sym_id in this function.
+    mrbc_set_class_const( vm->target_class, sym_id,
+			  &(mrbc_value){.tt = MRBC_TT_CLASS, .cls = cls});
   } else {
-    // register to global constant.
-    mrbc_set_const( sym_id, &(mrbc_value){.tt = MRBC_TT_CLASS, .cls = cls} );
+    mrbc_set_const( sym_id, &(mrbc_value){.tt = MRBC_TT_CLASS, .cls = cls});
   }
 
   return cls;
