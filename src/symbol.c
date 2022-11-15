@@ -373,6 +373,23 @@ static void c_symbol_to_s(struct VM *vm, mrbc_value v[], int argc)
 
 #if defined(MRBC_DEBUG)
 //================================================================
+/*! debug dump all symbols.
+*/
+void mrbc_symbol_debug_dump(void)
+{
+  mrbc_print("<< Symbol table dump >>\n");
+
+  int i;
+  for( i = 0; i < sym_index_pos; i++ ) {
+    mrbc_sym sym_id = i + OFFSET_BUILTIN_SYMBOL;
+    mrbc_printf(" %04x:%s\n", sym_id, sym_index[i].cstr );
+  }
+
+  mrbc_print("\n");
+}
+
+
+//================================================================
 /* statistics
 
    (e.g.)

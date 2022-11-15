@@ -177,14 +177,14 @@ void mrbc_global_clear_vm_id(void)
 
 #ifdef MRBC_DEBUG
 //================================================================
-/*! clear vm_id in global object for process terminated.
+/*! debug dump all const and global tables.
 */
 void mrbc_global_debug_dump(void)
 {
   mrbc_print("<< Const table dump. >>\n(s_id:identifier = value)\n");
   mrbc_kv_iterator ite = mrbc_kv_iterator_new( &handle_const );
   while( mrbc_kv_i_has_next( &ite ) ) {
-    mrbc_kv *kv = mrbc_kv_i_next( &ite );
+    const mrbc_kv *kv = mrbc_kv_i_next( &ite );
     const char *s = mrbc_symid_to_str(kv->sym_id);
 
     if( s && '0' <= s[0] && s[0] <= '9' ) {
@@ -220,6 +220,8 @@ void mrbc_global_debug_dump(void)
       mrbc_printf(" .tt=%d refcnt=%d\n", mrbc_type(kv->value), kv->value.obj->ref_count);
     }
   }
+
+  mrbc_print("\n");
 }
 
 #endif
