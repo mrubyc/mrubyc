@@ -1,13 +1,74 @@
 #
 # Array, mrubyc class library
 #
-#  Copyright (C) 2015-2020 Kyushu Institute of Technology.
-#  Copyright (C) 2015-2020 Shimane IT Open-Innovation Center.
+#  Copyright (C) 2015-2022 Kyushu Institute of Technology.
+#  Copyright (C) 2015-2022 Shimane IT Open-Innovation Center.
 #
 #  This file is distributed under BSD 3-Clause License.
 #
 
 class Array
+  #
+  # all?
+  #
+  def all?( *pattern, &block )
+    i = 0
+
+    # case of all? {|item| ... } -> bool
+    if block
+      while i < length
+        return false  if ! yield self[i]
+        i += 1
+      end
+
+    # case of all?(pattern) -> bool
+    elsif !pattern.empty?
+      while i < length
+        return false  if !(pattern[0] === self[i])
+        i += 1
+      end
+
+    # case of all? -> bool
+    else
+      while i < length
+        return false  if !self[i]
+        i += 1
+      end
+    end
+
+    return true
+  end
+
+  #
+  # any?
+  #
+  def any?( *pattern, &block )
+    i = 0
+
+    # case of any? {|item| ... } -> bool
+    if block
+      while i < length
+        return true  if yield self[i]
+        i += 1
+      end
+
+    # case of any?(pattern) -> bool
+    elsif !pattern.empty?
+      while i < length
+        return true  if pattern[0] === self[i]
+        i += 1
+      end
+
+    # case of any? -> bool
+    else
+      while i < length
+        return true  if self[i]
+        i += 1
+      end
+    end
+
+    return false
+  end
 
   #
   # collect
@@ -86,6 +147,34 @@ class Array
     end
     return self
   end
+
+  #
+  # index
+  #
+  def index( *val, &block )
+    i = 0
+
+    # case of index {|item| ...} -> Integer | nil
+    if block
+      while i < length
+        return i  if yield self[i]
+        i += 1
+      end
+      return nil
+    end
+
+    # case of index(val) -> Integer | nil
+    if !val.empty?
+      while i < length
+        return i  if self[i] == val[0]
+        i += 1
+      end
+      return nil
+    end
+
+    raise ArgumentError
+  end
+  alias find_index index
 
   #
   # reject!

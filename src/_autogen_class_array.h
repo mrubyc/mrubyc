@@ -15,7 +15,6 @@ static const mrbc_sym method_symbols_Array[] = {
   MRBC_SYM(empty_Q),
   MRBC_SYM(first),
   MRBC_SYM(include_Q),
-  MRBC_SYM(index),
 #if MRBC_USE_STRING
   MRBC_SYM(inspect),
 #endif
@@ -51,7 +50,6 @@ static const mrbc_func_t method_functions_Array[] = {
   c_array_empty,
   c_array_first,
   c_array_include,
-  c_array_index,
 #if MRBC_USE_STRING
   c_array_inspect,
 #endif
