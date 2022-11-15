@@ -228,8 +228,14 @@ void mrbc_separate_nested_symid(mrbc_sym sym_id, mrbc_sym *id1, mrbc_sym *id2)
 //================================================================
 /*! debug dump all const and global tables.
 */
-void mrbc_global_debug_dump(void)
+void mrbc_global_debug_dump(int mode_flag)
 {
+  int flag_global = !(mode_flag & 0x01);
+  int flag_const = !(mode_flag & 0x02);
+  int flag_const_ge100 = !!(mode_flag & 0x04);
+
+  if( !flag_const ) goto DISP_GLOBAL;
+
   mrbc_print("<< Const table dump. >>\n(s_id:identifier = value)\n");
   mrbc_kv_iterator ite = mrbc_kv_iterator_new( &handle_const );
 
@@ -237,15 +243,17 @@ void mrbc_global_debug_dump(void)
     const mrbc_kv *kv = mrbc_kv_i_next( &ite );
     const char *s = mrbc_symid_to_str(kv->sym_id);
 
+    if( flag_const_ge100 && kv->sym_id < 100 ) continue;
+
     mrbc_printf(" %04x:%s", kv->sym_id, s );
     if( mrbc_is_nested_symid(kv->sym_id) ) {
       mrbc_printf("(");
-      mrbc_print_nested_symbol( kv->sym_id );
+      mrbc_print_nested_symbol(kv->sym_id);
       mrbc_printf(")");
     }
 
     if( kv->value.tt == MRBC_TT_CLASS ) {
-      mrbc_printf("\n");
+      mrbc_printf(" class\n");
       continue;
     }
 
@@ -257,6 +265,9 @@ void mrbc_global_debug_dump(void)
       mrbc_printf(".tt=%d.ref=%d\n", mrbc_type(kv->value), kv->value.obj->ref_count);
     }
   }
+
+ DISP_GLOBAL:
+  if( !flag_global ) goto DONE;
 
   mrbc_print("<< Global table dump. >>\n(s_id:identifier = value)\n");
   ite = mrbc_kv_iterator_new( &handle_global );
@@ -272,6 +283,7 @@ void mrbc_global_debug_dump(void)
     }
   }
 
+ DONE:
   mrbc_print("\n");
 }
 
