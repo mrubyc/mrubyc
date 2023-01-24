@@ -489,4 +489,19 @@ class StringTest < MrubycTestCase
     assert_equal "str", "str".to_s
   end
 
+  description "String#bytes chars"
+  def string_bytes_chars
+    assert_equal [97, 98, 99], "abc".bytes
+  end
+
+  description "String#bytes empty"
+  def string_bytes_empty
+    assert_equal [], "".bytes
+  end
+
+  description "String#bytes null char"
+  def string_bytes_null_char
+    assert_equal [97, 0, 98], "a\000b".bytes
+  end
+
 end
