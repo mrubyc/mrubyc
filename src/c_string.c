@@ -1255,6 +1255,24 @@ static void c_string_include(struct VM *vm, mrbc_value v[], int argc)
 }
 
 
+//================================================================
+/*! (method) bytes
+*/
+static void c_string_bytes(struct VM *vm, mrbc_value v[], int argc)
+{
+  /*
+   * Note: This String#bytes doesn't support taking a block parameter.
+   *       Use String#each_byte instead.
+   */
+  int len = v[0].string->size;
+  mrbc_value ret = mrbc_array_new(vm, len);
+  for (int i = 0; i < len; i++) {
+    mrbc_array_set(&ret, i, &mrbc_integer_value(v[0].string->data[i]));
+  }
+  SET_RETURN(ret);
+}
+
+
 /* MRBC_AUTOGEN_METHOD_TABLE
 
   CLASS("String")
@@ -1295,6 +1313,7 @@ static void c_string_include(struct VM *vm, mrbc_value v[], int argc)
   METHOD( "start_with?", c_string_start_with )
   METHOD( "end_with?",	c_string_end_with )
   METHOD( "include?",	c_string_include )
+  METHOD( "bytes",	c_string_bytes )
 
 #if MRBC_USE_FLOAT
   METHOD( "to_f",	c_string_to_f )
