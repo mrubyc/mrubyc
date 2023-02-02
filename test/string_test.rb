@@ -55,7 +55,7 @@ class StringTest < MrubycTestCase
     assert_equal "ABCDEFG0123456789abcA", s1
   end
 
-  description "self <=> other -> (minus) | 0 | (plus) | nil"
+  description "self <=> other -> (minus) | 0 | (plus)"
   def compare_case
     assert ("aaa" <=> "xxx") < 0
     assert ("aaa" <=> "aaa") == 0
