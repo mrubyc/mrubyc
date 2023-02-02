@@ -295,4 +295,20 @@ class ArrayTest < MrubycTestCase
     assert_false [].include?(true)
   end
 
+  description "& (and) operation"
+  def and_operation
+    assert_equal [1, 3], [1, 1, 2, 3] & [3, 1, 4]
+    assert_raise(TypeError.new("no implicit conversion into Array")) do
+      [1] & 1
+    end
+  end
+
+  description "| (or) operation"
+  def or_operation
+    assert_equal [1, 4, 2, 3, 5], [1, 1, 4, 2, 3] | [5, 4, 5]
+    assert_raise(TypeError.new("no implicit conversion into Array")) do
+      [1] | "1"
+    end
+  end
+
 end
