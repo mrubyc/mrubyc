@@ -68,6 +68,7 @@
     mrbc_array_minmax
     mrbc_array_dup
     mrbc_array_divide
+    mrbc_array_include
 */
 
 
@@ -530,6 +531,23 @@ mrbc_value mrbc_array_divide(struct VM *vm, mrbc_value *src, int pos)
   return ret;
 }
 
+//================================================================
+/*! check inclusion
+
+  @param  ary     source
+  @param  val     object if it is included
+  @return         0 if not included. 1 or greater if included
+*/
+int mrbc_array_include(const mrbc_value *ary, const mrbc_value *val)
+{
+  int n = ary->array->n_stored;
+  int i;
+  for (i = 0; i < n; i++) {
+    if (mrbc_compare(&ary->array->data[i], val) == 0) break;
+  }
+  return (n - i);
+}
+
 
 //================================================================
 /*! method new
@@ -811,16 +829,58 @@ static void c_array_size(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_array_include(struct VM *vm, mrbc_value v[], int argc)
 {
-  const mrbc_value *value = &v[1];
-  const mrbc_value *data = v[0].array->data;
-  int n = v[0].array->n_stored;
-  int i;
+  SET_BOOL_RETURN(0 < mrbc_array_include(&v[0], &v[1]));
+}
 
-  for( i = 0; i < n; i++ ) {
-    if( mrbc_compare(&data[i], value) == 0 ) break;
+
+//================================================================
+/*! (method) &
+*/
+static void c_array_and(struct VM *vm, mrbc_value v[], int argc)
+{
+  if (v[1].tt != MRBC_TT_ARRAY) {
+    mrbc_raise( vm, MRBC_CLASS(TypeError), "no implicit conversion into Array");
+    return;
   }
+  mrbc_value result = mrbc_array_new(vm, 0);
+  int i;
+  for (i = 0; i < v[0].array->n_stored; i++) {
+    mrbc_value *data = &v[0].array->data[i];
+    if (0 < mrbc_array_include(&v[1], data) && 0 == mrbc_array_include(&result, data))
+    {
+      mrbc_array_push(&result, data);
+    }
+  }
+  SET_RETURN(result);
+}
 
-  SET_BOOL_RETURN( i < n );
+
+//================================================================
+/*! (method) |
+*/
+static void c_array_or(struct VM *vm, mrbc_value v[], int argc)
+{
+  if (v[1].tt != MRBC_TT_ARRAY) {
+    mrbc_raise( vm, MRBC_CLASS(TypeError), "no implicit conversion into Array");
+    return;
+  }
+  mrbc_value result = mrbc_array_new(vm, 0);
+  int i;
+  for (i = 0; i < v[0].array->n_stored; i++) {
+    mrbc_value *data = &v[0].array->data[i];
+    if (0 == mrbc_array_include(&result, data))
+    {
+      mrbc_array_push(&result, data);
+    }
+  }
+  for (i = 0; i < v[1].array->n_stored; i++) {
+    mrbc_value *data = &v[1].array->data[i];
+    if (0 == mrbc_array_include(&result, data))
+    {
+      mrbc_array_push(&result, data);
+    }
+  }
+  SET_RETURN(result);
 }
 
 
@@ -1101,6 +1161,8 @@ static void c_array_join(struct VM *vm, mrbc_value v[], int argc)
   METHOD( "length",	c_array_size )
   METHOD( "count",	c_array_size )
   METHOD( "include?",	c_array_include )
+  METHOD( "&",		c_array_and )
+  METHOD( "|",		c_array_or )
   METHOD( "first",	c_array_first )
   METHOD( "last",	c_array_last )
   METHOD( "push",	c_array_push )

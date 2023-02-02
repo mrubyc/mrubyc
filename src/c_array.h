@@ -67,7 +67,7 @@ int mrbc_array_compare(const mrbc_value *v1, const mrbc_value *v2);
 void mrbc_array_minmax(mrbc_value *ary, mrbc_value **pp_min_value, mrbc_value **pp_max_value);
 mrbc_value mrbc_array_dup(struct VM *vm, const mrbc_value *ary);
 mrbc_value mrbc_array_divide(struct VM *vm, mrbc_value *src, int pos);
-
+int mrbc_array_include(const mrbc_value *ary, const mrbc_value *val);
 
 /***** Inline functions *****************************************************/
 //================================================================
