@@ -68,6 +68,7 @@
     mrbc_array_minmax
     mrbc_array_dup
     mrbc_array_divide
+    mrbc_array_include
 */
 
 
@@ -530,6 +531,23 @@ mrbc_value mrbc_array_divide(struct VM *vm, mrbc_value *src, int pos)
   return ret;
 }
 
+//================================================================
+/*! check inclusion
+
+  @param  ary     source
+  @param  val     object if it is included
+  @return         0 if not included. 1 or greater if included
+*/
+int mrbc_array_include(const mrbc_value *ary, const mrbc_value *val)
+{
+  int n = ary->array->n_stored;
+  int i;
+  for (i = 0; i < n; i++) {
+    if (mrbc_compare(&ary->array->data[i], val) == 0) break;
+  }
+  return (n - i);
+}
+
 
 //================================================================
 /*! method new
@@ -811,16 +829,7 @@ static void c_array_size(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_array_include(struct VM *vm, mrbc_value v[], int argc)
 {
-  const mrbc_value *value = &v[1];
-  const mrbc_value *data = v[0].array->data;
-  int n = v[0].array->n_stored;
-  int i;
-
-  for( i = 0; i < n; i++ ) {
-    if( mrbc_compare(&data[i], value) == 0 ) break;
-  }
-
-  SET_BOOL_RETURN( i < n );
+  SET_BOOL_RETURN(0 < mrbc_array_include(&v[0], &v[1]));
 }
 
 
