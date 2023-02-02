@@ -286,4 +286,13 @@ class ArrayTest < MrubycTestCase
     assert_equal [2,4,6], a
   end
 
+  description "include?"
+  def include_case
+    assert_true [1,2,3].include?(1)
+    assert_true [[1],2,3].include?([1])
+    assert_false [1,2,3].include?(4)
+    assert_false [1,2,3].include?("3")
+    assert_false [].include?(true)
+  end
+
 end
