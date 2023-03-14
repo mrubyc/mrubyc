@@ -6,6 +6,8 @@ class StringTest < MrubycTestCase
   def string_new_with_arg
     str = String.new("a string instance")
     assert_equal "a string instance", str
+    utf8_str = String.new("あいう")
+    assert_equal "あいう", utf8_str
   end
 
   description "String.new without arg"
@@ -21,31 +23,47 @@ class StringTest < MrubycTestCase
     assert_equal false, "abc" == "abcd"
     assert_equal false, "abc" != "abc"
     assert_equal true, "abc" != "ABC"
+    assert_equal true, "あいう" == "あいう"
+    assert_equal true, "𩸽" == "𩸽" # outer BMP
+    assert_equal false, "A" == "À"
+    assert_equal false, "あいう" == "あいうえ"
+    assert_equal false, "あいう" != "あいう"
+    assert_equal true, "ace" != "àçè"
   end
 
   description "self * times -> String"
   def mul_case
     s1 = "ABCDEFG"
     s2 = "0123456789"
+    s3 = "あいう"
     assert_equal "ABCDEFGABCDEFG", s1 * 2
     assert_equal "abcabc", "abc" * 2
     assert_equal "01234567890123456789", s2 * 2
+    assert_equal "あいうあいう", s3 * 2
   end
 
   description "self + other -> String"
   def add_case
     s1 = "ABCDEFG"
     s2 = "0123456789"
+    s3 = "あいう"
     assert_equal "ABCDEFG0123456789", s1 + s2
     assert_equal "ABCDEFG123", s1 + "123"
     assert_equal "abc0123456789", "abc" + s2
     assert_equal "abc123", "abc" + "123"
+    assert_equal "あいう0123456789ABCDEFG", s3 + s2 + s1
+    assert_equal "ABCDEFGあいう0123456789", s1 + s3 + s2
+    assert_equal "ABCDEFG0123456789あいう", s1 + s2 + s3
+    assert_equal "ABCDEFGあい", s1 + "あい"
+    assert_equal "あい0123456789", "あい" + s2
+    assert_equal "あい𩸽", "あい" + "𩸽"
   end
 
   description "self << other -> self"
   def addi_case
     s1 = "ABCDEFG"
     s2 = "0123456789"
+    s3 = "あいう"
     s1 << s2
     assert_equal "ABCDEFG0123456789", s1
     s1 << "abc"
@@ -53,6 +71,17 @@ class StringTest < MrubycTestCase
     assert_equal "abcdef", "abc" << "def"
     s1 << 65
     assert_equal "ABCDEFG0123456789abcA", s1
+    s1 << s3
+    assert_equal "ABCDEFG0123456789abcAあいう", s1
+    assert_equal "あいう𩸽", "あいう" << "𩸽"
+    s1 << 227
+    # FIXME
+    # assert_equal "ABCDEFG0123456789abcAあいうã", s1
+    s1 << 129
+    # FIXME
+    # assert_equal "ABCDEFG0123456789abcAあいうã\u0081", s1
+    s1 << 130
+    assert_equal "ABCDEFG0123456789abcAあいうあ", s1
   end
 
   description "self <=> other -> (minus) | 0 | (plus)"
@@ -63,12 +92,19 @@ class StringTest < MrubycTestCase
     assert ("string" <=> "stringAA") < 0
     assert ("string" <=> "string") == 0
     assert ("stringAA" <=> "string") > 0
+    assert ("あ" <=> "い") < 0
+    assert ("い" <=> "い") == 0
+    assert ("い" <=> "あ") > 0
+    assert ("あ" <=> "ああ") < 0
+    assert ("ああ" <=> "あ") > 0
   end
 
   description "self == other -> bool"
   def op_eq_2_case
     s1 = "ABCDEFG"
+    s2 = "あいう"
     assert_equal "ABCDEFG", s1
+    assert_equal "あいう", s2
   end
 
   description "self[nth] -> String | nil"
@@ -78,6 +114,8 @@ class StringTest < MrubycTestCase
     assert_equal "r", 'bar'[-1]
     assert_equal nil, 'bar'[3]
     assert_equal nil, 'bar'[-4]
+    # FIXME
+    # assert_equal "い", 'あいう'[1]
   end
 
   description "self[nth, len] -> String | nil"
@@ -512,6 +550,15 @@ class StringTest < MrubycTestCase
     assert_false "abc".include?("A")
     assert_false "abc".include?("aB")
     assert_false "abc".include?("abC")
+    assert_true  "あいう".include?("")
+    assert_true  "あいう".include?("あ")
+    assert_true  "あいう".include?("い")
+    assert_true  "あいう".include?("う")
+    assert_true  "あいう".include?("あい")
+    assert_true  "あいう".include?("いう")
+    assert_true  "あいう".include?("あいう")
+    assert_false "あいう".include?("あいうえ")
+    assert_false "あいう".include?(" あいう")
   end
 
   description "to_f, to_i, to_s"
@@ -558,11 +605,13 @@ class StringTest < MrubycTestCase
     #assert_equal 16, "0x10".to_i(0)
 
     assert_equal "str", "str".to_s
+    assert_equal "あいう", "あいう".to_s
   end
 
   description "String#bytes chars"
   def string_bytes_chars
     assert_equal [97, 98, 99], "abc".bytes
+    assert_equal [227, 129, 130, 227, 129, 132, 227, 129, 134], "あいう".bytes
   end
 
   description "String#bytes empty"
@@ -573,6 +622,7 @@ class StringTest < MrubycTestCase
   description "String#bytes null char"
   def string_bytes_null_char
     assert_equal [97, 0, 98], "a\000b".bytes
+    assert_equal [227, 129, 130, 0, 227, 129, 132], "あ\000い".bytes
   end
 
   description "String#dup"
