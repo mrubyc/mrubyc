@@ -1321,7 +1321,7 @@ static void c_string_utf8_size(struct VM *vm, mrbc_value v[], int argc)
 {
   char *str = mrbc_string_cstr(&v[0]);
   int len = 0;
-  while (*str++) {
+  while (*str != '\0') {
     if ((*str & 0x80) == 0x00) {
       len++;
     } else if ((*str & 0xE0) == 0xC0) {
@@ -1333,6 +1333,7 @@ static void c_string_utf8_size(struct VM *vm, mrbc_value v[], int argc)
     } else {
       // nothing to do
     }
+    str++;
   }
   mrbc_int_t i = len;
   SET_INT_RETURN( i );
