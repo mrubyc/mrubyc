@@ -528,10 +528,18 @@ class StringTest < MrubycTestCase
     assert_true  "abc".start_with?("a")
     assert_true  "abc".start_with?("ab")
     assert_true  "abc".start_with?("abc")
+    assert_true  "あいう".start_with?("")
+    assert_true  "あいう".start_with?("あ")
+    assert_true  "あいう".start_with?("あい")
+    assert_true  "あいう".start_with?("あいう")
     assert_false "abc".start_with?("abcd")
     assert_false "abc".start_with?("A")
     assert_false "abc".start_with?("aA")
     assert_false "abc".start_with?("b")
+    assert_false "あいう".start_with?("あいうえ")
+    assert_false "あいう".start_with?("い")
+    assert_false "あいう".start_with?("いう")
+    assert_false "あいう".start_with?("え")
   end
 
   description "end_with?"
@@ -540,10 +548,18 @@ class StringTest < MrubycTestCase
     assert_true  "abc".end_with?("c")
     assert_true  "abc".end_with?("bc")
     assert_true  "abc".end_with?("abc")
+    assert_true  "あいう".end_with?("")
+    assert_true  "あいう".end_with?("う")
+    assert_true  "あいう".end_with?("いう")
+    assert_true  "あいう".end_with?("あいう")
     assert_false "abc".end_with?(" abc")
     assert_false "abc".end_with?("C")
     assert_false "abc".end_with?("Bc")
     assert_false "abc".end_with?("b")
+    assert_false "あいう".end_with?(" あいう")
+    assert_false "あいう".end_with?("え")
+    assert_false "あいう".end_with?("い")
+    assert_false "あいう".end_with?("あい")
   end
 
   description "include?"
