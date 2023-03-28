@@ -31,6 +31,9 @@ class SymbolTest < MrubycTestCase
     s = "abc"
     assert_equal :abc, s.to_sym
     assert_not_equal :abc, s
+    s1 = "あいう"
+    assert_equal :あいう, s1.to_sym
+    assert_not_equal :あいう, s1
   end
 
   description "to_s"
