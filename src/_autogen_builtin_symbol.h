@@ -190,9 +190,11 @@ static const char *builtin_symbols[] = {
   "upcase",		// MRBC_SYMID_upcase = 183(0xb7)
   "upcase!",		// MRBC_SYMID_upcase_E = 184(0xb8)
   "upto",		// MRBC_SYMID_upto = 185(0xb9)
-  "values",		// MRBC_SYMID_values = 186(0xba)
-  "|",			// MRBC_SYMID_OR = 187(0xbb)
-  "~",			// MRBC_SYMID_NEG = 188(0xbc)
+  "utf8_size",		// MRBC_SYMID_utf8_size = 186(0xba)
+  "utf8_slice",		// MRBC_SYMID_utf8_slice = 187(0xbb)
+  "values",		// MRBC_SYMID_values = 188(0xbc)
+  "|",			// MRBC_SYMID_OR = 189(0xbd)
+  "~",			// MRBC_SYMID_NEG = 190(0xbe)
 };
 #endif
 
@@ -383,9 +385,11 @@ enum {
   MRBC_SYMID_upcase = 183,
   MRBC_SYMID_upcase_E = 184,
   MRBC_SYMID_upto = 185,
-  MRBC_SYMID_values = 186,
-  MRBC_SYMID_OR = 187,
-  MRBC_SYMID_NEG = 188,
+  MRBC_SYMID_utf8_size = 186,
+  MRBC_SYMID_utf8_slice = 187,
+  MRBC_SYMID_values = 188,
+  MRBC_SYMID_OR = 189,
+  MRBC_SYMID_NEG = 190,
 };
 
 #define MRB_SYM(sym)  MRBC_SYMID_##sym
