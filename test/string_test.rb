@@ -122,6 +122,11 @@ class StringTest < MrubycTestCase
     assert_equal "あ", 'aÀあ'.utf8_slice(2)
     assert_equal nil, 'あいう'.utf8_slice(-1)
     assert_equal nil, 'あいう'.utf8_slice(3)
+    assert_equal "あい", 'あいう'.utf8_slice(0, 2)
+    assert_equal "いう", 'あいう'.utf8_slice(1, 2)
+    assert_equal "aÀ", 'aÀあ'.utf8_slice(0, 2)
+    assert_equal "Àあ", 'aÀあ'.utf8_slice(1, 2)
+    assert_equal "aÀあ", 'aÀあ'.utf8_slice(0, 3)
   end
 
   description "self[nth, len] -> String | nil"
