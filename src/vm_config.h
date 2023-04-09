@@ -62,6 +62,13 @@
 #define MRBC_USE_STRING 1
 #endif
 
+/* USE UTF-8. Support UTF-8 string.
+   0: NOT USE
+   1: USE UTF-8
+*/
+#if !defined(MRBC_USE_UTF8)
+#define MRBC_USE_UTF8 0
+#endif
 
 /* Hardware dependent flags */
 
