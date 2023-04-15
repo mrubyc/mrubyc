@@ -413,12 +413,12 @@ static int mrbc_string_downcase(mrbc_value *str)
   @param  src	pointer to target value
   @return	0 when not removed.
 */
+// この関数は2バイト目以降を返してもエラーにしない、今のところ
 int mrbc_string_utf8_size(const char *str) {
   int len = 0;
 
   if ((*str & 0xC0) == 0x80) {
     // 2バイト目以降
-    // TODO: error
   } else if ((*str & 0x80) == 0x00) {
     len = 1;
   } else if ((*str & 0xE0) == 0xC0) {
@@ -429,6 +429,26 @@ int mrbc_string_utf8_size(const char *str) {
     len = 4;
   } else {
     // TODO: error
+  }
+  return len;
+}
+
+int mrbc_string_char_size(const char *str)
+{
+  int len = 0;
+  while (*str != '\0') {
+    if ((*str & 0x80) == 0x00) {
+      len++;
+    } else if ((*str & 0xE0) == 0xC0) {
+      len++;
+    } else if ((*str & 0xF0) == 0xE0) {
+      len++;
+    } else if ((*str & 0xF8) == 0xF0) {
+      len++;
+    } else {
+      // nothing to do
+    }
+    str++;
   }
   return len;
 }
@@ -613,6 +633,29 @@ static void c_string_slice(struct VM *vm, mrbc_value v[], int argc)
   SET_NIL_RETURN();
 }
 
+/* map character index to byte offset index */
+// offは開始位置
+// idxは継続条件(文字数)
+int mrbc_string_chars2bytes(mrbc_value *src, int off, int idx)
+{
+  // TODO: ASCIIの場合はリターンする
+  //if (RSTR_ASCII_P(mrb_str_ptr(s))) {
+  //  return idx;
+  //}
+  // else {
+    int chars_size, bytes, current_char_bytesize;
+    // TODO: このキャストこれでいいんかな?
+    char *ptr = (char *)(src->string->data + off);
+    char *end = (char *)(src->string->data + src->string->size);
+
+    for (bytes=chars_size=0; ptr<end && chars_size<idx; chars_size++) {
+      current_char_bytesize = mrbc_string_utf8_size((char *)ptr);
+      bytes += current_char_bytesize;
+      ptr += current_char_bytesize;
+    }
+    return bytes;
+  // }
+}
 
 //================================================================
 /*! (method) []=
@@ -650,10 +693,24 @@ static void c_string_insert(struct VM *vm, mrbc_value v[], int argc)
     return;
   }
 
-  int len1 = v->string->size;
-  int len2 = val->string->size;
+  int len1 = v->string->size; // len1はおそらくself
+  int len2 = val->string->size; // len2は代入する文字列の長さ
+
+#if MRBC_USE_UTF8
+  char *string = mrbc_string_cstr(&v[0]);
+  int charsize = mrbc_string_char_size(string);
+  if( nth < 0 ) nth = charsize + nth;		// adjust to positive number.
+#else
   if( nth < 0 ) nth = len1 + nth;		// adjust to positive number.
+#endif
+
+#if MRBC_USE_UTF8
+  nth = mrbc_string_chars2bytes(v, 0, nth);
+  len = mrbc_string_chars2bytes(v, nth, len);
+#endif
+
   if( len > len1 - nth ) len = len1 - nth;
+
   if( nth < 0 || nth > len1 || len < 0) {
     mrbc_raisef( vm, MRBC_CLASS(IndexError), "index %d out of string", nth );
     return;
@@ -666,6 +723,9 @@ static void c_string_insert(struct VM *vm, mrbc_value v[], int argc)
     if( !str ) return;
   }
 
+  // 1. コピー先のポインタ void *buf1:       str + nth + len2
+  // 2. コピー元のポインタ const void *buf2: str + nth + len
+  // 3. コピーバイト数 size_t n:             len1 - nth - len + 1
   memmove( str + nth + len2, str + nth + len, len1 - nth - len + 1 );
   memcpy( str + nth, mrbc_string_cstr(val), len2 );
 

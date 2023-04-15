@@ -75,7 +75,6 @@ class StringTest < MrubycTestCase
     assert_equal "ABCDEFG0123456789abcAあいう", s1
     assert_equal "あいう𩸽", "あいう" << "𩸽"
     # s1 << 227
-    # FIXME
     # assert_equal "ABCDEFG0123456789abcAあいうã", s1
     # s1 << 129
     # FIXME
@@ -247,6 +246,122 @@ class StringTest < MrubycTestCase
     s1 = "0123456789"
     s1[-10] = ""
     assert_equal "123456789", s1
+
+    s1 = "あいうえお"
+    s1[0] = "かき"
+    assert_equal "かきいうえお", s1
+
+    s1 = "0123456789"
+    s1[0] = "あい"
+    assert_equal "あい123456789", s1
+
+    s1 = "0123456789"
+    s1[1] = "あい"
+    assert_equal "0あい23456789", s1
+
+    s1 = "0123456789"
+    s1[9] = "あい"
+    assert_equal "012345678あい", s1
+
+    s1 = "0123456789"
+    s1[10] = "あい"
+    assert_equal "0123456789あい", s1
+
+    s1 = "0123456789"
+    s1[-1] = "あい"
+    assert_equal "012345678あい", s1
+
+    s1 = "0123456789"
+    s1[-2] = "あい"
+    assert_equal "01234567あい9", s1
+
+    s1 = "0123456789"
+    s1[-10] = "あい"
+    assert_equal "あい123456789", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[0] = "ab"
+    assert_equal "ab１２３４５６７８９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[1] = "ab"
+    assert_equal "０ab２３４５６７８９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[9] = "ab"
+    assert_equal "０１２３４５６７８ab", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[10] = "ab"
+    assert_equal "０１２３４５６７８９ab", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[-1] = "ab"
+    assert_equal "０１２３４５６７８ab", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[-2] = "ab"
+    assert_equal "０１２３４５６７ab９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[-10] = "ab"
+    assert_equal "ab１２３４５６７８９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[0] = ""
+    assert_equal "１２３４５６７８９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[1] = ""
+    assert_equal "０２３４５６７８９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[9] = ""
+    assert_equal "０１２３４５６７８", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[10] = ""
+    assert_equal "０１２３４５６７８９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[-1] = ""
+    assert_equal "０１２３４５６７８", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[-2] = ""
+    assert_equal "０１２３４５６７９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[-10] = ""
+    assert_equal "１２３４５６７８９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[0] = "あい"
+    assert_equal "あい１２３４５６７８９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[1] = "あい"
+    assert_equal "０あい２３４５６７８９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[9] = "あい"
+    assert_equal "０１２３４５６７８あい", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[10] = "あい"
+    assert_equal "０１２３４５６７８９あい", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[-1] = "あい"
+    assert_equal "０１２３４５６７８あい", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[-2] = "あい"
+    assert_equal "０１２３４５６７あい９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[-10] = "あい"
+    assert_equal "あい１２３４５６７８９", s1
   end
 
   description "self[nth, len] = val"
@@ -270,7 +385,6 @@ class StringTest < MrubycTestCase
     s1 = "0123456789"
     s1[2,0] = "ab"
     assert_equal "01ab23456789", s1
-
 
     s1 = "0123456789"
     s1[0,5] = "ab"
@@ -343,6 +457,143 @@ class StringTest < MrubycTestCase
     s1 = "0123456789"
     s1[10,0] = ""
     assert_equal "0123456789", s1
+
+    s1 = "0123456789"
+    s1[2,5] = "あい"
+    assert_equal "01あい789", s1
+
+    s1 = "0123456789"
+    s1[2,8] = "あい"
+    assert_equal "01あい", s1
+
+    s1 = "0123456789"
+    s1[2,9] = "あい"
+    assert_equal "01あい", s1
+
+    s1 = "0123456789"
+    s1[2,1] = "あい"
+    assert_equal "01あい3456789", s1
+
+    s1 = "0123456789"
+    s1[2,0] = "あい"
+    assert_equal "01あい23456789", s1
+
+    s1 = "0123456789"
+    s1[0,5] = "あい"
+    assert_equal "あい56789", s1
+
+    s1 = "0123456789"
+    s1[0,10] = "あい"
+    assert_equal "あい", s1
+
+    s1 = "0123456789"
+    s1[0,99] = "あい"
+    assert_equal "あい", s1
+
+
+    s1 = "0123456789"
+    s1[9,1] = "あい"
+    assert_equal "012345678あい", s1
+
+    s1 = "0123456789"
+    s1[10,1] = "あい"
+    assert_equal "0123456789あい", s1
+
+    s1 = "0123456789"
+    s1[10,0] = "あい"
+    assert_equal "0123456789あい", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[2,5] = "ab"
+    assert_equal "０１ab７８９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[2,8] = "ab"
+    assert_equal "０１ab", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[2,9] = "ab"
+    assert_equal "０１ab", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[2,1] = "ab"
+    assert_equal "０１ab３４５６７８９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[2,0] = "ab"
+    assert_equal "０１ab２３４５６７８９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[0,5] = "ab"
+    assert_equal "ab５６７８９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[0,10] = "ab"
+    assert_equal "ab", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[0,99] = "ab"
+    assert_equal "ab", s1
+
+
+    s1 = "０１２３４５６７８９"
+    s1[9,1] = "ab"
+    assert_equal "０１２３４５６７８ab", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[10,1] = "ab"
+    assert_equal "０１２３４５６７８９ab", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[10,0] = "ab"
+    assert_equal "０１２３４５６７８９ab", s1
+
+
+    s1 = "０１２３４５６７８９"
+    s1[2,5] = ""
+    assert_equal "０１７８９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[2,8] = ""
+    assert_equal "０１", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[2,9] = ""
+    assert_equal "０１", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[2,1] = ""
+    assert_equal "０１３４５６７８９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[2,0] = ""
+    assert_equal "０１２３４５６７８９", s1
+
+
+    s1 = "０１２３４５６７８９"
+    s1[0,5] = ""
+    assert_equal "５６７８９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[0,10] = ""
+    assert_equal "", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[0,99] = ""
+    assert_equal "", s1
+
+
+    s1 = "０１２３４５６７８９"
+    s1[9,1] = ""
+    assert_equal "０１２３４５６７８", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[10,1] = ""
+    assert_equal "０１２３４５６７８９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[10,0] = ""
+    assert_equal "０１２３４５６７８９", s1
   end
 
   description "minus"
@@ -375,6 +626,64 @@ class StringTest < MrubycTestCase
     s1 = "0123456789"
     s1[-1,0] = "ab"
     assert_equal "012345678ab9", s1
+
+    s1 = "0123456789"
+    s1[-8,5] = "あい"
+    assert_equal "01あい789", s1
+
+    s1 = "0123456789"
+    s1[-8,8] = "あい"
+    assert_equal "01あい", s1
+
+    s1 = "0123456789"
+    s1[-8,9] = "あい"
+    assert_equal "01あい", s1
+
+    s1 = "0123456789"
+    s1[-8,1] = "あい"
+    assert_equal "01あい3456789", s1
+
+    s1 = "0123456789"
+    s1[-8,0] = "あい"
+    assert_equal "01あい23456789", s1
+
+
+    s1 = "0123456789"
+    s1[-1,1] = "あい"
+    assert_equal "012345678あい", s1
+
+    s1 = "0123456789"
+    s1[-1,0] = "あい"
+    assert_equal "012345678あい9", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[-8,5] = "ab"
+    assert_equal "０１ab７８９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[-8,8] = "ab"
+    assert_equal "０１ab", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[-8,9] = "ab"
+    assert_equal "０１ab", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[-8,1] = "ab"
+    assert_equal "０１ab３４５６７８９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[-8,0] = "ab"
+    assert_equal "０１ab２３４５６７８９", s1
+
+
+    s1 = "０１２３４５６７８９"
+    s1[-1,1] = "ab"
+    assert_equal "０１２３４５６７８ab", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[-1,0] = "ab"
+    assert_equal "０１２３４５６７８ab９", s1
   end
 
   description "String#slice!"
