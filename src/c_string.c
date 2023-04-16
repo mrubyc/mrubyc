@@ -878,6 +878,16 @@ static void c_string_inspect(struct VM *vm, mrbc_value v[], int argc)
   const unsigned char *s = (const unsigned char *)mrbc_string_cstr(v);
   int i;
   for( i = 0; i < mrbc_string_size(v); i++ ) {
+#if MRBC_USE_UTF8
+    if( s[i] < ' ' ) {	// tiny isprint()
+      buf[2] = "0123456789ABCDEF"[s[i] >> 4];
+      buf[3] = "0123456789ABCDEF"[s[i] & 0x0f];
+      mrbc_string_append_cstr(&ret, buf);
+    } else {
+      buf[3] = s[i];
+      mrbc_string_append_cstr(&ret, buf+3);
+    }
+#else
     if( s[i] < ' ' || 0x7f <= s[i] ) {	// tiny isprint()
       buf[2] = "0123456789ABCDEF"[s[i] >> 4];
       buf[3] = "0123456789ABCDEF"[s[i] & 0x0f];
@@ -886,6 +896,7 @@ static void c_string_inspect(struct VM *vm, mrbc_value v[], int argc)
       buf[3] = s[i];
       mrbc_string_append_cstr(&ret, buf+3);
     }
+#endif
   }
   mrbc_string_append_cstr(&ret, "\"");
 
