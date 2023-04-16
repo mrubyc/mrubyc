@@ -283,7 +283,13 @@ int mrbc_string_index(const mrbc_value *src, const mrbc_value *pattern, int offs
 
   while( try_cnt >= 0 ) {
     if( memcmp( p1, p2, mrbc_string_size(pattern) ) == 0 ) {
+#if MRBC_USE_UTF8
+      int ret = mrbc_string_bytes2chars(src, (p1 - mrbc_string_cstr(src))); // srcから数えてp1が何文字目か
+      char *matched = p1 - ret;
+      return p1 - matched;
+#else
       return p1 - mrbc_string_cstr(src);	// matched.
+#endif
     }
     try_cnt--;
     p1++;
@@ -657,6 +663,20 @@ int mrbc_string_chars2bytes(mrbc_value *src, int off, int idx)
   // }
 }
 
+/* map byte offset to character index */
+int mrbc_string_bytes2chars(const mrbc_value *src, int byte_index)
+{
+  char *str = mrbc_string_cstr(src);
+  const char *pivot = str + byte_index;
+  int i;
+
+  for (i = 0; str < pivot; i++) {
+    str += mrbc_string_utf8_size(str);
+  }
+  if (str != pivot) return -1;
+  return i;
+}
+
 //================================================================
 /*! (method) []=
 */
@@ -825,7 +845,11 @@ static void c_string_index(struct VM *vm, mrbc_value v[], int argc)
 
   } else if( argc == 2 && mrbc_type(v[2]) == MRBC_TT_INTEGER ) {
     offset = v[2].i;
+#if MRBC_USE_UTF8
+    offset = mrbc_string_chars2bytes(v, 0, offset);
+#else
     if( offset < 0 ) offset += mrbc_string_size(&v[0]);
+#endif
     if( offset < 0 ) goto NIL_RETURN;
 
   } else {

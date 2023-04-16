@@ -70,6 +70,7 @@ int mrbc_string_chomp(mrbc_value *src);
 int mrbc_string_utf8_size(const char *str);
 int mrbc_string_char_size(const char *str);
 int mrbc_string_chars2bytes(mrbc_value *src, int off, int idx);
+int mrbc_string_bytes2chars(const mrbc_value *src, int byte_index);
 
 
 /***** Inline functions *****************************************************/

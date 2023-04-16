@@ -804,6 +804,17 @@ class StringTest < MrubycTestCase
     assert_equal 2, "abcde".index("c",1)
     assert_equal 2, "abcde".index("c",2)
     assert_equal nil, "abcde".index("c",3)
+
+    assert_equal 0, "あいうえお".index("")
+    assert_equal 0, "あいうえお".index("あ")
+    assert_equal 0, "あいうえお".index("あいう")
+    assert_equal 1, "あいうえお".index("いうえ")
+    assert_equal 3, "あいうえお".index("えお")
+    assert_equal nil, "あいうえお".index("えおか")
+
+    assert_equal 2, "あいうえお".index("う",1)
+    assert_equal 2, "あいうえお".index("う",2)
+    assert_equal nil, "あいうえお".index("う",3)
   end
 
   description "tr"
