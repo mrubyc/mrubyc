@@ -764,7 +764,6 @@ class StringTest < MrubycTestCase
     end
     assert_equal 10, s1.size
     assert_equal "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09", s1
-  end
 
   description "String#size"
   def string_size_case
@@ -780,16 +779,14 @@ class StringTest < MrubycTestCase
     assert_equal 1, s.size
     assert_equal 1, s.length
 
-  description "utf-8 size"
-  def utf8_size
     s1 = "a"
     s2 = "aà"
     s3 = "aàあ"
     s4 = "aàあ𩸽"
-    assert_equal 1, s1.utf8_size
-    assert_equal 2, s2.utf8_size
-    assert_equal 3, s3.utf8_size
-    assert_equal 4, s4.utf8_size
+    assert_equal 1, s1.size
+    assert_equal 2, s2.size
+    assert_equal 3, s3.size
+    assert_equal 4, s4.size
   end
 
   description "index"

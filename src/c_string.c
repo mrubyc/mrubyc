@@ -439,24 +439,25 @@ int mrbc_string_utf8_size(const char *str) {
   return len;
 }
 
-int mrbc_string_char_size(const char *str)
+int mrbc_string_char_size(const char *str, int len)
 {
-  int len = 0;
-  while (*str != '\0') {
+  int ret = 0;
+  int i;
+  for( i = 0; i < len; i++ ) {
     if ((*str & 0x80) == 0x00) {
-      len++;
+      ret++;
     } else if ((*str & 0xE0) == 0xC0) {
-      len++;
+      ret++;
     } else if ((*str & 0xF0) == 0xE0) {
-      len++;
+      ret++;
     } else if ((*str & 0xF8) == 0xF0) {
-      len++;
+      ret++;
     } else {
       // nothing to do
     }
     str++;
   }
-  return len;
+  return ret;
 }
 
 //================================================================
@@ -536,7 +537,11 @@ static void c_string_mul(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_string_size(struct VM *vm, mrbc_value v[], int argc)
 {
+#if MRBC_USE_UTF8
+  mrbc_int_t size = mrbc_string_char_size(mrbc_string_cstr(&v[0]), v->string->size);
+#else
   mrbc_int_t size = mrbc_string_size(&v[0]);
+#endif
 
   SET_INT_RETURN( size );
 }
@@ -718,7 +723,7 @@ static void c_string_insert(struct VM *vm, mrbc_value v[], int argc)
 
 #if MRBC_USE_UTF8
   char *string = mrbc_string_cstr(&v[0]);
-  int charsize = mrbc_string_char_size(string);
+  int charsize = mrbc_string_char_size(string, v->string->size);
   if( nth < 0 ) nth = charsize + nth;		// adjust to positive number.
 #else
   if( nth < 0 ) nth = len1 + nth;		// adjust to positive number.
