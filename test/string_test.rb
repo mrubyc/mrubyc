@@ -459,6 +459,17 @@ class StringTest < MrubycTestCase
     s = "\0"
     assert_equal 1, s.size
     assert_equal 1, s.length
+
+  description "utf-8 size"
+  def utf8_size
+    s1 = "a"
+    s2 = "aà"
+    s3 = "aàあ"
+    s4 = "aàあ𩸽"
+    assert_equal 1, s1.utf8_size
+    assert_equal 2, s2.utf8_size
+    assert_equal 3, s3.utf8_size
+    assert_equal 4, s4.utf8_size
   end
 
   description "index"

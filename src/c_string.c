@@ -1314,6 +1314,29 @@ static void c_string_bytes(struct VM *vm, mrbc_value v[], int argc)
   SET_RETURN(ret);
 }
 
+//================================================================
+/*! get utf-8 string size
+*/
+static void c_string_utf8_size(struct VM *vm, mrbc_value v[], int argc)
+{
+  char *str = mrbc_string_cstr(&v[0]);
+  int len = 0;
+  while (*str++) {
+    if ((*str & 0x80) == 0x00) {
+      len++;
+    } else if ((*str & 0xE0) == 0xC0) {
+      len++;
+    } else if ((*str & 0xF0) == 0xE0) {
+      len++;
+    } else if ((*str & 0xF8) == 0xF0) {
+      len++;
+    } else {
+      // nothing to do
+    }
+  }
+  mrbc_int_t i = len;
+  SET_INT_RETURN( i );
+}
 
 //================================================================
 /*! (method) upcase
@@ -1403,6 +1426,7 @@ static void c_string_downcase_self(struct VM *vm, mrbc_value v[], int argc)
   METHOD( "upcase!",	c_string_upcase_self )
   METHOD( "downcase",	c_string_downcase )
   METHOD( "downcase!",	c_string_downcase_self )
+  METHOD( "utf8_size",	c_string_utf8_size )
 
 #if MRBC_USE_FLOAT
   METHOD( "to_f",	c_string_to_f )
