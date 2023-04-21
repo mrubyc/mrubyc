@@ -961,11 +961,23 @@ static void c_string_slice_self(struct VM *vm, mrbc_value v[], int argc)
     return;
   }
 
+#if MRBC_USE_UTF8
+  if( pos < 0 ) pos += mrbc_string_bytes2chars(v, target_len);
+  if( pos < 0 ) goto RETURN_NIL;
+  if( pos > mrbc_string_bytes2chars(v, target_len) ) goto RETURN_NIL; // 文字数オーバー
+  pos = mrbc_string_chars2bytes(v, 0, pos);
+#else
   if( pos < 0 ) pos += target_len;
   if( pos < 0 ) goto RETURN_NIL;
+#endif
+
   if( len > (target_len - pos) ) len = target_len - pos;
   if( len < 0 ) goto RETURN_NIL;
   if( argc == 1 && len <= 0 ) goto RETURN_NIL;
+
+#if MRBC_USE_UTF8
+  len = mrbc_string_chars2bytes(v, pos, len);
+#endif
 
   mrbc_value ret = mrbc_string_new(vm, mrbc_string_cstr(v) + pos, len);
   if( !ret.string ) goto RETURN_NIL;		// ENOMEM

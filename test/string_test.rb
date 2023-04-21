@@ -737,6 +737,54 @@ class StringTest < MrubycTestCase
     s = "bar"
     assert_equal nil, s.slice!(-4, 1)
     assert_equal "bar", s
+
+    s = "あいう"
+    assert_equal "う", s.slice!(2)
+    assert_equal "あい", s
+
+    s = "あいう"
+    assert_equal "う", s.slice!(-1)
+    assert_equal "あい", s
+
+    s = "あいう"
+    assert_equal nil, s.slice!(3)
+    assert_equal "あいう", s
+
+    s = "あいう"
+    assert_equal nil, s.slice!(-4)
+    assert_equal "あいう", s
+
+    s = "あいう"
+    assert_equal "う", s.slice!(2, 1)
+    assert_equal "あい", s
+
+    s = "あいう"
+    assert_equal "",  s.slice!(2, 0)
+    assert_equal "あいう", s
+
+    s = "あいう"
+    assert_equal "う", s.slice!(2, 100)
+    assert_equal "あい", s
+
+    s = "あいう"
+    assert_equal "う", s.slice!(-1, 1)
+    assert_equal "あい", s
+
+    s = "あいう"
+    assert_equal "う", s.slice!(-1, 2)
+    assert_equal "あい", s
+
+    s = "あいう"
+    assert_equal "", s.slice!(3, 1)
+    assert_equal "あいう", s
+
+    s = "あいう"
+    assert_equal nil, s.slice!(4, 1)
+    assert_equal "あいう", s
+
+    s = "あいう"
+    assert_equal nil, s.slice!(-4, 1)
+    assert_equal "あいう", s
   end
 
   description "ord"
