@@ -119,8 +119,9 @@ class StringTest < MrubycTestCase
     assert_equal "a", 'aÀあ'[0]
     assert_equal "À", 'aÀあ'[1]
     assert_equal "あ", 'aÀあ'[2]
-    assert_equal nil, 'あいう'[-1]
+    assert_equal "う", 'あいう'[-1]
     assert_equal nil, 'あいう'[3]
+    assert_equal nil, 'あいう'[-4]
   end
 
   description "self[nth, len] -> String | nil"
@@ -765,6 +766,7 @@ class StringTest < MrubycTestCase
     end
     assert_equal 10, s1.size
     assert_equal "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09", s1
+  end
 
   description "String#size"
   def string_size_case

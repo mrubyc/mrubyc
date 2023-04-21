@@ -628,7 +628,12 @@ static void c_string_slice(struct VM *vm, mrbc_value v[], int argc)
     return;
   }
 
+#if MRBC_USE_UTF8
+  if( pos < 0 ) pos += mrbc_string_bytes2chars(v, target_len);
+#else
   if( pos < 0 ) pos += target_len;
+#endif
+
   if( pos < 0 ) goto RETURN_NIL;
   if( len > (target_len - pos) ) len = target_len - pos;
   if( len < 0 ) goto RETURN_NIL;
