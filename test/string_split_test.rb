@@ -14,7 +14,7 @@ class StringSplitTest < MrubycTestCase
     assert_equal ["a","b:c","d:"],          "a::b:c::d:".split("::")
     assert_equal ["a","b:c","d"],           "a::b:c::d::".split("::")
     assert_equal ["a", "b:c", "d", ":"],    "a::b:c::d:::".split("::")
-    # assert_equal ["あ", "い", "う"],        "あ,い,う".split(",")
+    assert_equal ["あ", "い", "う"],        "あ,い,う".split(",")
     # assert_equal ["あ", "", "い", "う"],    "あ,,い,う".split(",")
     # assert_equal ["あ", "い", "う"],        "あ、い、う".split("、")
     # assert_equal ["ああ", "い", "う"],        "ああ、い、う".split("、")
