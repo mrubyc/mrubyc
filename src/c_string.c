@@ -931,9 +931,35 @@ static void c_string_ord(struct VM *vm, mrbc_value v[], int argc)
     return;
   }
 
-  int i = ((uint8_t *)mrbc_string_cstr(v))[0];
+  int ret;
+#if !MRBC_USE_UTF8
+  ret = ((uint8_t *)mrbc_string_cstr(v))[0];
+#else
+  unsigned char *str = (unsigned char *)mrbc_string_cstr(v);
 
-  SET_INT_RETURN( i );
+  // len = 1
+  if (str[0] < 0x80) {
+    ret = str[0];
+  }
+
+  int len = mrbc_string_utf8_size(mrbc_string_cstr(v));
+
+  if (len == 2) {
+    // binary    110yyyyy 10xxxxxx
+    // codepoint 00000yyy yyxxxxxx
+    ret = ((str[0] & 0x1f) << 6) + (str[1] & 0x3f);
+  } else if (len == 3) {
+    // binary    1110zzzz 10yyyyyy 10xxxxxx
+    // codepoint zzzzyyyy yyxxxxxx
+    ret = ((str[0] & 0x0f) << 12) + ((str[1] & 0x3f) << 6) + (str[2] & 0x3f);
+  } else if (len == 4) {
+    // binary    11110uuu 10uuzzzz 10yyyyyy 10xxxxxx
+    // codepoint 000uuuuu zzzzyyyy yyxxxxxx
+    ret = ((str[0] & 0x07) << 18) + ((str[1] & 0x3f) << 12) + ((str[2] & 0x3f) << 6) + (str[3] & 0x3f);
+  }
+#endif
+
+  SET_INT_RETURN( ret );
 }
 
 

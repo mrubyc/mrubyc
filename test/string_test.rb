@@ -792,6 +792,11 @@ class StringTest < MrubycTestCase
     assert_equal 97, "a".ord
     assert_equal 97, "abcde".ord
 
+    assert_equal 224, "à".ord
+    assert_equal 12354, "あ".ord
+    assert_equal 171581, "𩸽".ord
+    assert_equal 12354, "あいう".ord
+
     assert_raise(ArgumentError.new("empty string")) do
       "".ord
     end
