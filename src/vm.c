@@ -311,7 +311,7 @@ void mrbc_pop_callinfo( struct VM *vm )
 */
 mrbc_vm * mrbc_vm_new( int regs_size )
 {
-  mrbc_vm *vm = mrbc_raw_alloc(sizeof(mrbc_vm) + sizeof(mrbc_value) * regs_size);
+  mrbc_vm *vm = mrbc_raw_alloc(offsetof(mrbc_vm, regs) + sizeof(mrbc_value) * regs_size);
   if( !vm ) return NULL;
 
   memset(vm, 0, sizeof(mrbc_vm));	// caution: assume NULL is zero.
