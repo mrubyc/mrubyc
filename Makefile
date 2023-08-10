@@ -61,7 +61,7 @@ test_host:
 
 run_test: check_tag
 	docker run --mount type=bind,src=${PWD}/,dst=/work/mrubyc \
-	  -e CFLAGS="-DMRBC_USE_HAL_POSIX=1 -DMRBC_USE_MATH=1 -DMRBC_INT64 -DMAX_SYMBOLS_COUNT=1000 -DMRBC_USE_UTF8=1 $(CFLAGS)" \
+	  -e CFLAGS="-DMRBC_USE_HAL_POSIX=1 -DMRBC_USE_MATH=1 -DMRBC_INT64 -DMAX_SYMBOLS_COUNT=1000 -DMRBC_USE_STRING_UTF8=1 $(CFLAGS)" \
 	  -e MRBC="/work/mruby/build/host/bin/mrbc" \
 	  mrubyc-dev /bin/sh -c "cd mrblib; make distclean all && cd -; \
 	  CC=$(CC) QEMU=$(QEMU) \
