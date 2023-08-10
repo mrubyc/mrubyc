@@ -634,6 +634,11 @@ static void c_string_slice(struct VM *vm, mrbc_value v[], int argc)
   if( len < 0 ) goto RETURN_NIL;
   if( argc == 1 && len <= 0 ) goto RETURN_NIL;
 
+#if MRBC_USE_UTF8
+  pos = mrbc_string_chars2bytes(v, 0, pos);
+  len = mrbc_string_chars2bytes(v, pos, len);
+#endif
+
   mrbc_value ret = mrbc_string_new(vm, mrbc_string_cstr(v) + pos, len);
   if( !ret.string ) goto RETURN_NIL;		// ENOMEM
 

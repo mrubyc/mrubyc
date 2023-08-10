@@ -113,19 +113,14 @@ class StringTest < MrubycTestCase
     assert_equal "r", 'bar'[-1]
     assert_equal nil, 'bar'[3]
     assert_equal nil, 'bar'[-4]
-    assert_equal "あ", 'あいう'.utf8_slice(0)
-    assert_equal "い", 'あいう'.utf8_slice(1)
-    assert_equal "う", 'あいう'.utf8_slice(2)
-    assert_equal "a", 'aÀあ'.utf8_slice(0)
-    assert_equal "À", 'aÀあ'.utf8_slice(1)
-    assert_equal "あ", 'aÀあ'.utf8_slice(2)
-    assert_equal nil, 'あいう'.utf8_slice(-1)
-    assert_equal nil, 'あいう'.utf8_slice(3)
-    assert_equal "あい", 'あいう'.utf8_slice(0, 2)
-    assert_equal "いう", 'あいう'.utf8_slice(1, 2)
-    assert_equal "aÀ", 'aÀあ'.utf8_slice(0, 2)
-    assert_equal "Àあ", 'aÀあ'.utf8_slice(1, 2)
-    assert_equal "aÀあ", 'aÀあ'.utf8_slice(0, 3)
+    assert_equal "あ", 'あいう'[0]
+    assert_equal "い", 'あいう'[1]
+    assert_equal "う", 'あいう'[2]
+    assert_equal "a", 'aÀあ'[0]
+    assert_equal "À", 'aÀあ'[1]
+    assert_equal "あ", 'aÀあ'[2]
+    assert_equal nil, 'あいう'[-1]
+    assert_equal nil, 'あいう'[3]
   end
 
   description "self[nth, len] -> String | nil"
@@ -145,6 +140,12 @@ class StringTest < MrubycTestCase
     str1[0] = "XYZ"
     assert_equal "XYZa", str1     #(str1 の内容が破壊的に変更された
     assert_equal "bar", str0      #(str0 は無傷、 str1 は str0 と内容を共有していない
+
+    assert_equal "あい", 'あいう'[0, 2]
+    assert_equal "いう", 'あいう'[1, 2]
+    assert_equal "aÀ", 'aÀあ'[0, 2]
+    assert_equal "Àあ", 'aÀあ'[1, 2]
+    assert_equal "aÀあ", 'aÀあ'[0, 3]
   end
 
   description "境界値チェックを詳細にかけておく"
