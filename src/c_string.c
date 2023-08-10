@@ -1408,6 +1408,37 @@ static void c_string_downcase_self(struct VM *vm, mrbc_value v[], int argc)
 }
 
 
+/*! get utf-8 string size
+*/
+static void c_string_utf8_slice(struct VM *vm, mrbc_value v[], int argc)
+{
+  char *str = mrbc_string_cstr(&v[0]);
+  int pos = mrbc_integer(v[1]);
+  int len = 0;
+  int idx = 0;
+
+  while (*str != '\0') {
+    len = mrbc_string_utf8_size(str);
+    if (len != 0) {
+      if (idx == pos) {
+        char result[len + 1];
+        strncpy(result, str, len);
+        result[len] = '\0';
+
+        mrbc_value ret = mrbc_string_new_cstr(vm, result);
+        if( !ret.string ) goto RETURN_NIL;		// ENOMEM
+        SET_RETURN(ret);
+        return; //normal return
+      }
+      idx++;
+    }
+    str++;
+  }
+
+ RETURN_NIL:
+  SET_NIL_RETURN();
+}
+
 /* MRBC_AUTOGEN_METHOD_TABLE
 
   CLASS("String")
@@ -1454,6 +1485,7 @@ static void c_string_downcase_self(struct VM *vm, mrbc_value v[], int argc)
   METHOD( "downcase",	c_string_downcase )
   METHOD( "downcase!",	c_string_downcase_self )
   METHOD( "utf8_size",	c_string_utf8_size )
+  METHOD( "utf8_slice",	c_string_utf8_slice )
 
 #if MRBC_USE_FLOAT
   METHOD( "to_f",	c_string_to_f )
