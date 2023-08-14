@@ -944,17 +944,12 @@ static void c_string_ord(struct VM *vm, mrbc_value v[], int argc)
 
   int len = mrbc_string_utf8_size(mrbc_string_cstr(v));
 
+  // NOTE: Table 3-6. UTF-8 Bit Distribution https://www.unicode.org/versions/Unicode15.0.0/ch03.pdf
   if (len == 2) {
-    // binary    110yyyyy 10xxxxxx
-    // codepoint 00000yyy yyxxxxxx
     ret = ((str[0] & 0x1f) << 6) + (str[1] & 0x3f);
   } else if (len == 3) {
-    // binary    1110zzzz 10yyyyyy 10xxxxxx
-    // codepoint zzzzyyyy yyxxxxxx
     ret = ((str[0] & 0x0f) << 12) + ((str[1] & 0x3f) << 6) + (str[2] & 0x3f);
   } else if (len == 4) {
-    // binary    11110uuu 10uuzzzz 10yyyyyy 10xxxxxx
-    // codepoint 000uuuuu zzzzyyyy yyxxxxxx
     ret = ((str[0] & 0x07) << 18) + ((str[1] & 0x3f) << 12) + ((str[2] & 0x3f) << 6) + (str[3] & 0x3f);
   }
 #endif
