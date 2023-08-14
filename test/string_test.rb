@@ -789,6 +789,7 @@ class StringTest < MrubycTestCase
 
   description "ord"
   def ord_case
+    assert_equal 0, "\u0000".ord
     assert_equal 97, "a".ord
     assert_equal 97, "abcde".ord
 
@@ -796,6 +797,7 @@ class StringTest < MrubycTestCase
     assert_equal 12354, "あ".ord
     assert_equal 171581, "𩸽".ord
     assert_equal 12354, "あいう".ord
+    assert_equal 1114111, "\u{10FFFF}".ord
 
     assert_raise(ArgumentError.new("empty string")) do
       "".ord
