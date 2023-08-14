@@ -11,7 +11,25 @@ class IntegerTest < MrubycTestCase
 
   description "chr"
   def chr_case
+    assert_equal "\u0000", 0.chr
     assert_equal "A", 65.chr
+    # NOTE: Pre-processing in CRuby will result in an error if no arguments are added.
+    assert_equal "ã", 227.chr('UTF-8')
+    assert_equal "あ", 12354.chr('UTF-8')
+    assert_equal "𩸽", 171581.chr('UTF-8')
+    assert_equal "\u{10FFFF}", 0x10FFFF.chr('UTF-8')
+
+    assert_raise(RangeError.new("invalid codepoint in UTF-8")) do
+      0xD800.chr('UTF-8')
+    end
+
+    assert_raise(RangeError.new("invalid codepoint in UTF-8")) do
+      0xDFFF.chr('UTF-8')
+    end
+
+    assert_raise(RangeError.new("out of char range")) do
+      0x110000.chr('UTF-8')
+    end
   end
 
   description "times"

@@ -250,9 +250,49 @@ static void c_integer_to_f(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_integer_chr(struct VM *vm, mrbc_value v[], int argc)
 {
+#if MRBC_USE_STRING_UTF8
+  int codepoint = mrbc_integer(v[0]);
+
+  if (codepoint > 0x10FFFF || codepoint < 0) {
+    mrbc_raise(vm, MRBC_CLASS(RangeError), "out of char range");
+    return;
+  }
+
+  if (0xD800 <= codepoint && codepoint <= 0xDFFF) {
+    mrbc_raise(vm, MRBC_CLASS(RangeError), "invalid codepoint in UTF-8");
+    return;
+  }
+
+  unsigned char bytes[4];
+  int len = 0;
+
+  // NOTE: Table 3-6. UTF-8 Bit Distribution https://www.unicode.org/versions/Unicode15.0.0/ch03.pdf
+  if (codepoint <= 0x7F ) {
+    len = 1;
+    bytes[0] = codepoint;
+  } else if (codepoint <= 0x7FF) {
+    len = 2;
+    bytes[0] = 0xC0 | (codepoint >> 6);
+    bytes[1] = 0x80 | (codepoint & 0xBF);
+  } else if (codepoint <= 0xFFFF) {
+    len = 3;
+    bytes[0] = 0xE0 | (codepoint >> 12);
+    bytes[1] = 0x80 | (codepoint >> 6 & 0x3F);
+    bytes[2] = 0x80 | (codepoint & 0x3F);
+  } else if (codepoint <= 0x10FFFF) {
+    len = 4;
+    bytes[0] = 0xF0 | (codepoint >> 18);
+    bytes[1] = 0x80 | (codepoint >> 12 & 0x3F);
+    bytes[2] = 0x80 | (codepoint >> 6 & 0x3F);
+    bytes[3] = 0x80 | (codepoint & 0x3F);
+  }
+
+  mrbc_value value = mrbc_string_new(vm, bytes, len);
+#else
   char buf[2] = { mrbc_integer(v[0]) };
 
   mrbc_value value = mrbc_string_new(vm, buf, 1);
+#endif
   SET_RETURN(value);
 }
 
