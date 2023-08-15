@@ -598,7 +598,27 @@ static void c_string_to_s(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_string_append(struct VM *vm, mrbc_value v[], int argc)
 {
-  if( !mrbc_string_append( &v[0], &v[1] ) ) {
+mrbc_value *str = &v[1];
+
+#if MRBC_USE_STRING_UTF8
+  if (mrbc_type(v[1]) == MRBC_TT_INTEGER) {
+    int codepoint = mrbc_integer(v[1]);
+
+    if (codepoint > 0x10FFFF || codepoint < 0) {
+      mrbc_raise(vm, MRBC_CLASS(RangeError), "out of char range");
+      return;
+    }
+
+    if (0xD800 <= codepoint && codepoint <= 0xDFFF) {
+      mrbc_raise(vm, MRBC_CLASS(RangeError), "invalid codepoint in UTF-8");
+      return;
+    }
+
+    mrbc_value tmp = mrbc_integer_chr(vm, v[1]);
+    str = &tmp;
+  }
+#endif
+  if( !mrbc_string_append( &v[0], str) ) {
     // raise ? ENOMEM
   }
 }

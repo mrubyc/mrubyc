@@ -24,6 +24,7 @@
 
 /***** Local headers ********************************************************/
 #include "value.h"
+#include "c_numeric.h"
 
 #ifdef __cplusplus
 extern "C" {

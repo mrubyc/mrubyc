@@ -74,13 +74,24 @@ class StringTest < MrubycTestCase
     s1 << s3
     assert_equal "ABCDEFG0123456789abcAあいう", s1
     assert_equal "あいう𩸽", "あいう" << "𩸽"
-    # s1 << 227
-    # assert_equal "ABCDEFG0123456789abcAあいうã", s1
-    # s1 << 129
-    # FIXME
-    # assert_equal "ABCDEFG0123456789abcAあいうã\u0081", s1
-    # s1 << 130
-    # assert_equal "ABCDEFG0123456789abcAあいうあ", s1
+    s1 << 227
+    assert_equal "ABCDEFG0123456789abcAあいうã", s1
+    s1 << 12360
+    assert_equal "ABCDEFG0123456789abcAあいうãえ", s1
+    s1 << 171581
+    assert_equal "ABCDEFG0123456789abcAあいうãえ𩸽", s1
+
+    assert_raise(RangeError.new("invalid codepoint in UTF-8")) do
+      "あいう" << 0xD800
+    end
+
+    assert_raise(RangeError.new("invalid codepoint in UTF-8")) do
+      "あいう" << 0xDFFF
+    end
+
+    assert_raise(RangeError.new("out of char range")) do
+      "あいう" << 0x110000
+    end
   end
 
   description "self <=> other -> (minus) | 0 | (plus)"
