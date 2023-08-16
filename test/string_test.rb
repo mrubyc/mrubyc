@@ -1132,4 +1132,9 @@ class StringTest < MrubycTestCase
     assert_nil "abc".downcase!
   end
 
+  description "String#encoding"
+  def string_encoding
+    assert_equal "UTF-8", "".encoding
+  end
+
 end

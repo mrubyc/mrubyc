@@ -1627,6 +1627,18 @@ RETURN_NIL:
   SET_NIL_RETURN();
 }
 
+static void c_string_encoding(struct VM *vm, mrbc_value v[], int argc)
+{
+  mrbc_value ret;
+#if MRBC_USE_STRING_UTF8
+  ret = mrbc_string_new_cstr(vm, "UTF-8");
+#else
+  ret = mrbc_string_new_cstr(vm, "ASCII-8BIT");
+#endif
+  SET_RETURN( ret );
+}
+
+
 /* MRBC_AUTOGEN_METHOD_TABLE
 
   CLASS("String")
@@ -1674,6 +1686,7 @@ RETURN_NIL:
   METHOD( "downcase!",	c_string_downcase_self )
   METHOD( "utf8_size",	c_string_utf8_size )
   METHOD( "utf8_slice",	c_string_utf8_slice )
+  METHOD( "encoding",	c_string_encoding )
 
 #if MRBC_USE_FLOAT
   METHOD( "to_f",	c_string_to_f )
