@@ -1137,4 +1137,26 @@ class StringTest < MrubycTestCase
     assert_equal "UTF-8", "".encoding
   end
 
+  description "String#encoding"
+  def string_encoding
+    assert_equal "UTF-8", "".encoding
+  end
+
+  description "String#each_char"
+  def string_each_char
+    i = 0
+    "aÀあ𩸽".each_char do |c|
+      case i
+      when 0
+        assert_equal "a", c
+      when 1
+        assert_equal "À", c
+      when 2
+        assert_equal "あ", c
+      when 3
+        assert_equal "𩸽", c
+      end
+      i += 1
+    end
+  end
 end
