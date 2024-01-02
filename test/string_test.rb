@@ -6,6 +6,8 @@ class StringTest < MrubycTestCase
   def string_new_with_arg
     str = String.new("a string instance")
     assert_equal "a string instance", str
+    utf8_str = String.new("あいう")
+    assert_equal "あいう", utf8_str
   end
 
   description "String.new without arg"
@@ -21,31 +23,47 @@ class StringTest < MrubycTestCase
     assert_equal false, "abc" == "abcd"
     assert_equal false, "abc" != "abc"
     assert_equal true, "abc" != "ABC"
+    assert_equal true, "あいう" == "あいう"
+    assert_equal true, "𩸽" == "𩸽" # outer BMP
+    assert_equal false, "A" == "À"
+    assert_equal false, "あいう" == "あいうえ"
+    assert_equal false, "あいう" != "あいう"
+    assert_equal true, "ace" != "àçè"
   end
 
   description "self * times -> String"
   def mul_case
     s1 = "ABCDEFG"
     s2 = "0123456789"
+    s3 = "あいう"
     assert_equal "ABCDEFGABCDEFG", s1 * 2
     assert_equal "abcabc", "abc" * 2
     assert_equal "01234567890123456789", s2 * 2
+    assert_equal "あいうあいう", s3 * 2
   end
 
   description "self + other -> String"
   def add_case
     s1 = "ABCDEFG"
     s2 = "0123456789"
+    s3 = "あいう"
     assert_equal "ABCDEFG0123456789", s1 + s2
     assert_equal "ABCDEFG123", s1 + "123"
     assert_equal "abc0123456789", "abc" + s2
     assert_equal "abc123", "abc" + "123"
+    assert_equal "あいう0123456789ABCDEFG", s3 + s2 + s1
+    assert_equal "ABCDEFGあいう0123456789", s1 + s3 + s2
+    assert_equal "ABCDEFG0123456789あいう", s1 + s2 + s3
+    assert_equal "ABCDEFGあい", s1 + "あい"
+    assert_equal "あい0123456789", "あい" + s2
+    assert_equal "あい𩸽", "あい" + "𩸽"
   end
 
   description "self << other -> self"
   def addi_case
     s1 = "ABCDEFG"
     s2 = "0123456789"
+    s3 = "あいう"
     s1 << s2
     assert_equal "ABCDEFG0123456789", s1
     s1 << "abc"
@@ -53,6 +71,27 @@ class StringTest < MrubycTestCase
     assert_equal "abcdef", "abc" << "def"
     s1 << 65
     assert_equal "ABCDEFG0123456789abcA", s1
+    s1 << s3
+    assert_equal "ABCDEFG0123456789abcAあいう", s1
+    assert_equal "あいう𩸽", "あいう" << "𩸽"
+    s1 << 227
+    assert_equal "ABCDEFG0123456789abcAあいうã", s1
+    s1 << 12360
+    assert_equal "ABCDEFG0123456789abcAあいうãえ", s1
+    s1 << 171581
+    assert_equal "ABCDEFG0123456789abcAあいうãえ𩸽", s1
+
+    assert_raise(RangeError.new("invalid codepoint in UTF-8")) do
+      "あいう" << 0xD800
+    end
+
+    assert_raise(RangeError.new("invalid codepoint in UTF-8")) do
+      "あいう" << 0xDFFF
+    end
+
+    assert_raise(RangeError.new("out of char range")) do
+      "あいう" << 0x110000
+    end
   end
 
   description "self <=> other -> (minus) | 0 | (plus)"
@@ -63,12 +102,19 @@ class StringTest < MrubycTestCase
     assert ("string" <=> "stringAA") < 0
     assert ("string" <=> "string") == 0
     assert ("stringAA" <=> "string") > 0
+    assert ("あ" <=> "い") < 0
+    assert ("い" <=> "い") == 0
+    assert ("い" <=> "あ") > 0
+    assert ("あ" <=> "ああ") < 0
+    assert ("ああ" <=> "あ") > 0
   end
 
   description "self == other -> bool"
   def op_eq_2_case
     s1 = "ABCDEFG"
+    s2 = "あいう"
     assert_equal "ABCDEFG", s1
+    assert_equal "あいう", s2
   end
 
   description "self[nth] -> String | nil"
@@ -78,6 +124,15 @@ class StringTest < MrubycTestCase
     assert_equal "r", 'bar'[-1]
     assert_equal nil, 'bar'[3]
     assert_equal nil, 'bar'[-4]
+    assert_equal "あ", 'あいう'[0]
+    assert_equal "い", 'あいう'[1]
+    assert_equal "う", 'あいう'[2]
+    assert_equal "a", 'aÀあ'[0]
+    assert_equal "À", 'aÀあ'[1]
+    assert_equal "あ", 'aÀあ'[2]
+    assert_equal "う", 'あいう'[-1]
+    assert_equal nil, 'あいう'[3]
+    assert_equal nil, 'あいう'[-4]
   end
 
   description "self[nth, len] -> String | nil"
@@ -97,6 +152,12 @@ class StringTest < MrubycTestCase
     str1[0] = "XYZ"
     assert_equal "XYZa", str1     #(str1 の内容が破壊的に変更された
     assert_equal "bar", str0      #(str0 は無傷、 str1 は str0 と内容を共有していない
+
+    assert_equal "あい", 'あいう'[0, 2]
+    assert_equal "いう", 'あいう'[1, 2]
+    assert_equal "aÀ", 'aÀあ'[0, 2]
+    assert_equal "Àあ", 'aÀあ'[1, 2]
+    assert_equal "aÀあ", 'aÀあ'[0, 3]
   end
 
   description "境界値チェックを詳細にかけておく"
@@ -198,6 +259,122 @@ class StringTest < MrubycTestCase
     s1 = "0123456789"
     s1[-10] = ""
     assert_equal "123456789", s1
+
+    s1 = "あいうえお"
+    s1[0] = "かき"
+    assert_equal "かきいうえお", s1
+
+    s1 = "0123456789"
+    s1[0] = "あい"
+    assert_equal "あい123456789", s1
+
+    s1 = "0123456789"
+    s1[1] = "あい"
+    assert_equal "0あい23456789", s1
+
+    s1 = "0123456789"
+    s1[9] = "あい"
+    assert_equal "012345678あい", s1
+
+    s1 = "0123456789"
+    s1[10] = "あい"
+    assert_equal "0123456789あい", s1
+
+    s1 = "0123456789"
+    s1[-1] = "あい"
+    assert_equal "012345678あい", s1
+
+    s1 = "0123456789"
+    s1[-2] = "あい"
+    assert_equal "01234567あい9", s1
+
+    s1 = "0123456789"
+    s1[-10] = "あい"
+    assert_equal "あい123456789", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[0] = "ab"
+    assert_equal "ab１２３４５６７８９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[1] = "ab"
+    assert_equal "０ab２３４５６７８９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[9] = "ab"
+    assert_equal "０１２３４５６７８ab", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[10] = "ab"
+    assert_equal "０１２３４５６７８９ab", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[-1] = "ab"
+    assert_equal "０１２３４５６７８ab", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[-2] = "ab"
+    assert_equal "０１２３４５６７ab９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[-10] = "ab"
+    assert_equal "ab１２３４５６７８９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[0] = ""
+    assert_equal "１２３４５６７８９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[1] = ""
+    assert_equal "０２３４５６７８９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[9] = ""
+    assert_equal "０１２３４５６７８", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[10] = ""
+    assert_equal "０１２３４５６７８９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[-1] = ""
+    assert_equal "０１２３４５６７８", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[-2] = ""
+    assert_equal "０１２３４５６７９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[-10] = ""
+    assert_equal "１２３４５６７８９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[0] = "あい"
+    assert_equal "あい１２３４５６７８９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[1] = "あい"
+    assert_equal "０あい２３４５６７８９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[9] = "あい"
+    assert_equal "０１２３４５６７８あい", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[10] = "あい"
+    assert_equal "０１２３４５６７８９あい", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[-1] = "あい"
+    assert_equal "０１２３４５６７８あい", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[-2] = "あい"
+    assert_equal "０１２３４５６７あい９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[-10] = "あい"
+    assert_equal "あい１２３４５６７８９", s1
   end
 
   description "self[nth, len] = val"
@@ -221,7 +398,6 @@ class StringTest < MrubycTestCase
     s1 = "0123456789"
     s1[2,0] = "ab"
     assert_equal "01ab23456789", s1
-
 
     s1 = "0123456789"
     s1[0,5] = "ab"
@@ -294,6 +470,143 @@ class StringTest < MrubycTestCase
     s1 = "0123456789"
     s1[10,0] = ""
     assert_equal "0123456789", s1
+
+    s1 = "0123456789"
+    s1[2,5] = "あい"
+    assert_equal "01あい789", s1
+
+    s1 = "0123456789"
+    s1[2,8] = "あい"
+    assert_equal "01あい", s1
+
+    s1 = "0123456789"
+    s1[2,9] = "あい"
+    assert_equal "01あい", s1
+
+    s1 = "0123456789"
+    s1[2,1] = "あい"
+    assert_equal "01あい3456789", s1
+
+    s1 = "0123456789"
+    s1[2,0] = "あい"
+    assert_equal "01あい23456789", s1
+
+    s1 = "0123456789"
+    s1[0,5] = "あい"
+    assert_equal "あい56789", s1
+
+    s1 = "0123456789"
+    s1[0,10] = "あい"
+    assert_equal "あい", s1
+
+    s1 = "0123456789"
+    s1[0,99] = "あい"
+    assert_equal "あい", s1
+
+
+    s1 = "0123456789"
+    s1[9,1] = "あい"
+    assert_equal "012345678あい", s1
+
+    s1 = "0123456789"
+    s1[10,1] = "あい"
+    assert_equal "0123456789あい", s1
+
+    s1 = "0123456789"
+    s1[10,0] = "あい"
+    assert_equal "0123456789あい", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[2,5] = "ab"
+    assert_equal "０１ab７８９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[2,8] = "ab"
+    assert_equal "０１ab", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[2,9] = "ab"
+    assert_equal "０１ab", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[2,1] = "ab"
+    assert_equal "０１ab３４５６７８９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[2,0] = "ab"
+    assert_equal "０１ab２３４５６７８９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[0,5] = "ab"
+    assert_equal "ab５６７８９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[0,10] = "ab"
+    assert_equal "ab", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[0,99] = "ab"
+    assert_equal "ab", s1
+
+
+    s1 = "０１２３４５６７８９"
+    s1[9,1] = "ab"
+    assert_equal "０１２３４５６７８ab", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[10,1] = "ab"
+    assert_equal "０１２３４５６７８９ab", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[10,0] = "ab"
+    assert_equal "０１２３４５６７８９ab", s1
+
+
+    s1 = "０１２３４５６７８９"
+    s1[2,5] = ""
+    assert_equal "０１７８９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[2,8] = ""
+    assert_equal "０１", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[2,9] = ""
+    assert_equal "０１", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[2,1] = ""
+    assert_equal "０１３４５６７８９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[2,0] = ""
+    assert_equal "０１２３４５６７８９", s1
+
+
+    s1 = "０１２３４５６７８９"
+    s1[0,5] = ""
+    assert_equal "５６７８９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[0,10] = ""
+    assert_equal "", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[0,99] = ""
+    assert_equal "", s1
+
+
+    s1 = "０１２３４５６７８９"
+    s1[9,1] = ""
+    assert_equal "０１２３４５６７８", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[10,1] = ""
+    assert_equal "０１２３４５６７８９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[10,0] = ""
+    assert_equal "０１２３４５６７８９", s1
   end
 
   description "minus"
@@ -326,6 +639,64 @@ class StringTest < MrubycTestCase
     s1 = "0123456789"
     s1[-1,0] = "ab"
     assert_equal "012345678ab9", s1
+
+    s1 = "0123456789"
+    s1[-8,5] = "あい"
+    assert_equal "01あい789", s1
+
+    s1 = "0123456789"
+    s1[-8,8] = "あい"
+    assert_equal "01あい", s1
+
+    s1 = "0123456789"
+    s1[-8,9] = "あい"
+    assert_equal "01あい", s1
+
+    s1 = "0123456789"
+    s1[-8,1] = "あい"
+    assert_equal "01あい3456789", s1
+
+    s1 = "0123456789"
+    s1[-8,0] = "あい"
+    assert_equal "01あい23456789", s1
+
+
+    s1 = "0123456789"
+    s1[-1,1] = "あい"
+    assert_equal "012345678あい", s1
+
+    s1 = "0123456789"
+    s1[-1,0] = "あい"
+    assert_equal "012345678あい9", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[-8,5] = "ab"
+    assert_equal "０１ab７８９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[-8,8] = "ab"
+    assert_equal "０１ab", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[-8,9] = "ab"
+    assert_equal "０１ab", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[-8,1] = "ab"
+    assert_equal "０１ab３４５６７８９", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[-8,0] = "ab"
+    assert_equal "０１ab２３４５６７８９", s1
+
+
+    s1 = "０１２３４５６７８９"
+    s1[-1,1] = "ab"
+    assert_equal "０１２３４５６７８ab", s1
+
+    s1 = "０１２３４５６７８９"
+    s1[-1,0] = "ab"
+    assert_equal "０１２３４５６７８ab９", s1
   end
 
   description "String#slice!"
@@ -377,12 +748,67 @@ class StringTest < MrubycTestCase
     s = "bar"
     assert_equal nil, s.slice!(-4, 1)
     assert_equal "bar", s
+
+    s = "あいう"
+    assert_equal "う", s.slice!(2)
+    assert_equal "あい", s
+
+    s = "あいう"
+    assert_equal "う", s.slice!(-1)
+    assert_equal "あい", s
+
+    s = "あいう"
+    assert_equal nil, s.slice!(3)
+    assert_equal "あいう", s
+
+    s = "あいう"
+    assert_equal nil, s.slice!(-4)
+    assert_equal "あいう", s
+
+    s = "あいう"
+    assert_equal "う", s.slice!(2, 1)
+    assert_equal "あい", s
+
+    s = "あいう"
+    assert_equal "",  s.slice!(2, 0)
+    assert_equal "あいう", s
+
+    s = "あいう"
+    assert_equal "う", s.slice!(2, 100)
+    assert_equal "あい", s
+
+    s = "あいう"
+    assert_equal "う", s.slice!(-1, 1)
+    assert_equal "あい", s
+
+    s = "あいう"
+    assert_equal "う", s.slice!(-1, 2)
+    assert_equal "あい", s
+
+    s = "あいう"
+    assert_equal "", s.slice!(3, 1)
+    assert_equal "あいう", s
+
+    s = "あいう"
+    assert_equal nil, s.slice!(4, 1)
+    assert_equal "あいう", s
+
+    s = "あいう"
+    assert_equal nil, s.slice!(-4, 1)
+    assert_equal "あいう", s
   end
 
   description "ord"
   def ord_case
+    assert_equal 0, "\u0000".ord
     assert_equal 97, "a".ord
     assert_equal 97, "abcde".ord
+
+    assert_equal 224, "à".ord
+    assert_equal 12354, "あ".ord
+    assert_equal 171581, "𩸽".ord
+    assert_equal 12354, "あいう".ord
+    assert_equal 1114111, "\u{10FFFF}".ord
 
     assert_raise(ArgumentError.new("empty string")) do
       "".ord
@@ -421,6 +847,15 @@ class StringTest < MrubycTestCase
     s = "\0"
     assert_equal 1, s.size
     assert_equal 1, s.length
+
+    s1 = "a"
+    s2 = "aà"
+    s3 = "aàあ"
+    s4 = "aàあ𩸽"
+    assert_equal 1, s1.size
+    assert_equal 2, s2.size
+    assert_equal 3, s3.size
+    assert_equal 4, s4.size
   end
 
   description "index"
@@ -435,6 +870,17 @@ class StringTest < MrubycTestCase
     assert_equal 2, "abcde".index("c",1)
     assert_equal 2, "abcde".index("c",2)
     assert_equal nil, "abcde".index("c",3)
+
+    assert_equal 0, "あいうえお".index("")
+    assert_equal 0, "あいうえお".index("あ")
+    assert_equal 0, "あいうえお".index("あいう")
+    assert_equal 1, "あいうえお".index("いうえ")
+    assert_equal 3, "あいうえお".index("えお")
+    assert_equal nil, "あいうえお".index("えおか")
+
+    assert_equal 2, "あいうえお".index("う",1)
+    assert_equal 2, "あいうえお".index("う",2)
+    assert_equal nil, "あいうえお".index("う",3)
   end
 
   description "tr"
@@ -480,10 +926,18 @@ class StringTest < MrubycTestCase
     assert_true  "abc".start_with?("a")
     assert_true  "abc".start_with?("ab")
     assert_true  "abc".start_with?("abc")
+    assert_true  "あいう".start_with?("")
+    assert_true  "あいう".start_with?("あ")
+    assert_true  "あいう".start_with?("あい")
+    assert_true  "あいう".start_with?("あいう")
     assert_false "abc".start_with?("abcd")
     assert_false "abc".start_with?("A")
     assert_false "abc".start_with?("aA")
     assert_false "abc".start_with?("b")
+    assert_false "あいう".start_with?("あいうえ")
+    assert_false "あいう".start_with?("い")
+    assert_false "あいう".start_with?("いう")
+    assert_false "あいう".start_with?("え")
   end
 
   description "end_with?"
@@ -492,10 +946,18 @@ class StringTest < MrubycTestCase
     assert_true  "abc".end_with?("c")
     assert_true  "abc".end_with?("bc")
     assert_true  "abc".end_with?("abc")
+    assert_true  "あいう".end_with?("")
+    assert_true  "あいう".end_with?("う")
+    assert_true  "あいう".end_with?("いう")
+    assert_true  "あいう".end_with?("あいう")
     assert_false "abc".end_with?(" abc")
     assert_false "abc".end_with?("C")
     assert_false "abc".end_with?("Bc")
     assert_false "abc".end_with?("b")
+    assert_false "あいう".end_with?(" あいう")
+    assert_false "あいう".end_with?("え")
+    assert_false "あいう".end_with?("い")
+    assert_false "あいう".end_with?("あい")
   end
 
   description "include?"
@@ -512,6 +974,15 @@ class StringTest < MrubycTestCase
     assert_false "abc".include?("A")
     assert_false "abc".include?("aB")
     assert_false "abc".include?("abC")
+    assert_true  "あいう".include?("")
+    assert_true  "あいう".include?("あ")
+    assert_true  "あいう".include?("い")
+    assert_true  "あいう".include?("う")
+    assert_true  "あいう".include?("あい")
+    assert_true  "あいう".include?("いう")
+    assert_true  "あいう".include?("あいう")
+    assert_false "あいう".include?("あいうえ")
+    assert_false "あいう".include?(" あいう")
   end
 
   description "to_f, to_i, to_s"
@@ -558,11 +1029,13 @@ class StringTest < MrubycTestCase
     #assert_equal 16, "0x10".to_i(0)
 
     assert_equal "str", "str".to_s
+    assert_equal "あいう", "あいう".to_s
   end
 
   description "String#bytes chars"
   def string_bytes_chars
     assert_equal [97, 98, 99], "abc".bytes
+    assert_equal [227, 129, 130, 227, 129, 132, 227, 129, 134], "あいう".bytes
   end
 
   description "String#bytes empty"
@@ -573,6 +1046,7 @@ class StringTest < MrubycTestCase
   description "String#bytes null char"
   def string_bytes_null_char
     assert_equal [97, 0, 98], "a\000b".bytes
+    assert_equal [227, 129, 130, 0, 227, 129, 132], "あ\000い".bytes
   end
 
   description "String#dup"
@@ -612,6 +1086,7 @@ class StringTest < MrubycTestCase
   def string_inspect_case
     assert_equal "\"\\x00\"", "\0".inspect
     assert_equal "\"foo\"", "foo".inspect
+    assert_equal "\"あいう\"", "あいう".inspect
   end
 
   description "String#upcase"
@@ -657,4 +1132,31 @@ class StringTest < MrubycTestCase
     assert_nil "abc".downcase!
   end
 
+  description "String#encoding"
+  def string_encoding
+    assert_equal "UTF-8", "".encoding
+  end
+
+  description "String#encoding"
+  def string_encoding
+    assert_equal "UTF-8", "".encoding
+  end
+
+  description "String#each_char"
+  def string_each_char
+    i = 0
+    "aÀあ𩸽".each_char do |c|
+      case i
+      when 0
+        assert_equal "a", c
+      when 1
+        assert_equal "À", c
+      when 2
+        assert_equal "あ", c
+      when 3
+        assert_equal "𩸽", c
+      end
+      i += 1
+    end
+  end
 end

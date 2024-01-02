@@ -15,11 +15,13 @@
 #ifndef MRBC_SRC_C_NUMERIC_H_
 #define MRBC_SRC_C_NUMERIC_H_
 
+#include "value.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+mrbc_value mrbc_integer_chr(struct VM *vm, mrbc_value num);
 
 #ifdef __cplusplus
 }

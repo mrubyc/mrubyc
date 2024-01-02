@@ -62,8 +62,23 @@
 #define MRBC_USE_STRING 1
 #endif
 
+/* USE UTF-8. Support UTF-8 string.
+   0: NOT USE
+   1: USE UTF-8
+*/
+#if !defined(MRBC_USE_STRING_UTF8)
+#define MRBC_USE_STRING_UTF8 0
+#endif
+
+#if defined(MRBC_USE_STRING) && !defined(MRBC_USE_STRING_UTF8)
+  #error "MRBC_USE_STRING is not defined, but MRBC_USE_STRING_UTF8 is defined. Please define MRBC_USE_STRING for string operations."
+#endif
 
 /* Hardware dependent flags */
+
+#if defined(MRBC_USE_STRING_UTF8) && (defined(__XC16__) || defined(__PIC24F__))
+  #error "You can not define MRBC_USE_STRING_UTF8 in 16-bit architecture"
+#endif
 
 /* Endian
    Define either MRBC_BIG_ENDIAN or MRBC_LITTLE_ENDIAN.
