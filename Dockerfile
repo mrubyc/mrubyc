@@ -1,4 +1,4 @@
-from ruby:3.1.2-slim
+from ruby:3.3.0-slim
 
 RUN apt update && apt -y upgrade
 RUN apt install -y \
@@ -7,7 +7,6 @@ RUN apt install -y \
   gcc-arm-linux-gnueabi \
   git \
   make \
-  qemu \
   qemu-kvm \
   qemu-user-static
 
