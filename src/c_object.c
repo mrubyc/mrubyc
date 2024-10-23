@@ -238,6 +238,7 @@ static void c_object_nil(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) p
  */
+#if !defined(MRBC_NO_OBJECT_STDOUT)
 static void c_object_p(struct VM *vm, mrbc_value v[], int argc)
 {
   int i;
@@ -264,11 +265,13 @@ static void c_object_p(struct VM *vm, mrbc_value v[], int argc)
     }
   }
 }
+#endif
 
 
 //================================================================
 /*! (method) print
  */
+#if !defined(MRBC_NO_OBJECT_STDOUT)
 static void c_object_print(struct VM *vm, mrbc_value v[], int argc)
 {
   int i;
@@ -277,11 +280,13 @@ static void c_object_print(struct VM *vm, mrbc_value v[], int argc)
   }
   SET_NIL_RETURN();
 }
+#endif
 
 
 //================================================================
 /*! (method) puts
  */
+#if !defined(MRBC_NO_OBJECT_STDOUT)
 static void c_object_puts(struct VM *vm, mrbc_value v[], int argc)
 {
   int i;
@@ -294,6 +299,7 @@ static void c_object_puts(struct VM *vm, mrbc_value v[], int argc)
   }
   SET_NIL_RETURN();
 }
+#endif
 
 
 //================================================================
@@ -722,12 +728,14 @@ static void c_object_sprintf(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) printf
 */
+#if !defined(MRBC_NO_OBJECT_STDOUT)
 static void c_object_printf(struct VM *vm, mrbc_value v[], int argc)
 {
   c_object_sprintf(vm, v, argc);
   mrbc_nprint( mrbc_string_cstr(v), mrbc_string_size(v) );
   SET_NIL_RETURN();
 }
+#endif
 
 
 //================================================================
@@ -778,9 +786,11 @@ static void c_object_to_s(struct VM *vm, mrbc_value v[], int argc)
   METHOD( "is_a?",	c_object_kind_of )
   METHOD( "kind_of?",	c_object_kind_of )
   METHOD( "nil?",	c_object_nil )
+#if !defined(MRBC_NO_OBJECT_STDOUT)
   METHOD( "p",		c_object_p )
   METHOD( "print",	c_object_print )
   METHOD( "puts",	c_object_puts )
+#endif
   METHOD( "raise",	c_object_raise )
   METHOD( "attr_reader",c_object_attr_reader )
   METHOD( "attr_accessor", c_object_attr_accessor )
@@ -789,7 +799,9 @@ static void c_object_to_s(struct VM *vm, mrbc_value v[], int argc)
 
 #if MRBC_USE_STRING
   METHOD( "sprintf",	c_object_sprintf )
+#if !defined(MRBC_NO_OBJECT_STDOUT)
   METHOD( "printf",	c_object_printf )
+#endif
   METHOD( "inspect",	c_object_to_s )
   METHOD( "to_s",	c_object_to_s )
 #endif

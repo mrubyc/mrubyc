@@ -36,12 +36,20 @@ static const mrbc_sym method_symbols_Object[] = {
 #if defined(MRBC_DEBUG)
   MRBC_SYM(object_id),
 #endif
+#if !defined(MRBC_NO_OBJECT_STDOUT)
   MRBC_SYM(p),
+#endif
+#if !defined(MRBC_NO_OBJECT_STDOUT)
   MRBC_SYM(print),
+#endif
 #if MRBC_USE_STRING
+#if !defined(MRBC_NO_OBJECT_STDOUT)
   MRBC_SYM(printf),
 #endif
+#endif
+#if !defined(MRBC_NO_OBJECT_STDOUT)
   MRBC_SYM(puts),
+#endif
   MRBC_SYM(raise),
 #if MRBC_USE_STRING
   MRBC_SYM(sprintf),
@@ -85,12 +93,20 @@ static const mrbc_func_t method_functions_Object[] = {
 #if defined(MRBC_DEBUG)
   c_object_object_id,
 #endif
+#if !defined(MRBC_NO_OBJECT_STDOUT)
   c_object_p,
+#endif
+#if !defined(MRBC_NO_OBJECT_STDOUT)
   c_object_print,
+#endif
 #if MRBC_USE_STRING
+#if !defined(MRBC_NO_OBJECT_STDOUT)
   c_object_printf,
 #endif
+#endif
+#if !defined(MRBC_NO_OBJECT_STDOUT)
   c_object_puts,
+#endif
   c_object_raise,
 #if MRBC_USE_STRING
   c_object_sprintf,
