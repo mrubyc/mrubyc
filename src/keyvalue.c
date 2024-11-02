@@ -178,10 +178,12 @@ void mrbc_kv_clear_vm_id(mrbc_kv_handle *kvh)
 */
 int mrbc_kv_resize(mrbc_kv_handle *kvh, int size)
 {
-  mrbc_kv *data2 = mrbc_raw_realloc(kvh->data, sizeof(mrbc_kv) * size);
-  if( !data2 ) return E_NOMEMORY_ERROR;		// ENOMEM
+  if( size <= 0 ) size = 1;
 
-  kvh->data = data2;
+  mrbc_kv *data = mrbc_raw_realloc(kvh->data, sizeof(mrbc_kv) * size);
+  if( !data ) return E_NOMEMORY_ERROR;		// ENOMEM
+
+  kvh->data = data;
   kvh->data_size = size;
 
   return 0;

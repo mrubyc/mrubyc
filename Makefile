@@ -20,10 +20,10 @@ mrblib:
 
 mrubyc_lib:
 	cd mrblib ; $(MAKE) all
-	cd src ; $(MAKE) all
+	cd src ; $(MAKE) -j4 all
 
 mrubyc_bin:
-	cd sample_c ; $(MAKE) all
+	cd sample_c ; $(MAKE) -j4 all
 
 .PHONY: clean clean_all
 clean:

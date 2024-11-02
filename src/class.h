@@ -42,6 +42,7 @@ extern "C" {
 */
 typedef struct RClass {
   mrbc_sym sym_id;		//!< class name's symbol ID
+  unsigned int flag_builtin : 1;//!< is built-in class?
   unsigned int flag_module : 1; //!< is module?
   unsigned int flag_alias : 1;  //!< is alias class?
   uint8_t num_builtin_method;	//!< num of built-in method.
@@ -64,6 +65,7 @@ typedef struct RClass mrb_class;
 */
 struct RBuiltinClass {
   mrbc_sym sym_id;		//!< class name's symbol ID
+  unsigned int flag_builtin : 1;//!< is built-in class?
   unsigned int flag_module : 1; //!< is module?
   unsigned int flag_alias : 1;  //!< is alias class?
   uint8_t num_builtin_method;	//!< num of built-in method.

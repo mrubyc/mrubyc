@@ -154,12 +154,13 @@ void mrbc_array_clear_vm_id(mrbc_value *ary)
 */
 int mrbc_array_resize(mrbc_value *ary, int size)
 {
+  if( size <= 0 ) size = 1;
+
   mrbc_array *h = ary->array;
+  mrbc_value *data = mrbc_raw_realloc(h->data, sizeof(mrbc_value) * size);
+  if( !data ) return E_NOMEMORY_ERROR;	// ENOMEM
 
-  mrbc_value *data2 = mrbc_raw_realloc(h->data, sizeof(mrbc_value) * size);
-  if( !data2 ) return E_NOMEMORY_ERROR;	// ENOMEM
-
-  h->data = data2;
+  h->data = data;
   h->data_size = size;
 
   return 0;

@@ -790,8 +790,9 @@ static void c_object_to_s(struct VM *vm, mrbc_value v[], int argc)
   char buf[64];
   char *s = buf;
   mrbc_sym sym_id = find_class_by_object(&v[0])->sym_id;
+  int class_or_module = (v[0].tt == MRBC_TT_CLASS || v[0].tt == MRBC_TT_MODULE);
 
-  if( v[0].tt != MRBC_TT_CLASS ) {
+  if (!class_or_module) {
     buf[0] = '#'; buf[1] = '<';
     s = buf + 2;
   }
@@ -799,7 +800,7 @@ static void c_object_to_s(struct VM *vm, mrbc_value v[], int argc)
   int bufsiz = sizeof(buf) - (s - buf);
   int n = set_sym_name_by_id( s, bufsiz, sym_id );
 
-  if( v[0].tt != MRBC_TT_CLASS ) {
+  if (!class_or_module) {
     mrbc_snprintf(s+n, bufsiz-n, ":%08x>", (uint32_t)
 #if defined(UINTPTR_MAX)
 	(uintptr_t)

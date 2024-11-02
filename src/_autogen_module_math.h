@@ -56,6 +56,7 @@ static const mrbc_func_t method_functions_Math[] = {
 
 struct RBuiltinClass mrbc_class_Math = {
   .sym_id = MRBC_SYM(Math),
+  .flag_builtin = 1,
   .flag_module = 1,
   .num_builtin_method = sizeof(method_symbols_Math) / sizeof(mrbc_sym),
   .super = 0,

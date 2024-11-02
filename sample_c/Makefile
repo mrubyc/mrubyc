@@ -27,3 +27,6 @@ sample_myclass: sample_myclass.c $(LIBMRUBYC)
 
 clean:
 	@rm -rf $(TARGETS) *.o *.dSYM *~
+
+strip:
+	strip $(TARGETS)

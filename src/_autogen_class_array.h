@@ -78,6 +78,7 @@ static const mrbc_func_t method_functions_Array[] = {
 
 struct RBuiltinClass mrbc_class_Array = {
   .sym_id = MRBC_SYM(Array),
+  .flag_builtin = 1,
   .num_builtin_method = sizeof(method_symbols_Array) / sizeof(mrbc_sym),
   .super = MRBC_CLASS(Object),
   .method_link = 0,

@@ -62,6 +62,7 @@ static const mrbc_func_t method_functions_Integer[] = {
 
 struct RBuiltinClass mrbc_class_Integer = {
   .sym_id = MRBC_SYM(Integer),
+  .flag_builtin = 1,
   .num_builtin_method = sizeof(method_symbols_Integer) / sizeof(mrbc_sym),
   .super = MRBC_CLASS(Object),
   .method_link = 0,
