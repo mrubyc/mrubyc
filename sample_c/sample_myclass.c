@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
 
 
   // Define your own class.
-  mrb_class *my_cls = mrbc_define_class(0, "MyClass", mrbc_class_object);
+  mrb_class *my_cls = mrbc_define_class(0, "MyClass", MRBC_CLASS(Object));
   mrbc_define_method(0, my_cls, "method1", c_myclass_method1);
 
 

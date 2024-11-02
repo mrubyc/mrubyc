@@ -1435,8 +1435,8 @@ void mrbc_init(void *heap_ptr, unsigned int size)
   cls.cls = MRBC_CLASS(VM);
   mrbc_set_const( MRBC_SYM(VM), &cls );
 
-  mrbc_define_method(0, mrbc_class_object, "sleep", c_sleep);
-  mrbc_define_method(0, mrbc_class_object, "sleep_ms", c_sleep_ms);
+  mrbc_define_method(0, 0, "sleep", c_sleep);
+  mrbc_define_method(0, 0, "sleep_ms", c_sleep_ms);
 }
 
 

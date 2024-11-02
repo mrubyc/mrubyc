@@ -559,7 +559,7 @@ static void c_object_include(struct VM *vm, mrbc_value v[], int argc)
   if( v[0].tt == MRBC_TT_CLASS || v[0].tt == MRBC_TT_MODULE ) {
     self = v[0].cls;
   } else if( vm->callinfo_tail == 0 ) {    // is top level?
-    self = mrbc_class_object;
+    self = MRBC_CLASS(Object);
   } else {
     mrbc_raise( vm, 0, 0 );
     return; // Error.

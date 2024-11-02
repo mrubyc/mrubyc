@@ -102,7 +102,7 @@ mrbc_class * mrbc_define_class(struct VM *vm, const char *name, mrbc_class *supe
 
   *cls = (mrbc_class){
     .sym_id = sym_id,
-    .super = super ? super : mrbc_class_object,
+    .super = super ? super : MRBC_CLASS(Object),
 #if defined(MRBC_DEBUG)
     .name = name,
 #endif
@@ -151,7 +151,7 @@ mrbc_class * mrbc_define_class_under(struct VM *vm, const mrbc_class *outer, con
 
   *cls = (mrbc_class){
     .sym_id = mrbc_symbol( mrbc_symbol_new( vm, buf )),
-    .super = super ? super : mrbc_class_object,
+    .super = super ? super : MRBC_CLASS(Object),
 #if defined(MRBC_DEBUG)
     .name = name,
 #endif
@@ -267,7 +267,7 @@ mrbc_class * mrbc_define_module_under(struct VM *vm, const mrbc_class *outer, co
 */
 void mrbc_define_method(struct VM *vm, mrbc_class *cls, const char *name, mrbc_func_t cfunc)
 {
-  if( cls == NULL ) cls = mrbc_class_object;	// set default to Object.
+  if( cls == NULL ) cls = MRBC_CLASS(Object);	// set default to Object.
 
   mrbc_method *method = mrbc_raw_alloc_no_free( sizeof(mrbc_method) );
   if( !method ) return; // ENOMEM
@@ -501,7 +501,7 @@ mrbc_method * mrbc_find_method( mrbc_method *r_method, mrbc_class *cls, mrbc_sym
       // does not have super class.
       if( mod_nest_idx == 0 ) {
         if( flag_module ) {
-          cls = mrbc_class_object;
+          cls = MRBC_CLASS(Object);
           flag_module = 0;
           continue;
         }
