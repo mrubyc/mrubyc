@@ -195,7 +195,7 @@ mrbc_class * mrbc_define_module(struct VM *vm, const char *name)
   *cls = (mrbc_class){
     .sym_id = sym_id,
     .flag_module = 1,
-    .super = 0,
+    .super = MRBC_CLASS(Module),
 #if defined(MRBC_DEBUG)
     .name = name,
 #endif
@@ -244,7 +244,7 @@ mrbc_class * mrbc_define_module_under(struct VM *vm, const mrbc_class *outer, co
   *cls = (mrbc_class){
     .sym_id = mrbc_symbol( mrbc_symbol_new( vm, buf )),
     .flag_module = 1,
-    .super = 0,
+    .super = MRBC_CLASS(Module),
 #if defined(MRBC_DEBUG)
     .name = name,
 #endif
@@ -708,12 +708,6 @@ void mrbc_init_class(void)
   cls.cls = MRBC_CLASS(Hash);
   mrbc_set_const( MRBC_SYM(Hash), &cls );
 
-#if MRBC_USE_MATH
-  mrbc_value math = {.tt = MRBC_TT_MODULE, .cls = MRBC_CLASS(Math) };
-  mrbc_set_const( MRBC_SYM(Math), &math );
-  mrbc_init_module_math();
-#endif
-
   cls.cls = MRBC_CLASS(Exception);
   mrbc_set_const( MRBC_SYM(Exception), &cls );
 
@@ -752,6 +746,17 @@ void mrbc_init_class(void)
 
   cls.cls = MRBC_CLASS(ZeroDivisionError);
   mrbc_set_const( MRBC_SYM(ZeroDivisionError), &cls );
+
+  // modules
+  cls.tt = MRBC_TT_MODULE,
+  cls.cls = MRBC_CLASS(Module);
+  mrbc_set_const( MRBC_SYM(Module), &cls );
+
+#if MRBC_USE_MATH
+  cls.cls = MRBC_CLASS(Math);
+  mrbc_set_const( MRBC_SYM(Math), &cls );
+  mrbc_init_module_math();
+#endif
 
   mrbc_run_mrblib(mrblib_bytecode);
 }

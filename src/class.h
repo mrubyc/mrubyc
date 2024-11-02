@@ -154,6 +154,7 @@ extern struct RBuiltinClass mrbc_class_String;
 extern struct RBuiltinClass mrbc_class_Range;
 extern struct RBuiltinClass mrbc_class_Hash;
 extern struct RBuiltinClass mrbc_class_Math;
+extern struct RBuiltinClass mrbc_class_Module;
 extern struct RBuiltinClass mrbc_class_Exception;
 extern struct RClass mrbc_class_NoMemoryError;
 extern struct RClass mrbc_class_NotImplementedError;

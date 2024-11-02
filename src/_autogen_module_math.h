@@ -59,7 +59,7 @@ struct RBuiltinClass mrbc_class_Math = {
   .flag_builtin = 1,
   .flag_module = 1,
   .num_builtin_method = sizeof(method_symbols_Math) / sizeof(mrbc_sym),
-  .super = 0,
+  .super = MRBC_CLASS(Module),
   .method_link = 0,
 #if defined(MRBC_DEBUG)
   .name = "Math",
