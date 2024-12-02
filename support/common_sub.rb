@@ -97,11 +97,13 @@ end
 #   file: "c_range_method_table.h",
 #   classes: [ {
 #     class: "Range",
-#     super: "mrbc_class_object",
+#     super: "Object",
 #     methods: [
 #       { name:"first", func:"c_range_first", if_exp:[...] },... ]
 #   } ]
 # }
+#
+# If you don't specify the superclass, the default value will be added.
 #
 def parse_source_string( src )
   flag_error = false
@@ -138,11 +140,11 @@ def parse_source_string( src )
       ret[key.downcase.to_sym] = strip_double_quot(args[0])
 
     when "CLASS"
-      cls = { class: strip_double_quot(args[0]) }
+      cls = { class: strip_double_quot(args[0]), :super=>"Object" }
       ret[:classes] << cls
 
     when "MODULE"
-      cls = { module: strip_double_quot(args[0]) }
+      cls = { module: strip_double_quot(args[0]), :super=>"0" }
       ret[:classes] << cls
 
     when "SUPER"

@@ -85,20 +85,15 @@ def write_file( param )
     end
     n = cls[:methods] ? "sizeof(method_symbols_#{cls_name}) / sizeof(mrbc_sym)" : 0
     file.puts "  .num_builtin_method = #{n},"
-    if type == :class
-      sp = case cls[:super]
-           when nil
-             "MRBC_CLASS(Object)"
-           when /^[A-Z][A-Za-z0-9]+$/
-             "MRBC_CLASS(#{cls[:super]})"
-           else
-             cls[:super]
-           end
-    else
-      sp = "0"
-    end
+    sp = case cls[:super]
+         when nil
+           raise "SUPER isn't specified."
+         when /^[A-Z][A-Za-z0-9]+$/
+           "MRBC_CLASS(#{cls[:super]})"
+         else
+           cls[:super]
+         end
     file.puts "  .super = #{sp},"
-    file.puts "  .method_link = 0,"
     file.puts "#if defined(MRBC_DEBUG)"
     file.puts "  .name = \"#{cls_name}\","
     file.puts "#endif"

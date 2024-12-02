@@ -788,14 +788,11 @@ int mrbc_mutex_trylock( mrbc_mutex *mutex, mrbc_tcb *tcb )
 */
 void mrbc_cleanup(void)
 {
+  mrbc_cleanup_alloc();
   mrbc_cleanup_vm();
   mrbc_cleanup_symbol();
-  mrbc_cleanup_alloc();
 
-  q_dormant_ = 0;
-  q_ready_ = 0;
-  q_waiting_ = 0;
-  q_suspended_ = 0;
+  memset( task_queue_, 0, sizeof(task_queue_) );
 }
 
 
@@ -1421,7 +1418,13 @@ static void c_vm_tick(mrbc_vm *vm, mrbc_value v[], int argc)
 */
 void mrbc_init(void *heap_ptr, unsigned int size)
 {
-  hal_init();
+  static uint8_t flag_hal_init_called = 0;
+
+  if( !flag_hal_init_called ) {
+    hal_init();
+    flag_hal_init_called = 1;
+  }
+
   mrbc_init_alloc(heap_ptr, size);
   mrbc_init_global();
   mrbc_init_class();

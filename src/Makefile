@@ -33,10 +33,10 @@ clean:
 	@rm -f $(TARGET) $(OBJS) *~
 
 clean_all: clean
-	@rm -f $(AUTOGEN_SYMBOL_TABLE) $(AUTOGEN_METHOD_TABLE)
+	rm -f $(AUTOGEN_SYMBOL_TABLE) $(AUTOGEN_CLASS_TABLE) $(AUTOGEN_METHOD_TABLE)
 
 autogen:
-	@rm -f $(AUTOGEN_SYMBOL_TABLE) $(AUTOGEN_METHOD_TABLE)
+	@rm -f $(AUTOGEN_SYMBOL_TABLE) $(AUTOGEN_CLASS_TABLE) $(AUTOGEN_METHOD_TABLE)
 	$(MAKE) $(AUTOGEN_SYMBOL_TABLE)
 
 check_depend:
@@ -44,12 +44,15 @@ check_depend:
 	  | sed -e 's/\(^.*\.o:\)/$$(BUILD_DIR)\/\1/' -e 's/[^ ]*hal.h/$$(HAL_DIR)\/hal.h/'
 
 
+#
 # Auto generated files.
-
+#
 MAKE_SYMBOL_TABLE ?= ../support/make_symbol_table.rb
+MAKE_CLASS_TABLE ?= ../support/make_class_table.rb
 MAKE_METHOD_TABLE ?= ../support/make_method_table.rb
 
 AUTOGEN_SYMBOL_TABLE = _autogen_builtin_symbol.h
+AUTOGEN_CLASS_TABLE = _autogen_builtin_class.h
 AUTOGEN_METHOD_TABLE = _autogen_class_array.h _autogen_class_exception.h \
 	_autogen_class_float.h _autogen_class_hash.h _autogen_class_integer.h \
 	_autogen_module_math.h _autogen_class_object.h _autogen_class_range.h \
@@ -58,10 +61,13 @@ AUTOGEN_METHOD_TABLE = _autogen_class_array.h _autogen_class_exception.h \
 #
 # un-comment below, if you need add and/or delete method in builtin class.
 #
-#AUTOGEN_METHOD_SRCS = c_array.c c_hash.c c_math.c c_numeric.c c_object.c c_range.c c_string.c error.c rrt0.c
+#AUTOGEN_METHOD_SRCS = c_object.c symbol.c c_numeric.c c_string.c c_range.c c_array.c c_hash.c error.c c_math.c rrt0.c
 
-$(AUTOGEN_SYMBOL_TABLE): $(AUTOGEN_METHOD_TABLE)
+$(AUTOGEN_SYMBOL_TABLE): $(AUTOGEN_CLASS_TABLE)
 	$(MAKE_SYMBOL_TABLE) --path-c . --path-rb ../mrblib -o $(AUTOGEN_SYMBOL_TABLE)
+
+$(AUTOGEN_CLASS_TABLE): $(AUTOGEN_METHOD_TABLE)
+	$(MAKE_CLASS_TABLE) -o $(AUTOGEN_CLASS_TABLE) c_object.c symbol.c c_numeric.c c_string.c c_range.c c_array.c c_hash.c error.c c_math.c
 
 _autogen_class_array.h:		$(AUTOGEN_METHOD_SRCS)
 	$(MAKE_METHOD_TABLE) c_array.c
@@ -113,10 +119,11 @@ $(BUILD_DIR)/c_range.o: c_range.c vm_config.h alloc.h value.h symbol.h \
   c_range.h console.h _autogen_class_range.h
 $(BUILD_DIR)/c_string.o: c_string.c vm_config.h alloc.h value.h symbol.h \
   _autogen_builtin_symbol.h class.h keyvalue.h error.h c_string.h \
-  c_array.h vm.h console.h _autogen_class_string.h
+  c_array.h c_range.h vm.h console.h _autogen_class_string.h
 $(BUILD_DIR)/class.o: class.c vm_config.h alloc.h value.h symbol.h \
   _autogen_builtin_symbol.h error.h keyvalue.h class.h c_string.h \
-  c_array.h c_hash.h global.h vm.h load.h console.h
+  c_array.h c_hash.h c_math.h global.h vm.h load.h console.h \
+  _autogen_builtin_class.h
 $(BUILD_DIR)/console.o: console.c vm_config.h $(HAL_DIR)/hal.h alloc.h value.h \
   symbol.h _autogen_builtin_symbol.h class.h keyvalue.h error.h \
   console.h c_string.h c_array.h c_hash.h c_range.h global.h
@@ -124,7 +131,7 @@ $(BUILD_DIR)/error.o: error.c vm_config.h alloc.h value.h symbol.h \
   _autogen_builtin_symbol.h error.h class.h keyvalue.h c_string.h vm.h \
   console.h _autogen_class_exception.h
 $(BUILD_DIR)/global.o: global.c vm_config.h value.h symbol.h _autogen_builtin_symbol.h \
-  global.h keyvalue.h class.h error.h console.h
+  global.h keyvalue.h class.h error.h console.h c_array.h alloc.h
 $(BUILD_DIR)/keyvalue.o: keyvalue.c vm_config.h value.h alloc.h keyvalue.h
 $(BUILD_DIR)/load.o: load.c vm_config.h vm.h value.h class.h keyvalue.h error.h \
   alloc.h symbol.h _autogen_builtin_symbol.h c_string.h load.h

@@ -659,99 +659,30 @@ int mrbc_run_mrblib(const void *bytecode)
 }
 
 
+#include "_autogen_builtin_class.h"
+
 //================================================================
 /*! initialize all classes.
  */
 void mrbc_init_class(void)
 {
-  extern const uint8_t mrblib_bytecode[];
+  // initialize builtin class.
+  for( int i = 0; i < sizeof(MRBC_BuiltinClass)/sizeof(struct MRBC_BuiltinClass); i++ ) {
+    mrbc_class *cls = MRBC_BuiltinClass[i].cls;
 
-  mrbc_value cls = {.tt = MRBC_TT_CLASS};
+    cls->super = MRBC_BuiltinClass[i].super;
+    cls->method_link = 0;
 
-  cls.cls = MRBC_CLASS(Object);
-  mrbc_set_const( MRBC_SYM(Object), &cls );
-
-  cls.cls = MRBC_CLASS(NilClass);
-  mrbc_set_const( MRBC_SYM(NilClass), &cls );
-
-  cls.cls = MRBC_CLASS(FalseClass);
-  mrbc_set_const( MRBC_SYM(FalseClass), &cls );
-
-  cls.cls = MRBC_CLASS(TrueClass);
-  mrbc_set_const( MRBC_SYM(TrueClass), &cls );
-
-  cls.cls = MRBC_CLASS(Integer);
-  mrbc_set_const( MRBC_SYM(Integer), &cls );
-
-#if MRBC_USE_FLOAT
-  cls.cls = MRBC_CLASS(Float);
-  mrbc_set_const( MRBC_SYM(Float), &cls );
-#endif
-
-  cls.cls = MRBC_CLASS(Symbol);
-  mrbc_set_const( MRBC_SYM(Symbol), &cls );
-
-  cls.cls = MRBC_CLASS(Proc);
-  mrbc_set_const( MRBC_SYM(Proc), &cls );
-
-  cls.cls = MRBC_CLASS(Array);
-  mrbc_set_const( MRBC_SYM(Array), &cls );
-
-#if MRBC_USE_STRING
-  cls.cls = MRBC_CLASS(String);
-  mrbc_set_const( MRBC_SYM(String), &cls );
-#endif
-
-  cls.cls = MRBC_CLASS(Range);
-  mrbc_set_const( MRBC_SYM(Range), &cls );
-
-  cls.cls = MRBC_CLASS(Hash);
-  mrbc_set_const( MRBC_SYM(Hash), &cls );
+    mrbc_set_const( cls->sym_id, &(mrbc_value){
+	.tt = cls->flag_module ? MRBC_TT_MODULE : MRBC_TT_CLASS,
+	.cls = cls,
+      });
+  }
 
 #if MRBC_USE_MATH
-  mrbc_value math = {.tt = MRBC_TT_MODULE, .cls = MRBC_CLASS(Math) };
-  mrbc_set_const( MRBC_SYM(Math), &math );
   mrbc_init_module_math();
 #endif
 
-  cls.cls = MRBC_CLASS(Exception);
-  mrbc_set_const( MRBC_SYM(Exception), &cls );
-
-  cls.cls = MRBC_CLASS(NoMemoryError);
-  mrbc_set_const( MRBC_SYM(NoMemoryError), &cls );
-
-  cls.cls = MRBC_CLASS(NotImplementedError);
-  mrbc_set_const( MRBC_SYM(NotImplementedError), &cls );
-
-  cls.cls = MRBC_CLASS(StandardError);
-  mrbc_set_const( MRBC_SYM(StandardError), &cls );
-
-  cls.cls = MRBC_CLASS(ArgumentError);
-  mrbc_set_const( MRBC_SYM(ArgumentError), &cls );
-
-  cls.cls = MRBC_CLASS(IndexError);
-  mrbc_set_const( MRBC_SYM(IndexError), &cls );
-
-  cls.cls = MRBC_CLASS(IOError);
-  mrbc_set_const( MRBC_SYM(IOError), &cls );
-
-  cls.cls = MRBC_CLASS(NameError);
-  mrbc_set_const( MRBC_SYM(NameError), &cls );
-
-  cls.cls = MRBC_CLASS(NoMethodError);
-  mrbc_set_const( MRBC_SYM(NoMethodError), &cls );
-
-  cls.cls = MRBC_CLASS(RangeError);
-  mrbc_set_const( MRBC_SYM(RangeError), &cls );
-
-  cls.cls = MRBC_CLASS(RuntimeError);
-  mrbc_set_const( MRBC_SYM(RuntimeError), &cls );
-
-  cls.cls = MRBC_CLASS(TypeError);
-  mrbc_set_const( MRBC_SYM(TypeError), &cls );
-
-  cls.cls = MRBC_CLASS(ZeroDivisionError);
-  mrbc_set_const( MRBC_SYM(ZeroDivisionError), &cls );
-
+  extern const uint8_t mrblib_bytecode[];
   mrbc_run_mrblib(mrblib_bytecode);
 }
