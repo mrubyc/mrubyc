@@ -1429,14 +1429,19 @@ void mrbc_init(void *heap_ptr, unsigned int size)
   mrbc_init_global();
   mrbc_init_class();
 
-  mrbc_value cls = {.tt = MRBC_TT_CLASS, .cls = MRBC_CLASS(Task)};
-  mrbc_set_const( MRBC_SYM(Task), &cls );
+  static mrbc_class * const rrt0_cls[] = {
+    MRBC_CLASS(Task), MRBC_CLASS(Mutex), MRBC_CLASS(VM) };
 
-  cls.cls = MRBC_CLASS(Mutex);
-  mrbc_set_const( MRBC_SYM(Mutex), &cls );
+  for( int i = 0; i < sizeof(rrt0_cls)/sizeof(rrt0_cls[0]); i++ ) {
+    mrbc_class *cls = rrt0_cls[i];
 
-  cls.cls = MRBC_CLASS(VM);
-  mrbc_set_const( MRBC_SYM(VM), &cls );
+    cls->super = MRBC_CLASS(Object);
+    cls->method_link = 0;
+    mrbc_set_const( cls->sym_id, &(mrbc_value){
+	.tt = MRBC_TT_CLASS,
+	.cls = cls,
+      });
+  }
 
   mrbc_define_method(0, 0, "sleep", c_sleep);
   mrbc_define_method(0, 0, "sleep_ms", c_sleep_ms);
