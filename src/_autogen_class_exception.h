@@ -17,7 +17,6 @@ struct RBuiltinClass mrbc_class_Exception = {
   .flag_builtin = 1,
   .num_builtin_method = sizeof(method_symbols_Exception) / sizeof(mrbc_sym),
   .super = MRBC_CLASS(Object),
-  .method_link = 0,
 #if defined(MRBC_DEBUG)
   .name = "Exception",
 #endif
@@ -31,7 +30,6 @@ struct RClass mrbc_class_NoMemoryError = {
   .flag_builtin = 1,
   .num_builtin_method = 0,
   .super = MRBC_CLASS(Exception),
-  .method_link = 0,
 #if defined(MRBC_DEBUG)
   .name = "NoMemoryError",
 #endif
@@ -43,7 +41,6 @@ struct RClass mrbc_class_NotImplementedError = {
   .flag_builtin = 1,
   .num_builtin_method = 0,
   .super = MRBC_CLASS(Exception),
-  .method_link = 0,
 #if defined(MRBC_DEBUG)
   .name = "NotImplementedError",
 #endif
@@ -55,7 +52,6 @@ struct RClass mrbc_class_StandardError = {
   .flag_builtin = 1,
   .num_builtin_method = 0,
   .super = MRBC_CLASS(Exception),
-  .method_link = 0,
 #if defined(MRBC_DEBUG)
   .name = "StandardError",
 #endif
@@ -67,7 +63,6 @@ struct RClass mrbc_class_ArgumentError = {
   .flag_builtin = 1,
   .num_builtin_method = 0,
   .super = MRBC_CLASS(StandardError),
-  .method_link = 0,
 #if defined(MRBC_DEBUG)
   .name = "ArgumentError",
 #endif
@@ -79,7 +74,6 @@ struct RClass mrbc_class_IndexError = {
   .flag_builtin = 1,
   .num_builtin_method = 0,
   .super = MRBC_CLASS(StandardError),
-  .method_link = 0,
 #if defined(MRBC_DEBUG)
   .name = "IndexError",
 #endif
@@ -91,7 +85,6 @@ struct RClass mrbc_class_IOError = {
   .flag_builtin = 1,
   .num_builtin_method = 0,
   .super = MRBC_CLASS(StandardError),
-  .method_link = 0,
 #if defined(MRBC_DEBUG)
   .name = "IOError",
 #endif
@@ -103,7 +96,6 @@ struct RClass mrbc_class_NameError = {
   .flag_builtin = 1,
   .num_builtin_method = 0,
   .super = MRBC_CLASS(StandardError),
-  .method_link = 0,
 #if defined(MRBC_DEBUG)
   .name = "NameError",
 #endif
@@ -115,7 +107,6 @@ struct RClass mrbc_class_NoMethodError = {
   .flag_builtin = 1,
   .num_builtin_method = 0,
   .super = MRBC_CLASS(NameError),
-  .method_link = 0,
 #if defined(MRBC_DEBUG)
   .name = "NoMethodError",
 #endif
@@ -127,7 +118,6 @@ struct RClass mrbc_class_RangeError = {
   .flag_builtin = 1,
   .num_builtin_method = 0,
   .super = MRBC_CLASS(StandardError),
-  .method_link = 0,
 #if defined(MRBC_DEBUG)
   .name = "RangeError",
 #endif
@@ -139,7 +129,6 @@ struct RClass mrbc_class_RuntimeError = {
   .flag_builtin = 1,
   .num_builtin_method = 0,
   .super = MRBC_CLASS(StandardError),
-  .method_link = 0,
 #if defined(MRBC_DEBUG)
   .name = "RuntimeError",
 #endif
@@ -151,7 +140,6 @@ struct RClass mrbc_class_TypeError = {
   .flag_builtin = 1,
   .num_builtin_method = 0,
   .super = MRBC_CLASS(StandardError),
-  .method_link = 0,
 #if defined(MRBC_DEBUG)
   .name = "TypeError",
 #endif
@@ -163,7 +151,6 @@ struct RClass mrbc_class_ZeroDivisionError = {
   .flag_builtin = 1,
   .num_builtin_method = 0,
   .super = MRBC_CLASS(StandardError),
-  .method_link = 0,
 #if defined(MRBC_DEBUG)
   .name = "ZeroDivisionError",
 #endif

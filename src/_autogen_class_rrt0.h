@@ -51,7 +51,6 @@ struct RBuiltinClass mrbc_class_Task = {
   .flag_builtin = 1,
   .num_builtin_method = sizeof(method_symbols_Task) / sizeof(mrbc_sym),
   .super = MRBC_CLASS(Object),
-  .method_link = 0,
 #if defined(MRBC_DEBUG)
   .name = "Task",
 #endif
@@ -84,7 +83,6 @@ struct RBuiltinClass mrbc_class_Mutex = {
   .flag_builtin = 1,
   .num_builtin_method = sizeof(method_symbols_Mutex) / sizeof(mrbc_sym),
   .super = MRBC_CLASS(Object),
-  .method_link = 0,
 #if defined(MRBC_DEBUG)
   .name = "Mutex",
 #endif
@@ -107,7 +105,6 @@ struct RBuiltinClass mrbc_class_VM = {
   .flag_builtin = 1,
   .num_builtin_method = sizeof(method_symbols_VM) / sizeof(mrbc_sym),
   .super = MRBC_CLASS(Object),
-  .method_link = 0,
 #if defined(MRBC_DEBUG)
   .name = "VM",
 #endif

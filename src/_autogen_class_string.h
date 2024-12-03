@@ -103,7 +103,6 @@ struct RBuiltinClass mrbc_class_String = {
   .flag_builtin = 1,
   .num_builtin_method = sizeof(method_symbols_String) / sizeof(mrbc_sym),
   .super = MRBC_CLASS(Object),
-  .method_link = 0,
 #if defined(MRBC_DEBUG)
   .name = "String",
 #endif
