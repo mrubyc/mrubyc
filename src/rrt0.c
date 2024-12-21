@@ -147,6 +147,10 @@ inline static void preempt_running_task(void)
 /*! Tick timer interrupt handler.
 
 */
+#if defined(__EMSCRIPTEN__)
+#include <emscripten.h>
+EMSCRIPTEN_KEEPALIVE
+#endif
 void mrbc_tick(void)
 {
   tick_++;
@@ -441,6 +445,73 @@ int mrbc_run(void)
     continue;
   }
 }
+
+
+//================================================================
+/*! Alternative to mrbc_run for Wasm build
+
+*/
+#if defined(__EMSCRIPTEN__)
+EMSCRIPTEN_KEEPALIVE
+int
+mrbc_run_step(void)
+{
+  // Take the task that can be executed
+  mrbc_tcb *tcb = q_ready_;
+  if (tcb == NULL) {
+    // Even if there is no task to run, return 0
+    // so to wait for callbacks like event listener
+    return 0;
+  }
+
+  tcb->state = TASKSTATE_RUNNING;
+  tcb->timeslice = MRBC_TIMESLICE_TICK_COUNT;
+
+  int ret_vm_run = mrbc_vm_run(&tcb->vm);
+  tcb->vm.flag_preemption = 0;
+
+  if (ret_vm_run != 0) {
+    hal_disable_irq();
+    q_delete_task(tcb);
+    tcb->state = TASKSTATE_DORMANT;
+    q_insert_task(tcb);
+    hal_enable_irq();
+
+    if (!tcb->vm.flag_permanence) {
+      mrbc_vm_end(&tcb->vm);
+    }
+
+    for (mrbc_tcb *tcb1 = q_waiting_; tcb1 != NULL; tcb1 = tcb1->next) {
+      if (tcb1->reason == TASKREASON_JOIN && tcb1->tcb_join == tcb) {
+        hal_disable_irq();
+        q_delete_task(tcb1);
+        tcb1->state = TASKSTATE_READY;
+        tcb1->reason = 0;
+        q_insert_task(tcb1);
+        hal_enable_irq();
+      }
+    }
+    for (mrbc_tcb *tcb1 = q_suspended_; tcb1 != NULL; tcb1 = tcb1->next) {
+      if (tcb1->reason == TASKREASON_JOIN && tcb1->tcb_join == tcb) {
+        tcb1->reason = 0;
+      }
+    }
+
+    return ret_vm_run;
+  }
+
+  // Switch task.
+  if (tcb->state == TASKSTATE_RUNNING) {
+    tcb->state = TASKSTATE_READY;
+    hal_disable_irq();
+    q_delete_task(tcb);
+    q_insert_task(tcb);
+    hal_enable_irq();
+  }
+
+  return 0;
+}
+#endif
 
 
 //================================================================
