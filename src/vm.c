@@ -1926,7 +1926,8 @@ static inline void op_addi( mrbc_vm *vm, mrbc_value *regs EXT )
   }
 #endif
 
-  mrbc_raise(vm, MRBC_CLASS(TypeError), "no implicit conversion of Integer");
+  regs[a+1] = mrbc_integer_value(b);
+  send_by_name(vm, MRBC_SYM(PLUS), a, 1);
 }
 
 
@@ -1989,7 +1990,8 @@ static inline void op_subi( mrbc_vm *vm, mrbc_value *regs EXT )
   }
 #endif
 
-  mrbc_raise(vm, MRBC_CLASS(TypeError), "no implicit conversion of Integer");
+  regs[a+1] = mrbc_integer_value(b);
+  send_by_name(vm, MRBC_SYM(MINUS), a, 1);
 }
 
 
