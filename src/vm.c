@@ -58,18 +58,17 @@ static void send_by_name( struct VM *vm, mrbc_sym sym_id, int a, int c )
 
   // If it's packed in an array, expand it.
   if( narg == CALL_MAXARGS ) {
-    mrbc_value argv = recv[1];
+    mrbc_value argary = recv[1];
     int n_move = (karg == CALL_MAXARGS) ? 2 : karg * 2 + 1;
 
-    narg = mrbc_array_size(&argv);
+    narg = mrbc_array_size(&argary);
     for( int i = 0; i < narg; i++ ) {
-      mrbc_incref( &argv.array->data[i] );
+      mrbc_incref( &argary.array->data[i] );
     }
 
     memmove( recv + narg + 1, recv + 2, sizeof(mrbc_value) * n_move );
-    memcpy( recv + 1, argv.array->data, sizeof(mrbc_value) * narg );
-
-    mrbc_decref(&argv);
+    memcpy( recv + 1, argary.array->data, sizeof(mrbc_value) * narg );
+    mrbc_decref(&argary);
   }
 
   mrbc_value *r1 = recv + narg;
@@ -255,6 +254,7 @@ void mrbc_pop_callinfo( struct VM *vm )
   for( int i = 1; i < vm->cur_irep->nregs; i++ ) {
     mrbc_decref_empty( r0+i );
   }
+
   if( callinfo->karg_keep ) {
     mrbc_hash_delete( &(mrbc_value){.tt = MRBC_TT_HASH, .hash = callinfo->karg_keep} );
   }
@@ -1278,39 +1278,31 @@ static inline void op_super( mrbc_vm *vm, mrbc_value *regs EXT )
 	 b = 255 in other method.
     */
 
-    assert( recv[1].tt == MRBC_TT_ARRAY );
-
     mrbc_value argary = recv[1];
-    mrbc_value proc = recv[2];
-    recv[1].tt = MRBC_TT_EMPTY;
-    recv[2].tt = MRBC_TT_EMPTY;
-
-    int argc = mrbc_array_size(&argary);
-    for( int i = 0; i < argc; i++ ) {
-      mrbc_decref( &recv[i+1] );
-      recv[i+1] = argary.array->data[i];
+    int n_move = (karg == CALL_MAXARGS) ? 2 : karg * 2 + 1;
+    narg = mrbc_array_size(&argary);
+    for( int i = 0; i < narg; i++ ) {
+      mrbc_incref( &argary.array->data[i] );
     }
-    mrbc_array_delete_handle(&argary);
 
-    mrbc_decref( &recv[argc+1] );
-    recv[argc+1] = proc;
-    narg = argc;
+    memmove( recv + narg + 1, recv + 2, sizeof(mrbc_value) * n_move );
+    memcpy( recv + 1, argary.array->data, sizeof(mrbc_value) * narg );
+    mrbc_decref(&argary);
   }
+
+  mrbc_value *r1 = recv + narg;
 
   // Convert keyword argument to hash.
   if( karg && karg != CALL_MAXARGS ) {
-    narg++;
-    mrbc_value h = mrbc_hash_new( vm, karg );
-    if( !h.hash ) return;	// ENOMEM
+    mrbc_value hval = mrbc_hash_new( vm, karg );
+    if( !hval.hash ) return;	// ENOMEM
 
-    mrbc_value *r1 = recv + narg;
-    memcpy( h.hash->data, r1, sizeof(mrbc_value) * karg * 2 );
-    h.hash->n_stored = karg * 2;
+    memcpy( hval.hash->data, r1+1, sizeof(mrbc_value) * karg * 2 );
+    hval.hash->n_stored = karg * 2;
 
-    mrbc_value block = r1[karg * 2];
-    memset( r1 + 2, 0, sizeof(mrbc_value) * (karg * 2 - 1) );
-    *r1++ = h;
-    *r1 = block;
+    r1[1] = hval;
+    r1[2] = r1[karg * 2 + 1];	// Proc
+    memset( r1 + 3, 0, sizeof(mrbc_value) * (karg * 2 - 1) );
   }
 
   // find super class
@@ -1375,11 +1367,12 @@ static inline void op_argary( mrbc_vm *vm, mrbc_value *regs EXT )
   }
 
   mrbc_value *reg0 = regs;
+  mrbc_callinfo *callinfo = 0;
 
   // rewind proc nest
   if( lv ) {
     assert( mrbc_type(*reg0) == MRBC_TT_PROC );
-    mrbc_callinfo *callinfo = reg0->proc->callinfo;
+    callinfo = reg0->proc->callinfo;
     assert( callinfo );
 
     for( int i = 1; i < lv; i ++ ) {
@@ -1392,24 +1385,26 @@ static inline void op_argary( mrbc_vm *vm, mrbc_value *regs EXT )
     reg0 = callinfo->cur_regs + callinfo->reg_offset;
   }
 
-  // create arguent array.
+  // create argument array.
   int array_size = m1 + d;
-  mrbc_value val = mrbc_array_new( vm, array_size );
-  if( !val.array ) return;	// ENOMEM
+  mrbc_value argary = mrbc_array_new( vm, array_size );
+  if( !argary.array ) return;	// ENOMEM
 
-  if( vm->callinfo_tail->karg_keep ) {
-    mrbc_value karg = {.tt = MRBC_TT_HASH, .hash = vm->callinfo_tail->karg_keep};
+  for( int i = 1; i <= m1; i++ ) {
+    mrbc_incref( &reg0[i] );
+    mrbc_array_push( &argary, &reg0[i] );
+  }
+
+  if( d ) {
+    if( !callinfo ) callinfo = vm->callinfo_tail;
+    assert( callinfo->karg_keep );
+    mrbc_value karg = (mrbc_value){.tt = MRBC_TT_HASH, .hash = callinfo->karg_keep};
     karg = mrbc_hash_dup(vm, &karg);
-    mrbc_array_push( &val, &karg );
-  } else {
-    for( int i = 1; i <= array_size; i++ ) {
-      mrbc_incref( &reg0[i] );
-      mrbc_array_push( &val, &reg0[i] );
-    }
+    mrbc_array_push( &argary, &karg );
   }
 
   mrbc_decref( &regs[a] );
-  regs[a] = val;
+  regs[a] = argary;
 
   // copy a block object
   mrbc_decref( &regs[a+1] );
@@ -1524,9 +1519,7 @@ static inline void op_enter( mrbc_vm *vm, mrbc_value *regs EXT )
     if( a & (FLAG_DICT|FLAG_KW) ) {
       mrbc_decref(&regs[++i]);
       regs[i] = dict;
-      if( a & FLAG_KW ) {
-	vm->callinfo_tail->karg_keep = mrbc_hash_dup(vm, &dict).hash;
-      }
+      vm->callinfo_tail->karg_keep = mrbc_hash_dup(vm, &dict).hash;
     }
     mrbc_decref(&regs[i+1]);
     regs[i+1] = proc;
