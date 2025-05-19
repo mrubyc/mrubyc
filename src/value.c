@@ -120,6 +120,7 @@ int mrbc_compare(const mrbc_value *v1, const mrbc_value *v2)
 #endif
 
   case MRBC_TT_CLASS:
+  case MRBC_TT_MODULE:
   case MRBC_TT_OBJECT:
   case MRBC_TT_PROC:
     return (v1->cls > v2->cls) * 2 - (v1->cls != v2->cls);
@@ -302,13 +303,10 @@ mrbc_int_t mrbc_arg_i(struct VM *vm, mrbc_value v[], int argc, int n)
     return v[n].d;
 
   default:
-    ;
+    mrbc_raisef(vm, MRBC_CLASS(TypeError),
+	"argument %d must be Integer or Float", n);
+    return 0;
   }
-
-  mrbc_value ret = mrbc_send( vm, v, argc, &v[n], "to_i", 0 );
-  if( mrbc_israised(vm) ) return 0;
-
-  return ret.i;
 }
 
 
@@ -361,13 +359,10 @@ mrbc_float_t mrbc_arg_f(struct VM *vm, mrbc_value v[], int argc, int n)
     return v[n].d;
 
   default:
-    ;
+    mrbc_raisef(vm, MRBC_CLASS(TypeError),
+	"argument %d must be Integer or Float", n);
+    return 0;
   }
-
-  mrbc_value ret = mrbc_send( vm, v, argc, &v[n], "to_f", 0 );
-  if( mrbc_israised(vm) ) return 0;
-
-  return ret.d;
 }
 
 
@@ -413,16 +408,15 @@ const char * mrbc_arg_s(struct VM *vm, mrbc_value v[], int argc, int n)
     return 0;
   }
 
-  if( v[n].tt == MRBC_TT_STRING ) goto RETURN;
+  switch(v[n].tt) {
+  case MRBC_TT_STRING:
+    return mrbc_string_cstr( &v[n] );
 
-  mrbc_value ret = mrbc_send( vm, v, argc, &v[n], "to_s", 0 );
-  if( mrbc_israised(vm) ) return 0;
-
-  mrbc_decref( &v[n] );
-  v[n] = ret;
-
- RETURN:
-  return mrbc_string_cstr( &v[n] );
+  default:
+    mrbc_raisef(vm, MRBC_CLASS(TypeError),
+	"argument %d must be String", n);
+    return 0;
+  }
 }
 
 
