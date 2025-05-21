@@ -56,6 +56,56 @@ mrbc_class * const mrbc_class_tbl[MRBC_TT_MAXVAL+1] = {
 
 /***** Signal catching functions ********************************************/
 /***** Local functions ******************************************************/
+//================================================================
+/*! (internal use) traverse class tree.
+
+  @param  cls		target class
+  @param  nest_buf	nest buffer
+  @param  nest_idx	nest buffer index
+  @return mrbc_class *	next target class or NULL
+*/
+mrbc_class * mrbc_traverse_class_tree( mrbc_class *cls, mrbc_class *nest_buf[], int *nest_idx )
+{
+  cls = cls->super;
+
+  if( cls == 0 ) {
+    if( *nest_idx == 0 ) return 0;	// does not have super class.
+    cls = nest_buf[--(*nest_idx)];	// rewind to the saved point.
+    cls = cls->super;
+  }
+
+  // is the next module alias?
+  if( cls->flag_alias ) {
+    if( cls->super ) {
+      // save the branch point to nest_buf.
+      if( *nest_idx >= MRBC_TRAVERSE_NEST_LEVEL ) {
+	mrbc_printf("Warning: Module nest exceeds upper limit.\n");
+      } else {
+	nest_buf[(*nest_idx)++] = cls;
+      }
+    }
+
+    cls = cls->aliased;
+  }
+
+  return cls;
+}
+
+
+//================================================================
+/*! (internal use) traverse class tree. skip that class.
+
+  @param  nest_buf	nest buffer
+  @param  nest_idx	nest buffer index
+  @return mrbc_class *	previous target class
+*/
+mrbc_class * mrbc_traverse_class_tree_skip( mrbc_class *nest_buf[], int *nest_idx )
+{
+  if( *nest_idx == 0 ) return 0;	// does not have super class.
+  return nest_buf[--(*nest_idx)];	// rewind to the saved point.
+}
+
+
 /***** Global functions *****************************************************/
 //================================================================
 /*! define class
@@ -368,29 +418,13 @@ void mrbc_instance_clear_vm_id(mrbc_value *v)
 */
 int mrbc_obj_is_kind_of( const mrbc_value *obj, const mrbc_class *tcls )
 {
-  const mrbc_class *cls = find_class_by_object( obj );
-  const mrbc_class *mod_nest[3];
-  int mod_nest_idx = 0;
+  mrbc_class *cls = find_class_by_object( obj );
+  mrbc_class *nest_buf[MRBC_TRAVERSE_NEST_LEVEL];
+  int nest_idx = 0;
 
   while( cls != tcls ) {
-    cls = cls->super;
-    if( cls == 0 ) {
-      if( mod_nest_idx == 0 ) return 0;	// does not have super class.
-      cls = mod_nest[--mod_nest_idx];
-    }
-
-    // is the next alias?
-    if( cls->flag_alias ) {
-      // save the super for include nesting of modules.
-      if( cls->super ) {
-        if( mod_nest_idx >= (sizeof(mod_nest) / sizeof(mrbc_class *)) ) {
-          mrbc_printf("Warning: Module nest exceeds upper limit.\n");
-          return 0;
-        }
-        mod_nest[mod_nest_idx++] = cls->super;
-      }
-      cls = cls->aliased;
-    }
+    cls = mrbc_traverse_class_tree( cls, nest_buf, &nest_idx );
+    if( ! cls ) return 0;
   }
 
   return 1;
@@ -407,8 +441,8 @@ int mrbc_obj_is_kind_of( const mrbc_value *obj, const mrbc_class *tcls )
 */
 mrbc_method * mrbc_find_method( mrbc_method *r_method, mrbc_class *cls, mrbc_sym sym_id )
 {
-  mrbc_class *mod_nest[3];
-  int mod_nest_idx = 0;
+  mrbc_class *nest_buf[MRBC_TRAVERSE_NEST_LEVEL];
+  int nest_idx = 0;
   int flag_module = cls->flag_module;
 
   while( 1 ) {
@@ -445,33 +479,12 @@ mrbc_method * mrbc_find_method( mrbc_method *r_method, mrbc_class *cls, mrbc_sym
     }
 
   NEXT:
-    cls = cls->super;
+    cls = mrbc_traverse_class_tree( cls, nest_buf, &nest_idx );
     if( cls == 0 ) {
-      // does not have super class.
-      if( mod_nest_idx == 0 ) {
-        if( flag_module ) {
-          cls = MRBC_CLASS(Object);
-          flag_module = 0;
-          continue;
-        }
-        break;
-      }
+      if( !flag_module ) break;
 
-      // rewind the module search nest.
-      cls = mod_nest[--mod_nest_idx];
-    }
-
-    // is the next alias?
-    if( cls->flag_alias ) {
-      // save the super for include nesting of modules.
-      if( cls->super ) {
-        if( mod_nest_idx >= (sizeof(mod_nest) / sizeof(mrbc_class *)) ) {
-          mrbc_printf("Warning: Module nest exceeds upper limit.\n");
-          break;
-        }
-        mod_nest[mod_nest_idx++] = cls->super;
-      }
-      cls = cls->aliased;
+      cls = MRBC_CLASS(Object);
+      flag_module = 0;
     }
   }  // loop next.
 
@@ -492,9 +505,11 @@ mrbc_class * mrbc_get_class_by_name( const char *name )
 
   mrbc_value *obj = mrbc_get_const(sym_id);
   if( obj == NULL ) return NULL;
-  if( mrbc_type(*obj) != MRBC_TT_CLASS ) return NULL;
 
-  return obj->cls;
+  if( obj->tt == MRBC_TT_CLASS ||
+      obj->tt == MRBC_TT_MODULE ) return obj->cls;
+
+  return NULL;
 }
 
 

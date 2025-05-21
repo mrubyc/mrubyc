@@ -345,8 +345,8 @@ typedef struct RObject mrbc_value;
 
   <b>Examples:</b>
   @code
-  int arg1 = MRBC_ARG_I(1);	// Get a 1st argument as an integer.
-  int arg1 = MRBC_ARG_I(1,111);	// with default value 111.
+  int arg1 = MRBC_ARG_I(1);		// Get a 1st argument as an integer.
+  int arg1 = MRBC_ARG_I(1, 111);	// with default value 111.
   @endcode
 
 
@@ -355,8 +355,8 @@ typedef struct RObject mrbc_value;
 
   <b>Examples:</b>
   @code
-  double arg1 = MRBC_ARG_F(1);	    // Get a 1st argument as an double.
-  double arg1 = MRBC_ARG_F(1, 2.7); // with default value 2.7.
+  double arg1 = MRBC_ARG_F(1);		// Get a 1st argument as an double.
+  double arg1 = MRBC_ARG_F(1, 2.7);	// with default value 2.7.
   @endcode
 
 
@@ -365,8 +365,8 @@ typedef struct RObject mrbc_value;
 
   <b>Examples:</b>
   @code
-  const char *arg1 = MRBC_ARG_S(1);		// Get a 1st argument as an double.
-  const char *arg1 = MRBC_ARG_S(1,"DEFAULT");	// with default value "DEFAULT".
+  const char *arg1 = MRBC_ARG_S(1);	// Get a 1st argument as an double.
+  const char *arg1 = MRBC_ARG_S(1,"DEFAULT"); // with default value "DEFAULT".
   @endcode
 
 
@@ -427,21 +427,18 @@ typedef struct RObject mrbc_value;
 
   @def MRBC_KW_DELETE(mrbc_value1,...)
   Delete retrieved keyword arguments.
-
-  @def MRBC_KW_NARGC()
-  Get the number of arguments without keyword arguments.
 */
 #define MRBC_KW_ARG(...) \
   MRBC_each(__VA_ARGS__)( MRBC_KW_ARG_decl1, __VA_ARGS__ ) \
-  if( v[argc].tt == MRBC_TT_HASH ) { \
+  if( v[argc+1].tt == MRBC_TT_HASH ) { \
     MRBC_each(__VA_ARGS__)( MRBC_KW_ARG_decl2, __VA_ARGS__ ) \
   }
 #define MRBC_KW_ARG_decl1(kw) mrbc_value kw = {.tt = MRBC_TT_EMPTY};
-#define MRBC_KW_ARG_decl2(kw) kw = mrbc_hash_remove_by_id(&v[argc], mrbc_str_to_symid(#kw));
+#define MRBC_KW_ARG_decl2(kw) kw = mrbc_hash_remove_by_id(&v[argc+1], mrbc_str_to_symid(#kw));
 
 #define MRBC_KW_DICT(dict) \
   mrbc_value dict; \
-  if( v[argc].tt == MRBC_TT_HASH ) { dict = v[argc]; v[argc].tt = MRBC_TT_EMPTY; } \
+  if( v[argc+1].tt == MRBC_TT_HASH ) { dict = v[argc+1]; v[argc+1].tt = MRBC_TT_EMPTY; } \
   else { dict = mrbc_hash_new(vm, 0); }
 
 #define MRBC_KW_ISVALID(kw) (kw.tt != MRBC_TT_EMPTY)
@@ -452,15 +449,12 @@ typedef struct RObject mrbc_value;
   (mrbc_raisef(vm, MRBC_CLASS(ArgumentError), "missing keyword: %s", #kw), 0))&&
 
 #define MRBC_KW_END() \
-  (((v[argc].tt == MRBC_TT_HASH) && mrbc_hash_size(&v[argc])) ? \
+  (((v[argc+1].tt == MRBC_TT_HASH) && mrbc_hash_size(&v[argc+1])) ? \
    (mrbc_raise(vm, MRBC_CLASS(ArgumentError), "unknown keyword"), 0) : 1)
 
 #define MRBC_KW_DELETE(...) \
   MRBC_each(__VA_ARGS__)( MRBC_KW_DELETE_decl, __VA_ARGS__ )
 #define MRBC_KW_DELETE_decl(kw) mrbc_decref(&kw);
-
-#define MRBC_KW_NARGC() \
-  ((v[argc].tt == MRBC_TT_HASH || v[argc].tt == MRBC_TT_EMPTY) ? argc-1 : argc)
 
 //@cond
 #define MRBC_each(...) MRBC_each_sel(__VA_ARGS__, \

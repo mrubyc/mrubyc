@@ -31,6 +31,9 @@ extern "C" {
 #endif
 
 /***** Constant values ******************************************************/
+#define MRBC_TRAVERSE_NEST_LEVEL 3
+
+
 /***** Macros ***************************************************************/
 /*!
   Get a built-in class (pointer)
@@ -189,6 +192,8 @@ extern struct RClass * const mrbc_class_tbl[];
 
 /***** Function prototypes **************************************************/
 //@cond
+mrbc_class *mrbc_traverse_class_tree(mrbc_class *cls, mrbc_class *nest_buf[], int *nest_idx);
+mrbc_class *mrbc_traverse_class_tree_skip(mrbc_class *nest_buf[], int *nest_idx);
 mrbc_class *mrbc_define_class(struct VM *vm, const char *name, mrbc_class *super);
 mrbc_class *mrbc_define_class_under(struct VM *vm, const mrbc_class *outer, const char *name, mrbc_class *super);
 mrbc_class *mrbc_define_module(struct VM *vm, const char *name);
@@ -202,7 +207,7 @@ void mrbc_instance_clear_vm_id(mrbc_value *v);
 int mrbc_obj_is_kind_of(const mrbc_value *obj, const mrbc_class *tcls);
 mrbc_method *mrbc_find_method(mrbc_method *r_method, mrbc_class *cls, mrbc_sym sym_id);
 mrbc_class *mrbc_get_class_by_name(const char *name);
-mrbc_value mrbc_send(struct VM *vm, mrbc_value *v, int reg_ofs, mrbc_value *recv, const char *method_name, int argc, ...);
+mrbc_value mrbc_send(struct VM *vm, mrbc_value *v, int argc, mrbc_value *recv, const char *method_name, int n_params, ...);
 void c_ineffect(struct VM *vm, mrbc_value v[], int argc);
 int mrbc_run_mrblib(const void *bytecode);
 void mrbc_init_class(void);

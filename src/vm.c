@@ -53,44 +53,44 @@ static void send_by_name( struct VM *vm, mrbc_sym sym_id, int a, int c )
 {
   int narg = c & 0x0f;
   int karg = (c >> 4) & 0x0f;
+  int have_block = (c >> 8);
   mrbc_value *recv = vm->cur_regs + a;
 
   // If it's packed in an array, expand it.
   if( narg == CALL_MAXARGS ) {
-    mrbc_value argv = recv[1];
-    narg = mrbc_array_size(&argv);
+    mrbc_value argary = recv[1];
+    int n_move = (karg == CALL_MAXARGS) ? 2 : karg * 2 + 1;
+
+    narg = mrbc_array_size(&argary);
     for( int i = 0; i < narg; i++ ) {
-      mrbc_incref( &argv.array->data[i] );
+      mrbc_incref( &argary.array->data[i] );
     }
 
-    memmove( recv + narg + 1, recv + 2, sizeof(mrbc_value) * (karg * 2 + 1) );
-    memcpy( recv + 1, argv.array->data, sizeof(mrbc_value) * narg );
-
-    mrbc_decref(&argv);
+    memmove( recv + narg + 1, recv + 2, sizeof(mrbc_value) * n_move );
+    memcpy( recv + 1, argary.array->data, sizeof(mrbc_value) * narg );
+    mrbc_decref(&argary);
   }
 
+  mrbc_value *r1 = recv + narg;
+
   // Convert keyword argument to hash.
-  if( karg ) {
-    narg++;
-    if( karg != CALL_MAXARGS ) {
-      mrbc_value h = mrbc_hash_new( vm, karg );
-      if( !h.hash ) return;	// ENOMEM
+  if( karg && karg != CALL_MAXARGS ) {
+    mrbc_value hval = mrbc_hash_new( vm, karg );
+    if( !hval.hash ) return;	// ENOMEM
 
-      mrbc_value *r1 = recv + narg;
-      memcpy( h.hash->data, r1, sizeof(mrbc_value) * karg * 2 );
-      h.hash->n_stored = karg * 2;
+    memcpy( hval.hash->data, r1+1, sizeof(mrbc_value) * karg * 2 );
+    hval.hash->n_stored = karg * 2;
 
-      mrbc_value block = r1[karg * 2];
-      memset( r1 + 2, 0, sizeof(mrbc_value) * (karg * 2 - 1) );
-      *r1++ = h;
-      *r1 = block;
-    }
+    r1[1] = hval;
+    r1[2] = r1[karg * 2 + 1];	// Proc
+    memset( r1 + 3, 0, sizeof(mrbc_value) * (karg * 2 - 1) );
   }
 
   // is not have block
-  if( (c >> 8) == 0 ) {
-    mrbc_decref( recv + narg + 1 );
-    mrbc_set_nil( recv + narg + 1 );
+  if( !have_block ) {
+    r1 += (!!karg + 1);
+    mrbc_decref( r1 );
+    mrbc_set_nil( r1 );
   }
 
   // find a method
@@ -129,7 +129,7 @@ static void send_by_name( struct VM *vm, mrbc_sym sym_id, int a, int c )
   if( sym_id == MRBC_SYM(call) ) return;
   if( sym_id == MRBC_SYM(new) ) return;
 
-  for( int i = 1; i <= narg+1; i++ ) {
+  for( int i = 1; i <= narg + !!karg + have_block; i++ ) {
     mrbc_decref_empty( recv + i );
   }
   return;
@@ -249,11 +249,12 @@ void mrbc_pop_callinfo( struct VM *vm )
 
   // clear used register.
   mrbc_callinfo *callinfo = vm->callinfo_tail;
-  mrbc_value *reg1 = vm->cur_regs + callinfo->cur_irep->nregs - callinfo->reg_offset;
-  mrbc_value *reg2 = vm->cur_regs + vm->cur_irep->nregs;
-  while( reg1 < reg2 ) {
-    mrbc_decref_empty( reg1++ );
+  mrbc_value *r0 = vm->cur_regs;
+
+  for( int i = 1; i < vm->cur_irep->nregs; i++ ) {
+    mrbc_decref_empty( r0+i );
   }
+
   if( callinfo->karg_keep ) {
     mrbc_hash_delete( &(mrbc_value){.tt = MRBC_TT_HASH, .hash = callinfo->karg_keep} );
   }
@@ -1277,39 +1278,31 @@ static inline void op_super( mrbc_vm *vm, mrbc_value *regs EXT )
 	 b = 255 in other method.
     */
 
-    assert( recv[1].tt == MRBC_TT_ARRAY );
-
     mrbc_value argary = recv[1];
-    mrbc_value proc = recv[2];
-    recv[1].tt = MRBC_TT_EMPTY;
-    recv[2].tt = MRBC_TT_EMPTY;
-
-    int argc = mrbc_array_size(&argary);
-    for( int i = 0; i < argc; i++ ) {
-      mrbc_decref( &recv[i+1] );
-      recv[i+1] = argary.array->data[i];
+    int n_move = (karg == CALL_MAXARGS) ? 2 : karg * 2 + 1;
+    narg = mrbc_array_size(&argary);
+    for( int i = 0; i < narg; i++ ) {
+      mrbc_incref( &argary.array->data[i] );
     }
-    mrbc_array_delete_handle(&argary);
 
-    mrbc_decref( &recv[argc+1] );
-    recv[argc+1] = proc;
-    narg = argc;
+    memmove( recv + narg + 1, recv + 2, sizeof(mrbc_value) * n_move );
+    memcpy( recv + 1, argary.array->data, sizeof(mrbc_value) * narg );
+    mrbc_decref(&argary);
   }
+
+  mrbc_value *r1 = recv + narg;
 
   // Convert keyword argument to hash.
   if( karg && karg != CALL_MAXARGS ) {
-    narg++;
-    mrbc_value h = mrbc_hash_new( vm, karg );
-    if( !h.hash ) return;	// ENOMEM
+    mrbc_value hval = mrbc_hash_new( vm, karg );
+    if( !hval.hash ) return;	// ENOMEM
 
-    mrbc_value *r1 = recv + narg;
-    memcpy( h.hash->data, r1, sizeof(mrbc_value) * karg * 2 );
-    h.hash->n_stored = karg * 2;
+    memcpy( hval.hash->data, r1+1, sizeof(mrbc_value) * karg * 2 );
+    hval.hash->n_stored = karg * 2;
 
-    mrbc_value block = r1[karg * 2];
-    memset( r1 + 2, 0, sizeof(mrbc_value) * (karg * 2 - 1) );
-    *r1++ = h;
-    *r1 = block;
+    r1[1] = hval;
+    r1[2] = r1[karg * 2 + 1];	// Proc
+    memset( r1 + 3, 0, sizeof(mrbc_value) * (karg * 2 - 1) );
   }
 
   // find super class
@@ -1330,7 +1323,7 @@ static inline void op_super( mrbc_vm *vm, mrbc_value *regs EXT )
 
   // call C function and return.
   if( method.c_func ) {
-    method.func(vm, recv, narg);
+    method.func(vm, recv, narg - !!karg);
     for( int i = 1; i <= narg+1; i++ ) {
       mrbc_decref_empty( recv + i );
     }
@@ -1369,16 +1362,17 @@ static inline void op_argary( mrbc_vm *vm, mrbc_value *regs EXT )
     return;
   }
   if( b & 0x3e0 ) {	// check m2 parameter.
-    mrbc_raise( vm, MRBC_CLASS(NotImplementedError), "not support m2 or keyword argument");
+    mrbc_raise( vm, MRBC_CLASS(NotImplementedError), "not support m2 argument");
     return;
   }
 
   mrbc_value *reg0 = regs;
+  mrbc_callinfo *callinfo = 0;
 
   // rewind proc nest
   if( lv ) {
     assert( mrbc_type(*reg0) == MRBC_TT_PROC );
-    mrbc_callinfo *callinfo = reg0->proc->callinfo;
+    callinfo = reg0->proc->callinfo;
     assert( callinfo );
 
     for( int i = 1; i < lv; i ++ ) {
@@ -1391,24 +1385,26 @@ static inline void op_argary( mrbc_vm *vm, mrbc_value *regs EXT )
     reg0 = callinfo->cur_regs + callinfo->reg_offset;
   }
 
-  // create arguent array.
+  // create argument array.
   int array_size = m1 + d;
-  mrbc_value val = mrbc_array_new( vm, array_size );
-  if( !val.array ) return;	// ENOMEM
+  mrbc_value argary = mrbc_array_new( vm, array_size );
+  if( !argary.array ) return;	// ENOMEM
 
-  if( vm->callinfo_tail->karg_keep ) {
-    mrbc_value karg = {.tt = MRBC_TT_HASH, .hash = vm->callinfo_tail->karg_keep};
+  for( int i = 1; i <= m1; i++ ) {
+    mrbc_incref( &reg0[i] );
+    mrbc_array_push( &argary, &reg0[i] );
+  }
+
+  if( d ) {
+    if( !callinfo ) callinfo = vm->callinfo_tail;
+    assert( callinfo->karg_keep );
+    mrbc_value karg = (mrbc_value){.tt = MRBC_TT_HASH, .hash = callinfo->karg_keep};
     karg = mrbc_hash_dup(vm, &karg);
-    mrbc_array_push( &val, &karg );
-  } else {
-    for( int i = 1; i <= array_size; i++ ) {
-      mrbc_incref( &reg0[i] );
-      mrbc_array_push( &val, &reg0[i] );
-    }
+    mrbc_array_push( &argary, &karg );
   }
 
   mrbc_decref( &regs[a] );
-  regs[a] = val;
+  regs[a] = argary;
 
   // copy a block object
   mrbc_decref( &regs[a+1] );
@@ -1443,15 +1439,18 @@ static inline void op_enter( mrbc_vm *vm, mrbc_value *regs EXT )
 
   // Check m2 parameter.
   if( a & FLAG_M2 ) {
-    mrbc_raise( vm, MRBC_CLASS(NotImplementedError), "not support m2 or keyword argument");
+    mrbc_raise( vm, MRBC_CLASS(NotImplementedError), "not support m2 argument");
     return;
   }
 
   int m1 = (a >> 18) & 0x1f;	// num of required parameters 1
   int o  = (a >> 13) & 0x1f;	// num of optional parameters
   int argc = vm->callinfo_tail->n_args;
+  int flag_kwarg = regs[argc+1].tt == MRBC_TT_HASH;
 
-  if( argc < m1 && mrbc_type(regs[0]) != MRBC_TT_PROC ) {
+  argc += flag_kwarg;
+
+  if( argc < m1 && regs[0].tt != MRBC_TT_PROC ) {
     mrbc_raise( vm, MRBC_CLASS(ArgumentError), "wrong number of arguments");
     return;
   }
@@ -1461,10 +1460,8 @@ static inline void op_enter( mrbc_vm *vm, mrbc_value *regs EXT )
   regs[argc+1].tt = MRBC_TT_EMPTY;
 
   // support yield [...] pattern, to expand array.
-  if( mrbc_type(regs[0]) == MRBC_TT_PROC &&
-      mrbc_type(regs[1]) == MRBC_TT_ARRAY &&
+  if( regs[0].tt == MRBC_TT_PROC && regs[1].tt == MRBC_TT_ARRAY &&
       argc == 1 && m1 > 1 ) {
-
     mrbc_value argary = regs[1];
     int argary_size = mrbc_array_size(&argary);
 
@@ -1487,7 +1484,7 @@ static inline void op_enter( mrbc_vm *vm, mrbc_value *regs EXT )
   if( a & (FLAG_DICT|FLAG_KW|FLAG_REST) ) {
     mrbc_value dict;
     if( a & (FLAG_DICT|FLAG_KW) ) {
-      if( (argc - m1) > 0 && mrbc_type(regs[argc]) == MRBC_TT_HASH ) {
+      if( (argc - m1) > 0 && regs[argc].tt == MRBC_TT_HASH ) {
 	dict = regs[argc];
 	regs[argc--].tt = MRBC_TT_EMPTY;
       } else {
@@ -1510,12 +1507,11 @@ static inline void op_enter( mrbc_vm *vm, mrbc_value *regs EXT )
     }
 
     // reorder arguments.
-    int i;
-    for( i = argc; i < m1; ) {
+    for( int i = argc; i < m1; ) {
       mrbc_decref( &regs[++i] );
       mrbc_set_nil( &regs[i] );
     }
-    i = m1 + o;
+    int i = m1 + o;
     if( a & FLAG_REST ) {
       mrbc_decref(&regs[++i]);
       regs[i] = rest;
@@ -1523,9 +1519,7 @@ static inline void op_enter( mrbc_vm *vm, mrbc_value *regs EXT )
     if( a & (FLAG_DICT|FLAG_KW) ) {
       mrbc_decref(&regs[++i]);
       regs[i] = dict;
-      if( a & FLAG_KW ) {
-	vm->callinfo_tail->karg_keep = mrbc_hash_dup(vm, &dict).hash;
-      }
+      vm->callinfo_tail->karg_keep = mrbc_hash_dup(vm, &dict).hash;
     }
     mrbc_decref(&regs[i+1]);
     regs[i+1] = proc;
@@ -1533,12 +1527,11 @@ static inline void op_enter( mrbc_vm *vm, mrbc_value *regs EXT )
 
   } else {
     // reorder arguments.
-    int i;
-    for( i = argc; i < m1; ) {
+    for( int i = argc; i < m1; ) {
       mrbc_decref( &regs[++i] );
       mrbc_set_nil( &regs[i] );
     }
-    i = m1 + o;
+    int i = m1 + o;
     mrbc_decref(&regs[i+1]);
     regs[i+1] = proc;
     vm->callinfo_tail->n_args = i;
@@ -1550,7 +1543,7 @@ static inline void op_enter( mrbc_vm *vm, mrbc_value *regs EXT )
     if( jmp_ofs > o ) {
       jmp_ofs = o;
 
-      if( !(a & FLAG_REST) && mrbc_type(regs[0]) != MRBC_TT_PROC ) {
+      if( !(a & FLAG_REST) && regs[0].tt != MRBC_TT_PROC ) {
 	mrbc_raise( vm, MRBC_CLASS(ArgumentError), "wrong number of arguments");
 	return;
       }
@@ -1810,7 +1803,7 @@ static inline void op_blkpush( mrbc_vm *vm, mrbc_value *regs EXT )
   int lv = (b      ) & 0x0f;
 
   if( m2 ) {
-    mrbc_raise( vm, MRBC_CLASS(NotImplementedError), "not support m2 or keyword argument");
+    mrbc_raise( vm, MRBC_CLASS(NotImplementedError), "not support m2 argument");
     return;
   }
 
