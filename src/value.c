@@ -252,6 +252,270 @@ int mrbc_strcpy( char *dest, int destsize, const char *src )
 
 
 //================================================================
+/*! (beta) mrbc_value accessor for int type return value.
+
+  @param  vm	pointer to vm.
+  @param  val	target value.
+  @return	integer value.
+
+  @remarks
+  There is a useful macro MRBC_VAL_I().
+*/
+mrbc_int_t mrbc_val_i(struct VM *vm, const mrbc_value *val)
+{
+  if( val == NULL ) return 0;
+
+  switch(val->tt) {
+  case MRBC_TT_INTEGER:
+    return val->i;
+
+  case MRBC_TT_FLOAT:
+    return val->d;
+
+  default:
+    ;
+  }
+
+  mrbc_raise(vm, MRBC_CLASS(TypeError), "argument must be Integer or Float");
+  return 0;
+}
+
+
+//================================================================
+/*! (beta) mrbc_value accessor for int type return value. have a default value.
+
+  @param  vm	pointer to vm.
+  @param  val	target value.
+  @param  default_value default value.
+  @return	integer value.
+
+  @remarks
+  There is a useful macro MRBC_VAL_I().
+*/
+mrbc_int_t mrbc_val_i2(struct VM *vm, const mrbc_value *val, mrbc_int_t default_value )
+{
+  if( val == NULL || val->tt == MRBC_TT_EMPTY ) return default_value;
+
+  return mrbc_val_i( vm, val );
+}
+
+
+//================================================================
+/*! (beta) mrbc_value accessor for double type return value.
+
+  @param  vm	pointer to vm.
+  @param  val	target value.
+  @return	integer value.
+
+  @remarks
+  There is a useful macro MRBC_VAL_F().
+*/
+double mrbc_val_f(struct VM *vm, const mrbc_value *val)
+{
+  if( val == NULL ) return 0;
+
+  switch(val->tt) {
+  case MRBC_TT_INTEGER:
+    return val->i;
+
+  case MRBC_TT_FLOAT:
+    return val->d;
+
+  default:
+    ;
+  }
+
+  mrbc_raise(vm, MRBC_CLASS(TypeError), "argument must be Integer or Float");
+  return 0;
+}
+
+
+//================================================================
+/*! (beta) mrbc_value accessor for double type return value. have a default value.
+
+  @param  vm	pointer to vm.
+  @param  val	target value.
+  @param  default_value default value.
+  @return	integer value.
+
+  @remarks
+  There is a useful macro MRBC_VAL_F().
+*/
+double mrbc_val_f2(struct VM *vm, const mrbc_value *val, double default_value )
+{
+  if( val == NULL || val->tt == MRBC_TT_EMPTY ) return default_value;
+
+  return mrbc_val_f( vm, val );
+}
+
+
+//================================================================
+/*! (beta) mrbc_value accessor for const char * type return value.
+
+  @param  vm	pointer to vm.
+  @param  val	target value.
+  @return	integer value.
+
+  @remarks
+  There is a useful macro MRBC_VAL_S().
+*/
+const char * mrbc_val_s(struct VM *vm, const mrbc_value *val)
+{
+  if( val == NULL ) return 0;
+
+  switch(val->tt) {
+  case MRBC_TT_STRING:
+    return mrbc_string_cstr( val );
+
+  default:
+    ;
+  }
+
+  mrbc_raise(vm, MRBC_CLASS(TypeError), "argument must be String");
+  return 0;
+}
+
+
+//================================================================
+/*! (beta) mrbc_value accessor for const char * type return value. have a default value.
+
+  @param  vm	pointer to vm.
+  @param  val	target value.
+  @param  default_value default value.
+  @return	integer value.
+
+  @remarks
+  There is a useful macro MRBC_VAL_S().
+*/
+const char * mrbc_val_s2(struct VM *vm, const mrbc_value *val, const char * default_value )
+{
+  if( val == NULL || val->tt == MRBC_TT_EMPTY ) return default_value;
+
+  return mrbc_val_s( vm, val );
+}
+
+
+//================================================================
+/*! (beta) Convert mrbc_value type to Integer.
+
+  @param  vm	pointer to vm.
+  @param  v	argument array.
+  @param  argc	num of argument.
+  @param  val	target value.
+  @return	integer value.
+
+  @remarks
+  There is a useful macro MRBC_TO_I().
+*/
+mrbc_int_t mrbc_to_i(struct VM *vm, mrbc_value v[], int argc, mrbc_value *val)
+{
+  if( val == NULL ) return 0;
+
+  switch(val->tt) {
+  case MRBC_TT_EMPTY:
+    mrbc_raise(vm, MRBC_CLASS(TypeError), 0);
+    return 0;
+
+  case MRBC_TT_INTEGER:
+    break;
+
+  case MRBC_TT_FLOAT:
+    mrbc_set_integer(val, val->d);
+    break;
+
+  default:{
+    mrbc_value ret = mrbc_send( vm, v, argc, val, "to_i", 0 );
+    if( mrbc_israised(vm) ) return 0;
+
+    mrbc_decref( val );
+    *val = ret;
+   } break;
+  }
+
+  return val->i;
+}
+
+
+//================================================================
+/*! (beta) Convert mrbc_value type to Float.
+
+  @param  vm	pointer to vm.
+  @param  v	argument array.
+  @param  argc	num of argument.
+  @param  val	target value.
+  @return	float value.
+
+  @remarks
+  There is a useful macro MRBC_TO_F().
+*/
+mrbc_float_t mrbc_to_f(struct VM *vm, mrbc_value v[], int argc, mrbc_value *val)
+{
+  if( val == NULL ) return 0;
+
+  switch(val->tt) {
+  case MRBC_TT_EMPTY:
+    mrbc_raise(vm, MRBC_CLASS(TypeError), 0);
+    return 0;
+
+  case MRBC_TT_INTEGER:
+    mrbc_set_float(val, val->i);
+    break;
+
+  case MRBC_TT_FLOAT:
+    break;
+
+  default:{
+    mrbc_value ret = mrbc_send( vm, v, argc, val, "to_f", 0 );
+    if( mrbc_israised(vm) ) return 0;
+
+    mrbc_decref( val );
+    *val = ret;
+   } break;
+  }
+
+  return val->d;
+}
+
+
+//================================================================
+/*! (beta) Convert mrbc_value type to String.
+
+  @param  vm	pointer to vm.
+  @param  v	argument array.
+  @param  argc	num of argument.
+  @param  val	target value.
+  @return	pointer to C string or NULL.
+
+  @remarks
+  There is a useful macro MRBC_TO_S().
+*/
+char * mrbc_to_s(struct VM *vm, mrbc_value v[], int argc, mrbc_value *val)
+{
+  if( val == NULL ) return 0;
+
+  switch(val->tt) {
+  case MRBC_TT_EMPTY:
+    mrbc_raise(vm, MRBC_CLASS(TypeError), 0);
+    return 0;
+
+  case MRBC_TT_STRING:
+    goto RETURN;
+
+  default:{
+    mrbc_value ret = mrbc_send( vm, v, argc, val, "to_s", 0 );
+    if( mrbc_israised(vm) ) return 0;
+
+    mrbc_decref( val );
+    *val = ret;
+   } break;
+  }
+
+ RETURN:
+  return mrbc_string_cstr( val );
+}
+
+
+//================================================================
 /*! (beta) Get a N'th argument pointer.
 
   @param  vm	pointer to vm.
@@ -499,124 +763,4 @@ int mrbc_arg_b2(struct VM *vm, mrbc_value v[], int argc, int n, int default_valu
   if( argc < n ) return default_value;
 
   return mrbc_arg_b( vm, v, argc, n );
-}
-
-
-//================================================================
-/*! (beta) Convert mrbc_value type to Integer.
-
-  @param  vm	pointer to vm.
-  @param  v	argument array.
-  @param  argc	num of argument.
-  @param  val	target value.
-  @return	integer value.
-
-  @remarks
-  There is a useful macro MRBC_TO_I().
-*/
-mrbc_int_t mrbc_to_i(struct VM *vm, mrbc_value v[], int argc, mrbc_value *val)
-{
-  if( val == NULL ) return 0;
-
-  switch(val->tt) {
-  case MRBC_TT_EMPTY:
-    mrbc_raise(vm, MRBC_CLASS(TypeError), 0);
-    return 0;
-
-  case MRBC_TT_INTEGER:
-    break;
-
-  case MRBC_TT_FLOAT:
-    mrbc_set_integer(val, val->d);
-    break;
-
-  default:{
-    mrbc_value ret = mrbc_send( vm, v, argc, val, "to_i", 0 );
-    if( mrbc_israised(vm) ) return 0;
-
-    mrbc_decref( val );
-    *val = ret;
-   } break;
-  }
-
-  return val->i;
-}
-
-
-//================================================================
-/*! (beta) Convert mrbc_value type to Float.
-
-  @param  vm	pointer to vm.
-  @param  v	argument array.
-  @param  argc	num of argument.
-  @param  val	target value.
-  @return	float value.
-
-  @remarks
-  There is a useful macro MRBC_TO_F().
-*/
-mrbc_float_t mrbc_to_f(struct VM *vm, mrbc_value v[], int argc, mrbc_value *val)
-{
-  if( val == NULL ) return 0;
-
-  switch(val->tt) {
-  case MRBC_TT_EMPTY:
-    mrbc_raise(vm, MRBC_CLASS(TypeError), 0);
-    return 0;
-
-  case MRBC_TT_INTEGER:
-    mrbc_set_float(val, val->i);
-    break;
-
-  case MRBC_TT_FLOAT:
-    break;
-
-  default:{
-    mrbc_value ret = mrbc_send( vm, v, argc, val, "to_f", 0 );
-    if( mrbc_israised(vm) ) return 0;
-
-    mrbc_decref( val );
-    *val = ret;
-   } break;
-  }
-
-  return val->d;
-}
-
-
-//================================================================
-/*! (beta) Convert mrbc_value type to String.
-
-  @param  vm	pointer to vm.
-  @param  v	argument array.
-  @param  argc	num of argument.
-  @param  val	target value.
-  @return	pointer to C string or NULL.
-
-  @remarks
-  There is a useful macro MRBC_TO_S().
-*/
-char * mrbc_to_s(struct VM *vm, mrbc_value v[], int argc, mrbc_value *val)
-{
-  if( val == NULL ) return 0;
-
-  switch(val->tt) {
-  case MRBC_TT_EMPTY:
-    mrbc_raise(vm, MRBC_CLASS(TypeError), 0);
-    return 0;
-
-  case MRBC_TT_STRING:
-    goto RETURN;
-
-  default:{
-    mrbc_value ret = mrbc_send( vm, v, argc, val, "to_s", 0 );
-    if( mrbc_israised(vm) ) return 0;
-
-    mrbc_decref( val );
-    *val = ret;
-   } break;
-  }
-
- RETURN:
-  return mrbc_string_cstr( val );
 }
