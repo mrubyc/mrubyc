@@ -303,10 +303,11 @@ mrbc_int_t mrbc_arg_i(struct VM *vm, mrbc_value v[], int argc, int n)
     return v[n].d;
 
   default:
-    mrbc_raisef(vm, MRBC_CLASS(TypeError),
-	"argument %d must be Integer or Float", n);
-    return 0;
+    ;
   }
+
+  mrbc_raisef(vm, MRBC_CLASS(TypeError), "argument %d must be Integer or Float", n);
+  return 0;
 }
 
 
@@ -359,10 +360,11 @@ mrbc_float_t mrbc_arg_f(struct VM *vm, mrbc_value v[], int argc, int n)
     return v[n].d;
 
   default:
-    mrbc_raisef(vm, MRBC_CLASS(TypeError),
-	"argument %d must be Integer or Float", n);
-    return 0;
+    ;
   }
+
+  mrbc_raisef(vm, MRBC_CLASS(TypeError), "argument %d must be Integer or Float", n);
+  return 0;
 }
 
 
@@ -413,10 +415,11 @@ const char * mrbc_arg_s(struct VM *vm, mrbc_value v[], int argc, int n)
     return mrbc_string_cstr( &v[n] );
 
   default:
-    mrbc_raisef(vm, MRBC_CLASS(TypeError),
-	"argument %d must be String", n);
-    return 0;
+    ;
   }
+
+  mrbc_raisef(vm, MRBC_CLASS(TypeError), "argument %d must be String", n);
+  return 0;
 }
 
 
@@ -473,7 +476,7 @@ int mrbc_arg_b(struct VM *vm, mrbc_value v[], int argc, int n)
     ;
   }
 
-  mrbc_raise(vm, MRBC_CLASS(TypeError), "Argument type mismatch (true or false).");
+  mrbc_raisef(vm, MRBC_CLASS(TypeError), "argument %d must be true or false", n);
   return 0;
 }
 
@@ -516,6 +519,10 @@ mrbc_int_t mrbc_to_i(struct VM *vm, mrbc_value v[], int argc, mrbc_value *val)
   if( val == NULL ) return 0;
 
   switch(val->tt) {
+  case MRBC_TT_EMPTY:
+    mrbc_raise(vm, MRBC_CLASS(TypeError), 0);
+    return 0;
+
   case MRBC_TT_INTEGER:
     break;
 
@@ -553,6 +560,10 @@ mrbc_float_t mrbc_to_f(struct VM *vm, mrbc_value v[], int argc, mrbc_value *val)
   if( val == NULL ) return 0;
 
   switch(val->tt) {
+  case MRBC_TT_EMPTY:
+    mrbc_raise(vm, MRBC_CLASS(TypeError), 0);
+    return 0;
+
   case MRBC_TT_INTEGER:
     mrbc_set_float(val, val->i);
     break;
@@ -580,7 +591,7 @@ mrbc_float_t mrbc_to_f(struct VM *vm, mrbc_value v[], int argc, mrbc_value *val)
   @param  v	argument array.
   @param  argc	num of argument.
   @param  val	target value.
-  @return	pointer to C string.
+  @return	pointer to C string or NULL.
 
   @remarks
   There is a useful macro MRBC_TO_S().
@@ -588,13 +599,23 @@ mrbc_float_t mrbc_to_f(struct VM *vm, mrbc_value v[], int argc, mrbc_value *val)
 char * mrbc_to_s(struct VM *vm, mrbc_value v[], int argc, mrbc_value *val)
 {
   if( val == NULL ) return 0;
-  if( val->tt == MRBC_TT_STRING ) goto RETURN;
 
-  mrbc_value ret = mrbc_send( vm, v, argc, val, "to_s", 0 );
-  if( mrbc_israised(vm) ) return 0;
+  switch(val->tt) {
+  case MRBC_TT_EMPTY:
+    mrbc_raise(vm, MRBC_CLASS(TypeError), 0);
+    return 0;
 
-  mrbc_decref( val );
-  *val = ret;
+  case MRBC_TT_STRING:
+    goto RETURN;
+
+  default:{
+    mrbc_value ret = mrbc_send( vm, v, argc, val, "to_s", 0 );
+    if( mrbc_israised(vm) ) return 0;
+
+    mrbc_decref( val );
+    *val = ret;
+   } break;
+  }
 
  RETURN:
   return mrbc_string_cstr( val );
