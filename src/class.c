@@ -607,7 +607,7 @@ int mrbc_run_mrblib(const void *bytecode)
   if( !vm ) return -1;	// ENOMEM
 
   if( mrbc_load_mrb(vm, bytecode) ) {
-    mrbc_print_exception(&vm->exception);
+    mrbc_print_vm_exception(vm);
     return 2;
   }
 
