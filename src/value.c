@@ -525,7 +525,7 @@ char * mrbc_to_s(struct VM *vm, mrbc_value v[], int argc, mrbc_value *val)
   @return	pointer to mrbc_value.
 
   @remarks
-  There is a useful macro MRBC_ARG().\n
+  There is a useful macro MRBC_ARG().
 */
 mrbc_value * mrbc_arg(struct VM *vm, mrbc_value v[], int argc, int n)
 {
@@ -663,8 +663,7 @@ mrbc_float_t mrbc_arg_f2(struct VM *vm, mrbc_value v[], int argc, int n, mrbc_fl
   @return	pointer to C string.
 
   @remarks
-  There is a useful macro MRBC_ARG_S().\n
-  This function changes the n'th argument type to String.
+  There is a useful macro MRBC_ARG_S().
 */
 const char * mrbc_arg_s(struct VM *vm, mrbc_value v[], int argc, int n)
 {
@@ -698,8 +697,7 @@ const char * mrbc_arg_s(struct VM *vm, mrbc_value v[], int argc, int n)
   @return	pointer to C string.
 
   @remarks
-  There is a useful macro MRBC_ARG_S().\n
-  This function changes the n'th argument type to String.
+  There is a useful macro MRBC_ARG_S().
 */
 const char * mrbc_arg_s2(struct VM *vm, mrbc_value v[], int argc, int n, const char *default_value)
 {
