@@ -1901,6 +1901,7 @@ static inline void op_addi( mrbc_vm *vm, mrbc_value *regs EXT )
   }
 #endif
 
+  mrbc_decref(&regs[a+1]);
   regs[a+1] = mrbc_integer_value(b);
   send_by_name(vm, MRBC_SYM(PLUS), a, 1);
 }
@@ -1967,6 +1968,7 @@ static inline void op_subi( mrbc_vm *vm, mrbc_value *regs EXT )
   }
 #endif
 
+  mrbc_decref(&regs[a+1]);
   regs[a+1] = mrbc_integer_value(b);
   send_by_name(vm, MRBC_SYM(MINUS), a, 1);
 }
