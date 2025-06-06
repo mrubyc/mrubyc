@@ -7,7 +7,7 @@
 #  This file is distributed under BSD 3-Clause License.
 #
 
-RUBY_VERSION = "1.9"
-MRUBY_VERSION = "3.3.0"
-MRUBYC_VERSION = "3.3"
+RUBY_VERSION = "3.4"
+MRUBY_VERSION = "3.4.0"
+MRUBYC_VERSION = "3.4"
 RUBY_ENGINE = "mruby/c"
