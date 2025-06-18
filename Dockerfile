@@ -27,6 +27,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libc6:armhf \
     g++-mips-linux-gnu \
     libc6-dev-mips-cross \
+    gcc-mips-linux-gnu \
+    binutils-mips-linux-gnu \
     git \
     cmake \
     make \
