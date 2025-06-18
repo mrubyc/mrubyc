@@ -14,7 +14,7 @@ mruby/c is another implementation of mruby.
 
 ||mruby/c|mruby|
 |----|----|----|
-|memory size| < 40KB | < 400KB |
+|memory size (RAM)| < 40KB | < 400KB |
 |main target| one-chip microprocessors | general embedded software|
 
 
@@ -36,5 +36,4 @@ mruby/c is released under the Revised BSD License(aka 3-clause license).
 
 ## Related work
 
-- Device classes for mruby/c (https://github.com/mrubyc/dev)
-- Some sample programs that mainly control sensors. (https://github.com/mrubyc/devkit02/tree/main/samples)
+- Microcontroller peripheral interface guide (https://github.com/mruby/microcontroller-peripheral-interface-guide)
