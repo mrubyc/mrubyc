@@ -49,4 +49,8 @@ class ClassTest1 < Picotest::Test
     assert_equal('Hello from C', MyClass.hello)
   end
 
+  def test_object_constants
+    assert Object.constants.is_a?(Array)
+  end
+
 end
