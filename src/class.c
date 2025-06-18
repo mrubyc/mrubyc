@@ -97,7 +97,7 @@ mrbc_class * mrbc_traverse_class_tree( mrbc_class *cls, mrbc_class *nest_buf[], 
 
   @param  nest_buf	nest buffer
   @param  nest_idx	nest buffer index
-  @return mrbc_class *	previous target class
+  @return mrbc_class *	previous target class or NULL
 */
 mrbc_class * mrbc_traverse_class_tree_skip( mrbc_class *nest_buf[], int *nest_idx )
 {

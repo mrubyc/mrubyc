@@ -609,20 +609,16 @@ static void c_object_constants(mrb_vm *vm, mrb_value v[], int argc)
   mrbc_class *nest_buf[MRBC_TRAVERSE_NEST_LEVEL];
   int nest_idx = 0;
 
-  mrbc_get_all_class_const( cls, &ret );
-  if( !flag_inherit ) goto RETURN;
+  do {
+    mrbc_get_all_class_const( cls, &ret );
+    if( !flag_inherit ) break;
 
-  while( cls ) {
     cls = mrbc_traverse_class_tree( cls, nest_buf, &nest_idx );
-    if ( !cls ) break;
     if( cls == MRBC_CLASS(Object) ) {
       cls = mrbc_traverse_class_tree_skip( nest_buf, &nest_idx );
-      continue;
     }
-    mrbc_get_all_class_const( cls, &ret );
-  }
+  } while( cls );
 
- RETURN:
   SET_RETURN(ret);
 }
 
