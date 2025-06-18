@@ -44,9 +44,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN gem install rake bundler
 
-ARG USER_ID
-RUN if [ $USER_ID -eq 0 ]; then export USER_ID=1000; fi \
-    && useradd -m -u $USER_ID mrubyc
+ARG USER_ID=1000
+RUN useradd -m -u "$USER_ID" mrubyc
 
 RUN mkdir /work && chown mrubyc /work
 
