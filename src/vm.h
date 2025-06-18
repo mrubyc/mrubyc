@@ -204,7 +204,9 @@ static inline mrbc_value * mrbc_get_self( struct VM *vm, mrbc_value *regs )
 */
 static inline int mrbc_c_block_given( struct VM *vm, mrbc_value v[], int argc )
 {
-  return v[argc+1].tt == MRBC_TT_PROC;
+  int ofs = 1 + (v[argc+1].tt == MRBC_TT_HASH);
+
+  return v[argc + ofs].tt == MRBC_TT_PROC;
 }
 
 #ifdef __cplusplus

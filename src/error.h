@@ -34,7 +34,7 @@ extern "C" {
 
 
 /***** Macros ***************************************************************/
-#define mrbc_israised(vm) (mrbc_type((vm)->exception) == MRBC_TT_EXCEPTION)
+#define mrbc_israised(vm) ((vm)->exception.tt == MRBC_TT_EXCEPTION)
 
 
 /***** Typedefs *************************************************************/

@@ -48,6 +48,9 @@ static const mrbc_sym method_symbols_Object[] = {
   MRBC_SYM(printf),
 #endif
 #endif
+  MRBC_SYM(private),
+  MRBC_SYM(protected),
+  MRBC_SYM(public),
 #if !defined(MRBC_NO_STDIO)
   MRBC_SYM(puts),
 #endif
@@ -106,6 +109,9 @@ static const mrbc_func_t method_functions_Object[] = {
   c_object_printf,
 #endif
 #endif
+  c_ineffect,
+  c_ineffect,
+  c_ineffect,
 #if !defined(MRBC_NO_STDIO)
   c_object_puts,
 #endif

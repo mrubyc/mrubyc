@@ -106,7 +106,7 @@ static void c_func5(struct VM *vm, mrbc_value v[], int argc)
   if( !MRBC_KW_ISVALID(k1) ) k1 = mrbc_integer_value(11);
   if( !MRBC_KW_ISVALID(k2) ) k2 = mrbc_integer_value(22);
 
-mrbc_p(&k1);
+  mrbc_p(&k1);
   mrbc_p(&k2);
   mrbc_p(&dict);
 
@@ -130,45 +130,5 @@ static void c_func6(struct VM *vm, mrbc_value v[], int argc)
 
  RETURN:
   MRBC_KW_DELETE(dict);
-}
-```
-
-
-## case of not use the macros.
-  ``def func( k1:, k2: )``
-
-```
-static void c_func(struct VM *vm, mrbc_value v[], int argc)
-{
-  // キーワード引数があるか確認する
-  if( v[argc].tt != MRBC_TT_HASH ) {
-    mrbc_raise(vm, MRBC_CLASS(ArgumentError), "missing keyword parameter.");
-    return;
-  }
-
-  // キーワード引数 k1, k2 を得る
-  mrbc_value k1 = mrbc_hash_remove_by_id(&v[argc], mrbc_str_to_symid("k1"));
-  mrbc_value k2 = mrbc_hash_remove_by_id(&v[argc], mrbc_str_to_symid("k2"));
-
-  // 残りのキーワード引数があれば、エラーとする
-  if( mrbc_hash_size(&v[argc]) != 0 ) {
-    mrbc_raise(vm, MRBC_CLASS(ArgumentError), "unknown keyword parameter.");
-    goto RETURN;
-  }
-
-  // k1とk2 が両方とも与えられているか確認し、与えられていなければエラーとする
-  if( (k1.tt == MRBC_TT_EMPTY) || (k2.tt == MRBC_TT_EMPTY) ) {
-    mrbc_raise(vm, MRBC_CLASS(ArgumentError), "missing keyword parameter.");
-    goto RETURN;
-  }
-
-  // 表示して確認
-  mrbc_p(&k1);
-  mrbc_p(&k2);
-
-  // リファレンスカウンタを採用しているので、リターン前に解放する。
- RETURN:
-  mrbc_decref(&k1);
-  mrbc_decref(&k2);
 }
 ```

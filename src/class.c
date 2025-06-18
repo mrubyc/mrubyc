@@ -56,6 +56,56 @@ mrbc_class * const mrbc_class_tbl[MRBC_TT_MAXVAL+1] = {
 
 /***** Signal catching functions ********************************************/
 /***** Local functions ******************************************************/
+//================================================================
+/*! (internal use) traverse class tree.
+
+  @param  cls		target class
+  @param  nest_buf	nest buffer
+  @param  nest_idx	nest buffer index
+  @return mrbc_class *	next target class or NULL
+*/
+mrbc_class * mrbc_traverse_class_tree( mrbc_class *cls, mrbc_class *nest_buf[], int *nest_idx )
+{
+  cls = cls->super;
+
+  if( cls == 0 ) {
+    if( *nest_idx == 0 ) return 0;	// does not have super class.
+    cls = nest_buf[--(*nest_idx)];	// rewind to the saved point.
+    cls = cls->super;
+  }
+
+  // is the next module alias?
+  if( cls->flag_alias ) {
+    if( cls->super ) {
+      // save the branch point to nest_buf.
+      if( *nest_idx >= MRBC_TRAVERSE_NEST_LEVEL ) {
+	mrbc_printf("Warning: Module nest exceeds upper limit.\n");
+      } else {
+	nest_buf[(*nest_idx)++] = cls;
+      }
+    }
+
+    cls = cls->aliased;
+  }
+
+  return cls;
+}
+
+
+//================================================================
+/*! (internal use) traverse class tree. skip that class.
+
+  @param  nest_buf	nest buffer
+  @param  nest_idx	nest buffer index
+  @return mrbc_class *	previous target class
+*/
+mrbc_class * mrbc_traverse_class_tree_skip( mrbc_class *nest_buf[], int *nest_idx )
+{
+  if( *nest_idx == 0 ) return 0;	// does not have super class.
+  return nest_buf[--(*nest_idx)];	// rewind to the saved point.
+}
+
+
 /***** Global functions *****************************************************/
 //================================================================
 /*! define class
@@ -368,29 +418,13 @@ void mrbc_instance_clear_vm_id(mrbc_value *v)
 */
 int mrbc_obj_is_kind_of( const mrbc_value *obj, const mrbc_class *tcls )
 {
-  const mrbc_class *cls = find_class_by_object( obj );
-  const mrbc_class *mod_nest[3];
-  int mod_nest_idx = 0;
+  mrbc_class *cls = find_class_by_object( obj );
+  mrbc_class *nest_buf[MRBC_TRAVERSE_NEST_LEVEL];
+  int nest_idx = 0;
 
   while( cls != tcls ) {
-    cls = cls->super;
-    if( cls == 0 ) {
-      if( mod_nest_idx == 0 ) return 0;	// does not have super class.
-      cls = mod_nest[--mod_nest_idx];
-    }
-
-    // is the next alias?
-    if( cls->flag_alias ) {
-      // save the super for include nesting of modules.
-      if( cls->super ) {
-        if( mod_nest_idx >= (sizeof(mod_nest) / sizeof(mrbc_class *)) ) {
-          mrbc_printf("Warning: Module nest exceeds upper limit.\n");
-          return 0;
-        }
-        mod_nest[mod_nest_idx++] = cls->super;
-      }
-      cls = cls->aliased;
-    }
+    cls = mrbc_traverse_class_tree( cls, nest_buf, &nest_idx );
+    if( ! cls ) return 0;
   }
 
   return 1;
@@ -407,8 +441,8 @@ int mrbc_obj_is_kind_of( const mrbc_value *obj, const mrbc_class *tcls )
 */
 mrbc_method * mrbc_find_method( mrbc_method *r_method, mrbc_class *cls, mrbc_sym sym_id )
 {
-  mrbc_class *mod_nest[3];
-  int mod_nest_idx = 0;
+  mrbc_class *nest_buf[MRBC_TRAVERSE_NEST_LEVEL];
+  int nest_idx = 0;
   int flag_module = cls->flag_module;
 
   while( 1 ) {
@@ -445,33 +479,12 @@ mrbc_method * mrbc_find_method( mrbc_method *r_method, mrbc_class *cls, mrbc_sym
     }
 
   NEXT:
-    cls = cls->super;
+    cls = mrbc_traverse_class_tree( cls, nest_buf, &nest_idx );
     if( cls == 0 ) {
-      // does not have super class.
-      if( mod_nest_idx == 0 ) {
-        if( flag_module ) {
-          cls = MRBC_CLASS(Object);
-          flag_module = 0;
-          continue;
-        }
-        break;
-      }
+      if( !flag_module ) break;
 
-      // rewind the module search nest.
-      cls = mod_nest[--mod_nest_idx];
-    }
-
-    // is the next alias?
-    if( cls->flag_alias ) {
-      // save the super for include nesting of modules.
-      if( cls->super ) {
-        if( mod_nest_idx >= (sizeof(mod_nest) / sizeof(mrbc_class *)) ) {
-          mrbc_printf("Warning: Module nest exceeds upper limit.\n");
-          break;
-        }
-        mod_nest[mod_nest_idx++] = cls->super;
-      }
-      cls = cls->aliased;
+      cls = MRBC_CLASS(Object);
+      flag_module = 0;
     }
   }  // loop next.
 
@@ -492,9 +505,11 @@ mrbc_class * mrbc_get_class_by_name( const char *name )
 
   mrbc_value *obj = mrbc_get_const(sym_id);
   if( obj == NULL ) return NULL;
-  if( mrbc_type(*obj) != MRBC_TT_CLASS ) return NULL;
 
-  return obj->cls;
+  if( obj->tt == MRBC_TT_CLASS ||
+      obj->tt == MRBC_TT_MODULE ) return obj->cls;
+
+  return NULL;
 }
 
 
@@ -503,48 +518,51 @@ mrbc_class * mrbc_get_class_by_name( const char *name )
 
   @param  vm		pointer to vm.
   @param  v		see below example.
-  @param  reg_ofs	see below example.
+  @param  argc		see below example.
   @param  recv		pointer to receiver.
   @param  method_name	method name.
-  @param  argc		num of params.
+  @param  n_params	num of params.
 
 <b>Examples</b>
 @code
   // (Integer).to_s(16)
   static void c_integer_to_s(struct VM *vm, mrbc_value v[], int argc)
   {
-    mrbc_value *recv = &v[1];
+    mrbc_value *recv = &v[1];	// expect Integer.
     mrbc_value arg1 = mrbc_integer_value(16);
     mrbc_value ret = mrbc_send( vm, v, argc, recv, "to_s", 1, &arg1 );
     SET_RETURN(ret);
   }
 @endcode
 */
-mrbc_value mrbc_send( struct VM *vm, mrbc_value *v, int reg_ofs,
-		     mrbc_value *recv, const char *method_name, int argc, ... )
+mrbc_value mrbc_send( struct VM *vm, mrbc_value *v, int argc,
+	mrbc_value *recv, const char *method_name, int n_params, ... )
 {
   mrbc_method method;
+  mrbc_class *cls = find_class_by_object(recv);
 
-  if( mrbc_find_method( &method, find_class_by_object(recv),
-			mrbc_str_to_symid(method_name) ) == 0 ) {
-    mrbc_printf("No method. vtype=%d method='%s'\n", mrbc_type(*recv), method_name );
+  if( mrbc_find_method( &method, cls, mrbc_str_to_symid(method_name)) == 0 ) {
+    mrbc_raisef(vm, MRBC_CLASS(NoMethodError), "undefined method '%s' for %s",
+		method_name, mrbc_symid_to_str(cls->sym_id) );
     goto ERROR;
   }
   if( !method.c_func ) {
-    mrbc_printf("Method %s needs to be C function.\n", method_name );
+    mrbc_raisef(vm, MRBC_CLASS(NotImplementedError),
+		"Method needs to be C function. '%s' for %s",
+		method_name, mrbc_symid_to_str(cls->sym_id) );
     goto ERROR;
   }
 
   // create call stack.
-  mrbc_value *regs = v + reg_ofs + 2;
+  mrbc_value *regs = v + argc + 2;
   mrbc_decref( &regs[0] );
   regs[0] = *recv;
   mrbc_incref(recv);
 
   va_list ap;
-  va_start(ap, argc);
+  va_start(ap, n_params);
   int i;
-  for( i = 1; i <= argc; i++ ) {
+  for( i = 1; i <= n_params; i++ ) {
     mrbc_decref( &regs[i] );
     regs[i] = *va_arg(ap, mrbc_value *);
   }
@@ -553,7 +571,7 @@ mrbc_value mrbc_send( struct VM *vm, mrbc_value *v, int reg_ofs,
   va_end(ap);
 
   // call method.
-  method.func(vm, regs, argc);
+  method.func(vm, regs, n_params);
   mrbc_value ret = regs[0];
 
   for(; i >= 0; i-- ) {
@@ -589,7 +607,7 @@ int mrbc_run_mrblib(const void *bytecode)
   if( !vm ) return -1;	// ENOMEM
 
   if( mrbc_load_mrb(vm, bytecode) ) {
-    mrbc_print_exception(&vm->exception);
+    mrbc_print_vm_exception(vm);
     return 2;
   }
 

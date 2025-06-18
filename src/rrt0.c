@@ -349,13 +349,13 @@ int mrbc_run(void)
   int ret = 0;
 
   (void)ret;	// avoid warning.
-#if MRBC_SCHEDULER_EXIT
-  if( !q_ready_ && !q_waiting_ && !q_suspended_ ) return ret;
-#endif
 
   while( 1 ) {
     mrbc_tcb *tcb = q_ready_;
     if( tcb == NULL ) {		// no task to run.
+#if MRBC_SCHEDULER_EXIT
+      if( !q_waiting_ && !q_suspended_ ) return ret;
+#endif
       hal_idle_cpu();
       continue;
     }
@@ -412,10 +412,6 @@ int mrbc_run(void)
           tcb1->reason = 0;
         }
       }
-
-#if MRBC_SCHEDULER_EXIT
-      if( !q_ready_ && !q_waiting_ && !q_suspended_ ) return ret;
-#endif
       continue;
     }
 
