@@ -614,6 +614,7 @@ static void c_object_constants(mrb_vm *vm, mrb_value v[], int argc)
 
   while( cls ) {
     cls = mrbc_traverse_class_tree( cls, nest_buf, &nest_idx );
+    if ( !cls ) break;
     if( cls == MRBC_CLASS(Object) ) {
       cls = mrbc_traverse_class_tree_skip( nest_buf, &nest_idx );
       continue;
