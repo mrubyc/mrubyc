@@ -16,6 +16,14 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Restore Cache
+      uses: actions/cache@v3
+      with:
+        path: /tmp/.buildx-cache
+        key: Linux-buildx-${{ github.sha }}
+        restore-keys: |
+          Linux-buildx-
+
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v3
 
