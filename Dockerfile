@@ -55,11 +55,11 @@ RUN git clone --recursive -b master \
     https://github.com/picoruby/picoruby /work/picoruby
 
 WORKDIR /work/picoruby
-RUN rake
+RUN rake --trace
 ENV MRUBY_CONFIG=arm-linux-gnueabihf
-RUN rake
+RUN rake --trace
 ENV MRUBY_CONFIG=mips-linux-gnu
-RUN rake
+RUN rake --trace
 ENV MRUBY_CONFIG=default
 
 VOLUME /work/mrubyc
