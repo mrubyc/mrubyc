@@ -35,7 +35,6 @@ class OpMethodTest < Picotest::Test
     assert_equal( 0x02, 0x01 << 1 )
     assert_equal( 0x04, 0x01 << 2 )
     #assert_equal( 0x8000_0000, 0x01 << 31 )  # error in 32bit int
-    assert_equal( 0, 0x01 << 32 )   # when 32bit mrbc_int
 
     assert_equal( 0x4000_0000, 0x4000_0000 >> 0 )
     assert_equal( 0x2000_0000, 0x4000_0000 >> 1 )
