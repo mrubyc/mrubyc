@@ -669,9 +669,17 @@ static void c_object_sprintf(struct VM *vm, mrbc_value v[], int argc)
 
     case 's':
       if( mrbc_type(v[i]) == MRBC_TT_STRING ) {
-	ret = mrbc_printf_bstr( &pf, mrbc_string_cstr(&v[i]), mrbc_string_size(&v[i]),' ');
-      } else if( mrbc_type(v[i]) == MRBC_TT_SYMBOL ) {
-	ret = mrbc_printf_str( &pf, mrbc_symbol_cstr( &v[i] ), ' ');
+	ret = mrbc_printf_bstr( &pf, mrbc_string_cstr(&v[i]),
+				     mrbc_string_size(&v[i]), ' ');
+      } else {
+	const char *s;
+	switch( v[i].tt ) {
+	case MRBC_TT_SYMBOL:	s = mrbc_symbol_cstr(&v[i]);	break;
+	case MRBC_TT_TRUE:	s = "true";			break;
+	case MRBC_TT_FALSE:	s = "false";			break;
+	default:		s = "";				break;
+	}
+	ret = mrbc_printf_str( &pf, s, ' ');
       }
       break;
 
