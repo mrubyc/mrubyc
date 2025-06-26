@@ -182,6 +182,16 @@ typedef struct RMethod {
 } mrbc_method;
 
 
+//================================================================
+/*!@brief
+  for mrbc_define_method_list function.
+*/
+struct MRBC_DEFINE_METHOD_LIST {
+  const char *name;		//!< method name
+  const mrbc_func_t cfunc;	//!< pointer to method function
+};
+
+
 /***** Global variables *****************************************************/
 extern struct RClass * const mrbc_class_tbl[];
 #include "_autogen_builtin_class.h"
@@ -273,6 +283,37 @@ static inline mrbc_value * mrbc_instance_getiv_p(mrbc_value *obj, mrbc_sym sym_i
   return mrbc_kv_get( &obj->instance->ivar, sym_id );
 }
 
+
+//================================================================
+/*! define method by method list.
+
+  @param  vm		dummy.
+  @param  cls		target class.
+  @param  list		method list.
+  @param  list_size	size of method list.
+
+<b>Code example</b>
+  @code
+  static const struct MRBC_DEFINE_METHOD_LIST method_list[] = {
+    { "method1", c_method1 },
+    { "method2", c_method2 },
+    // ...
+  };
+
+  mrbc_class *cls = mrbc_define_class(0, "MyClass", 0);
+  mrbc_define_method_list(0, cls, method_list, sizeof(method_list)/sizeof(method_list[0]));
+  @endcode
+
+  @details
+  This function is used to define multiple methods at once.
+  It is useful for defining many methods.
+*/
+static inline void mrbc_define_method_list(struct VM *vm, mrbc_class *cls, const struct MRBC_DEFINE_METHOD_LIST list[], int list_size)
+{
+  for( int i = 0; i < list_size; i++ ) {
+    mrbc_define_method(vm, cls, list[i].name, list[i].cfunc);
+  }
+}
 
 #ifdef __cplusplus
 }
