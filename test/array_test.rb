@@ -336,9 +336,9 @@ class ArrayTest < Picotest::Test
 
   description "uniq test"
   def test_uniq
-    a = %(A B C B)
+    a = %W(A B C B)
     assert_equal %W(A B C), a.uniq
-    assert_equal %(A B C B), a
+    assert_equal %W(A B C B), a
 
     assert_equal %W(A B C), a.uniq!
     assert_equal %W(A B C), a
