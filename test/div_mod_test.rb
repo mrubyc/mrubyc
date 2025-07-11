@@ -1,4 +1,4 @@
-class SymbolTest < Picotest::Test
+class DivModTest < Picotest::Test
 
   description "マイナス値を含む割り算"
   def test_div

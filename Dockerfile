@@ -50,16 +50,17 @@ RUN useradd -m -u "$USER_ID" mrubyc
 RUN mkdir /work && chown mrubyc /work
 
 USER mrubyc
-RUN git clone --recursive -b master \
+RUN git clone --depth 1 --recursive -b master \
     https://github.com/picoruby/picoruby /work/picoruby
 
 WORKDIR /work/picoruby
+ENV MRUBY_CONFIG=picoruby-test
 RUN rake --trace
 ENV MRUBY_CONFIG=arm-linux-gnueabihf
 RUN rake --trace
 ENV MRUBY_CONFIG=mips-linux-gnu
 RUN rake --trace
-ENV MRUBY_CONFIG=default
+ENV MRUBY_CONFIG=picoruby-test
 
 VOLUME /work/mrubyc
 

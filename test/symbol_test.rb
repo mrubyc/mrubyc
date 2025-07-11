@@ -38,4 +38,9 @@ class SymbolTest < Picotest::Test
     assert_equal "symbol", s.to_s
     assert_not_equal "symbol", s
   end
+
+  description "inspect"
+  def test_inspect
+    assert_equal ':":a"', :":a".inspect
+  end
 end

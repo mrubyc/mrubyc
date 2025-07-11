@@ -383,8 +383,17 @@ static void c_symbol_all_symbols(struct VM *vm, mrbc_value v[], int argc)
 static void c_symbol_inspect(struct VM *vm, mrbc_value v[], int argc)
 {
   const char *s = mrbc_symid_to_str( mrbc_symbol(v[0]) );
-  v[0] = mrbc_string_new_cstr(vm, ":");
+  int colon_include = 0;
+  if (strchr(s, ':')) {
+    colon_include = 1;
+    v[0] = mrbc_string_new_cstr(vm, ":\"");
+  } else {
+    v[0] = mrbc_string_new_cstr(vm, ":");
+  }
   mrbc_string_append_cstr(&v[0], s);
+  if (colon_include) {
+    mrbc_string_append_cstr(&v[0], "\"");
+  }
 }
 
 

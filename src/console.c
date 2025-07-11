@@ -95,6 +95,26 @@ static int mrbc_printf_sub_output_arg( mrbc_printf_t *pf, va_list *ap )
   return ret;
 }
 
+/* sub function to print a hashkey
+ */
+static int mrbc_p_sub_hashkey(const mrbc_value *v)
+{
+  switch( mrbc_type(*v) ) {
+    case MRBC_TT_SYMBOL:{
+      const char *s = mrbc_symbol_cstr(v);
+      const char *fmt = strchr(s, ':') ? "\"%s\": " : "%s: ";
+      mrbc_printf(fmt, s);
+      break;
+    }
+    default: {
+      mrbc_p_sub(v);
+      mrbc_print(" => ");
+      break;
+    }
+  }
+  return 0;
+}
+
 
 /***** Global functions *****************************************************/
 
@@ -486,8 +506,7 @@ int mrbc_print_sub(const mrbc_value *v)
     mrbc_hash_iterator ite = mrbc_hash_iterator_new(v);
     while( mrbc_hash_i_has_next(&ite) ) {
       mrbc_value *vk = mrbc_hash_i_next(&ite);
-      mrbc_p_sub(vk);
-      mrbc_print("=>");
+      mrbc_p_sub_hashkey(vk);
       mrbc_p_sub(vk+1);
       if( mrbc_hash_i_has_next(&ite) ) mrbc_print(", ");
     }
