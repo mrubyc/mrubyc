@@ -594,12 +594,18 @@ static void c_hash_inspect(struct VM *vm, mrbc_value v[], int argc)
     if( !flag_first ) mrbc_string_append_cstr( &ret, ", " );
     flag_first = 0;
     mrbc_value *kv = mrbc_hash_i_next(&ite);
+    mrbc_value s1;
 
-    mrbc_value s1 = mrbc_send( vm, v, argc, &kv[0], "inspect", 0 );
-    mrbc_string_append( &ret, &s1 );
-    mrbc_string_delete( &s1 );
-
-    mrbc_string_append_cstr( &ret, "=>" );
+    if (mrbc_type(*kv) == MRBC_TT_SYMBOL) {
+      const char *s = mrbc_symid_to_str(kv->sym_id);
+      mrbc_string_append_cstr( &ret, s );
+      mrbc_string_append_cstr( &ret, ": " );
+    } else {
+      s1 = mrbc_send( vm, v, argc, &kv[0], "inspect", 0 );
+      mrbc_string_append( &ret, &s1 );
+      mrbc_string_delete( &s1 );
+      mrbc_string_append_cstr( &ret, " => " );
+    }
 
     s1 = mrbc_send( vm, v, argc, &kv[1], "inspect", 0 );
     mrbc_string_append( &ret, &s1 );
