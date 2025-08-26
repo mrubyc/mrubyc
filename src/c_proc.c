@@ -104,7 +104,7 @@ static void c_proc_new(struct VM *vm, mrbc_value v[], int argc)
   }
 
   v[0] = v[1];
-  mrbc_set_empty(&v[1]);
+  mrbc_set_tt(&v[1], MRBC_TT_EMPTY);
 }
 
 

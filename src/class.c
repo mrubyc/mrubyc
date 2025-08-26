@@ -575,7 +575,7 @@ mrbc_value mrbc_send( struct VM *vm, mrbc_value *v, int argc,
   mrbc_value ret = regs[0];
 
   for(; i >= 0; i-- ) {
-    mrbc_set_empty(&regs[i]);
+    mrbc_set_tt(&regs[i], MRBC_TT_EMPTY);
   }
 
   return ret;

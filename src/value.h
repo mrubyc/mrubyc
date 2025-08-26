@@ -203,7 +203,8 @@ typedef struct RObject mrbc_value;
 #define mrbc_set_false(p)	(p)->tt = MRBC_TT_FALSE
 #define mrbc_set_bool(p,n)	(p)->tt = (n)? MRBC_TT_TRUE: MRBC_TT_FALSE
 #define mrbc_set_symbol(p,n)	(p)->tt = MRBC_TT_SYMBOL; (p)->sym_id = (n)
-#define mrbc_set_empty(p)	(p)->tt = MRBC_TT_EMPTY	// internal use only.
+#define mrbc_set_tt(p,type)	(p)->tt = (type)	// internal use only.
+
 
 // make immediate values.
 #define mrbc_integer_value(n)	((mrbc_value){.tt = MRBC_TT_INTEGER, .i=(n)})
@@ -621,7 +622,7 @@ static inline void mrbc_decref(mrbc_value *v)
 static inline void mrbc_decref_empty(mrbc_value *v)
 {
   mrbc_decref(v);
-  mrbc_set_empty(v);
+  mrbc_set_tt(v, MRBC_TT_EMPTY);
 }
 
 

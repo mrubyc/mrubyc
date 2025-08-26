@@ -372,8 +372,8 @@ static void c_hash_set(struct VM *vm, mrbc_value v[], int argc)
   mrbc_value *v1 = &v[1];
   mrbc_value *v2 = &v[2];
   mrbc_hash_set(v, v1, v2);
-  mrbc_set_empty(v1);
-  mrbc_set_empty(v2);
+  mrbc_set_tt(v1, MRBC_TT_EMPTY);
+  mrbc_set_tt(v2, MRBC_TT_EMPTY);
 }
 
 

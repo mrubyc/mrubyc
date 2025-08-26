@@ -1046,7 +1046,7 @@ static inline void op_raiseif( mrbc_vm *vm, mrbc_value *regs EXT )
 
   // save the parameter.
   mrbc_value ra = regs[a];
-  mrbc_set_empty(&regs[a]);
+  mrbc_set_tt( &regs[a], MRBC_TT_EMPTY );
 
   switch( mrbc_type(ra) ) {
   case MRBC_TT_RETURN:		goto CASE_OP_RETURN;
@@ -1075,7 +1075,7 @@ CASE_OP_RETURN:
   // set the return value and return to caller.
   mrbc_decref(&regs[0]);
   regs[0] = regs[ vm->cur_irep->nregs ];
-  mrbc_set_empty( &regs[ vm->cur_irep->nregs ] );
+  mrbc_set_tt( &regs[ vm->cur_irep->nregs ], MRBC_TT_EMPTY );
 
   mrbc_pop_callinfo(vm);
   return;
@@ -1458,7 +1458,7 @@ static inline void op_enter( mrbc_vm *vm, mrbc_value *regs EXT )
 
   // save proc (or nil) object.
   mrbc_value proc = regs[argc+1];
-  mrbc_set_empty( &regs[argc+1] );
+  mrbc_set_tt( &regs[argc+1], MRBC_TT_EMPTY );
 
   // support yield [...] pattern, to expand array.
   if( mrbc_type(regs[0]) == MRBC_TT_PROC &&
@@ -1488,7 +1488,7 @@ static inline void op_enter( mrbc_vm *vm, mrbc_value *regs EXT )
     if( a & (FLAG_DICT|FLAG_KW) ) {
       if( (argc - m1) > 0 && mrbc_type(regs[argc]) == MRBC_TT_HASH ) {
 	dict = regs[argc];
-	mrbc_set_empty( &regs[argc--] );
+	mrbc_set_tt( &regs[argc--], MRBC_TT_EMPTY );
       } else {
 	dict = mrbc_hash_new( vm, 0 );
       }
@@ -1504,7 +1504,7 @@ static inline void op_enter( mrbc_vm *vm, mrbc_value *regs EXT )
       int rest_reg = m1 + o + 1;
       for( int i = 0; i < rest_size; i++ ) {
 	mrbc_array_push( &rest, &regs[rest_reg] );
-	mrbc_set_empty( &regs[rest_reg++] );
+	mrbc_set_tt( &regs[rest_reg++], MRBC_TT_EMPTY );
       }
     }
 
@@ -1637,7 +1637,7 @@ static inline void op_return__sub( mrbc_vm *vm, mrbc_value *regs, int a )
 
       // Save the return value in the last+1 register.
       regs[ vm->cur_irep->nregs ] = regs[a];
-      mrbc_set_empty( &regs[a] );
+      mrbc_set_tt( &regs[a], MRBC_TT_EMPTY );
 
       vm->exception.tt = MRBC_TT_RETURN;
       vm->inst = vm->cur_irep->inst + bin_to_uint32(handler->target);
@@ -1652,7 +1652,7 @@ static inline void op_return__sub( mrbc_vm *vm, mrbc_value *regs, int a )
     } else {
       mrbc_decref(&regs[0]);
       regs[0] = regs[a];
-      mrbc_set_empty( &regs[a] );
+      mrbc_set_tt( &regs[a], MRBC_TT_EMPTY );
     }
     vm->flag_preemption = 1;
     vm->flag_stop = 1;
@@ -1669,7 +1669,7 @@ static inline void op_return__sub( mrbc_vm *vm, mrbc_value *regs, int a )
  SET_RETURN:
   mrbc_decref(&regs[0]);
   regs[0] = regs[a];
-  mrbc_set_empty( &regs[a] );
+  mrbc_set_tt( &regs[a], MRBC_TT_EMPTY );
 
  RETURN:
   mrbc_pop_callinfo(vm);
@@ -1707,7 +1707,7 @@ static inline void op_return_blk( mrbc_vm *vm, mrbc_value *regs EXT )
   mrbc_incref( &regs[0] );
   vm->ret_blk = regs[0].proc;
   vm->ret_blk->ret_val = regs[a];
-  mrbc_set_empty( &regs[a] );
+  mrbc_set_tt( &regs[a], MRBC_TT_EMPTY );
 
   // return to the proc generated level.
   while( 1 ) {
@@ -1758,7 +1758,7 @@ static inline void op_break( mrbc_vm *vm, mrbc_value *regs EXT )
   mrbc_incref( &regs[0] );
   vm->ret_blk = regs[0].proc;
   vm->ret_blk->ret_val = regs[a];
-  mrbc_set_empty( &regs[a] );
+  mrbc_set_tt( &regs[a], MRBC_TT_EMPTY );
 
   // return to the proc generated level.
   int reg_offset = 0;
@@ -2583,7 +2583,7 @@ static inline void op_range_inc( mrbc_vm *vm, mrbc_value *regs EXT )
 
   mrbc_value value = mrbc_range_new(vm, &regs[a], &regs[a+1], 0);
   regs[a] = value;
-  mrbc_set_empty( &regs[a+1] );
+  mrbc_set_tt( &regs[a+1], MRBC_TT_EMPTY );
 }
 
 
@@ -2598,7 +2598,7 @@ static inline void op_range_exc( mrbc_vm *vm, mrbc_value *regs EXT )
 
   mrbc_value value = mrbc_range_new(vm, &regs[a], &regs[a+1], 1);
   regs[a] = value;
-  mrbc_set_empty( &regs[a+1] );
+  mrbc_set_tt( &regs[a+1], MRBC_TT_EMPTY );
 }
 
 

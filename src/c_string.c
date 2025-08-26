@@ -685,7 +685,7 @@ static void c_string_insert(struct VM *vm, mrbc_value v[], int argc)
   // return val
   mrbc_decref(&v[0]);
   v[0] = *val;
-  mrbc_set_empty(val);
+  mrbc_set_tt(val, MRBC_TT_EMPTY);
 }
 
 

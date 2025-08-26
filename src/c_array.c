@@ -784,7 +784,7 @@ static void c_array_set(struct VM *vm, mrbc_value v[], int argc)
     mrbc_incref(&v[2]);
     mrbc_decref(&v[0]);
     v[0] = v[2];
-    mrbc_set_empty(&v[2]);
+    mrbc_set_tt(&v[2], MRBC_TT_EMPTY);
     return;
   }
 
@@ -840,7 +840,7 @@ static void c_array_set(struct VM *vm, mrbc_value v[], int argc)
     // return val
     mrbc_decref(&v[0]);
     v[0] = v[3];
-    mrbc_set_empty(&v[3]);
+    mrbc_set_tt(&v[3], MRBC_TT_EMPTY);
     return;
   }
 
