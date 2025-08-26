@@ -265,7 +265,7 @@ mrbc_int_t mrbc_val_i(struct VM *vm, const mrbc_value *val)
 {
   if( val == NULL ) return 0;
 
-  switch(val->tt) {
+  switch( mrbc_type(*val) ) {
   case MRBC_TT_INTEGER:
     return val->i;
 
@@ -294,7 +294,7 @@ mrbc_int_t mrbc_val_i(struct VM *vm, const mrbc_value *val)
 */
 mrbc_int_t mrbc_val_i2(struct VM *vm, const mrbc_value *val, mrbc_int_t default_value )
 {
-  if( val == NULL || val->tt == MRBC_TT_EMPTY ) return default_value;
+  if( val == NULL || mrbc_type(*val) == MRBC_TT_EMPTY ) return default_value;
 
   return mrbc_val_i( vm, val );
 }
@@ -314,7 +314,7 @@ double mrbc_val_f(struct VM *vm, const mrbc_value *val)
 {
   if( val == NULL ) return 0;
 
-  switch(val->tt) {
+  switch( mrbc_type(*val) ) {
   case MRBC_TT_INTEGER:
     return val->i;
 
@@ -343,7 +343,7 @@ double mrbc_val_f(struct VM *vm, const mrbc_value *val)
 */
 double mrbc_val_f2(struct VM *vm, const mrbc_value *val, double default_value )
 {
-  if( val == NULL || val->tt == MRBC_TT_EMPTY ) return default_value;
+  if( val == NULL || mrbc_type(*val) == MRBC_TT_EMPTY ) return default_value;
 
   return mrbc_val_f( vm, val );
 }
@@ -363,7 +363,7 @@ const char * mrbc_val_s(struct VM *vm, const mrbc_value *val)
 {
   if( val == NULL ) return 0;
 
-  switch(val->tt) {
+  switch( mrbc_type(*val) ) {
   case MRBC_TT_STRING:
     return mrbc_string_cstr( val );
 
@@ -389,7 +389,7 @@ const char * mrbc_val_s(struct VM *vm, const mrbc_value *val)
 */
 const char * mrbc_val_s2(struct VM *vm, const mrbc_value *val, const char * default_value )
 {
-  if( val == NULL || val->tt == MRBC_TT_EMPTY ) return default_value;
+  if( val == NULL || mrbc_type(*val) == MRBC_TT_EMPTY ) return default_value;
 
   return mrbc_val_s( vm, val );
 }
@@ -411,7 +411,7 @@ mrbc_int_t mrbc_to_i(struct VM *vm, mrbc_value v[], int argc, mrbc_value *val)
 {
   if( val == NULL ) return 0;
 
-  switch(val->tt) {
+  switch( mrbc_type(*val) ) {
   case MRBC_TT_EMPTY:
     mrbc_raise(vm, MRBC_CLASS(TypeError), 0);
     return 0;
@@ -452,7 +452,7 @@ mrbc_float_t mrbc_to_f(struct VM *vm, mrbc_value v[], int argc, mrbc_value *val)
 {
   if( val == NULL ) return 0;
 
-  switch(val->tt) {
+  switch( mrbc_type(*val) ) {
   case MRBC_TT_EMPTY:
     mrbc_raise(vm, MRBC_CLASS(TypeError), 0);
     return 0;
@@ -493,7 +493,7 @@ char * mrbc_to_s(struct VM *vm, mrbc_value v[], int argc, mrbc_value *val)
 {
   if( val == NULL ) return 0;
 
-  switch(val->tt) {
+  switch( mrbc_type(*val) ) {
   case MRBC_TT_EMPTY:
     mrbc_raise(vm, MRBC_CLASS(TypeError), 0);
     return 0;
@@ -559,7 +559,7 @@ mrbc_int_t mrbc_arg_i(struct VM *vm, mrbc_value v[], int argc, int n)
     return 0;
   }
 
-  switch(v[n].tt) {
+  switch( mrbc_type(v[n]) ) {
   case MRBC_TT_INTEGER:
     return v[n].i;
 
@@ -616,7 +616,7 @@ mrbc_float_t mrbc_arg_f(struct VM *vm, mrbc_value v[], int argc, int n)
     return 0;
   }
 
-  switch(v[n].tt) {
+  switch( mrbc_type(v[n]) ) {
   case MRBC_TT_INTEGER:
     return v[n].i;
 
@@ -673,7 +673,7 @@ const char * mrbc_arg_s(struct VM *vm, mrbc_value v[], int argc, int n)
     return 0;
   }
 
-  switch(v[n].tt) {
+  switch( mrbc_type(v[n]) ) {
   case MRBC_TT_STRING:
     return mrbc_string_cstr( &v[n] );
 
@@ -727,7 +727,7 @@ int mrbc_arg_b(struct VM *vm, mrbc_value v[], int argc, int n)
     return 0;
   }
 
-  switch(v[n].tt) {
+  switch( mrbc_type(v[n]) ) {
   case MRBC_TT_FALSE:
     return 0;
 

@@ -372,8 +372,8 @@ static void c_hash_set(struct VM *vm, mrbc_value v[], int argc)
   mrbc_value *v1 = &v[1];
   mrbc_value *v2 = &v[2];
   mrbc_hash_set(v, v1, v2);
-  v1->tt = MRBC_TT_EMPTY;
-  v2->tt = MRBC_TT_EMPTY;
+  mrbc_set_empty(v1);
+  mrbc_set_empty(v2);
 }
 
 
@@ -579,7 +579,7 @@ static void c_hash_values(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_hash_inspect(struct VM *vm, mrbc_value v[], int argc)
 {
-  if( v[0].tt == MRBC_TT_CLASS ) {
+  if( mrbc_type(v[0]) == MRBC_TT_CLASS ) {
     v[0] = mrbc_string_new_cstr(vm, mrbc_symid_to_str( v[0].cls->sym_id ));
     return;
   }

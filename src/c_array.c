@@ -774,7 +774,7 @@ static void c_array_set(struct VM *vm, mrbc_value v[], int argc)
   /*
     in case of self[nth] = val
   */
-  if( argc == 2 && v[1].tt == MRBC_TT_INTEGER ) {
+  if( argc == 2 && mrbc_type(v[1]) == MRBC_TT_INTEGER ) {
     if( mrbc_array_set(v, mrbc_integer(v[1]), &v[2]) != 0 ) {
       mrbc_raise( vm, MRBC_CLASS(IndexError), "too small for array");
       return;
@@ -784,14 +784,15 @@ static void c_array_set(struct VM *vm, mrbc_value v[], int argc)
     mrbc_incref(&v[2]);
     mrbc_decref(&v[0]);
     v[0] = v[2];
-    v[2].tt = MRBC_TT_EMPTY;
+    mrbc_set_empty(&v[2]);
     return;
   }
 
   /*
     in case of self[start, length] = val
   */
-  if( argc == 3 && v[1].tt == MRBC_TT_INTEGER && v[2].tt == MRBC_TT_INTEGER ) {
+  if( argc == 3 && mrbc_type(v[1]) == MRBC_TT_INTEGER &&
+                   mrbc_type(v[2]) == MRBC_TT_INTEGER ) {
     int pos = mrbc_integer(v[1]);
     int len = mrbc_integer(v[2]);
 
@@ -823,7 +824,7 @@ static void c_array_set(struct VM *vm, mrbc_value v[], int argc)
     }
 
     // append data
-    if( v[3].tt == MRBC_TT_ARRAY ) {
+    if( mrbc_type(v[3]) == MRBC_TT_ARRAY ) {
       mrbc_array_push_m(&v[0], &v[3]);
       for( int i = 0; i < v[3].array->n_stored; i++ ) {
 	mrbc_incref( &v[3].array->data[i] );
@@ -839,7 +840,7 @@ static void c_array_set(struct VM *vm, mrbc_value v[], int argc)
     // return val
     mrbc_decref(&v[0]);
     v[0] = v[3];
-    v[3].tt = MRBC_TT_EMPTY;
+    mrbc_set_empty(&v[3]);
     return;
   }
 
@@ -913,7 +914,7 @@ static void c_array_include(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_array_and(struct VM *vm, mrbc_value v[], int argc)
 {
-  if (v[1].tt != MRBC_TT_ARRAY) {
+  if( mrbc_type(v[1]) != MRBC_TT_ARRAY ) {
     mrbc_raisef( vm, MRBC_CLASS(TypeError), "no implicit conversion into %s", "Array");
     return;
   }
@@ -934,7 +935,7 @@ static void c_array_and(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_array_or(struct VM *vm, mrbc_value v[], int argc)
 {
-  if (v[1].tt != MRBC_TT_ARRAY) {
+  if( mrbc_type(v[1]) != MRBC_TT_ARRAY ) {
     mrbc_raisef( vm, MRBC_CLASS(TypeError), "no implicit conversion into %s", "Array");
     return;
   }
@@ -1179,7 +1180,7 @@ static void c_array_uniq_self(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_array_inspect(struct VM *vm, mrbc_value v[], int argc)
 {
-  if( v[0].tt == MRBC_TT_CLASS ) {
+  if( mrbc_type(v[0]) == MRBC_TT_CLASS ) {
     v[0] = mrbc_string_new_cstr(vm, mrbc_symid_to_str( v[0].cls->sym_id ));
     return;
   }
