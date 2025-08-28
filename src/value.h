@@ -195,16 +195,6 @@ typedef struct RObject mrbc_value;
 #define mrbc_float(o)		((o).d)
 #define mrbc_symbol(o)		((o).sym_id)
 
-// setters
-#define mrbc_set_integer(p,n)	(p)->tt = MRBC_TT_INTEGER; (p)->i = (n)
-#define mrbc_set_float(p,n)	(p)->tt = MRBC_TT_FLOAT; (p)->d = (n)
-#define mrbc_set_nil(p)		(p)->tt = MRBC_TT_NIL
-#define mrbc_set_true(p)	(p)->tt = MRBC_TT_TRUE
-#define mrbc_set_false(p)	(p)->tt = MRBC_TT_FALSE
-#define mrbc_set_bool(p,n)	(p)->tt = (n)? MRBC_TT_TRUE: MRBC_TT_FALSE
-#define mrbc_set_symbol(p,n)	(p)->tt = MRBC_TT_SYMBOL; (p)->sym_id = (n)
-#define mrbc_set_tt(p,type)	(p)->tt = (type)	// internal use only.
-
 
 // make immediate values.
 #define mrbc_integer_value(n)	((mrbc_value){.tt = MRBC_TT_INTEGER, .i=(n)})
@@ -586,6 +576,54 @@ int mrbc_arg_b2(struct VM *vm, mrbc_value v[], int argc, int n, int default_valu
 
 
 /***** Inline functions *****************************************************/
+
+//================================================================
+// mrbc_value setters
+
+static inline void mrbc_set_integer(mrbc_value *p, mrbc_int_t n)
+{
+  p->tt = MRBC_TT_INTEGER;
+  p->i = n;
+}
+
+static inline void mrbc_set_float(mrbc_value *p, mrbc_float_t d)
+{
+  p->tt = MRBC_TT_FLOAT;
+  p->d = d;
+}
+
+static inline void mrbc_set_nil(mrbc_value *p)
+{
+  p->tt = MRBC_TT_NIL;
+}
+
+static inline void mrbc_set_true(mrbc_value *p)
+{
+  p->tt = MRBC_TT_TRUE;
+}
+
+static inline void mrbc_set_false(mrbc_value *p)
+{
+  p->tt = MRBC_TT_FALSE;
+}
+
+static inline void mrbc_set_bool(mrbc_value *p, int n)
+{
+  p->tt = n ? MRBC_TT_TRUE: MRBC_TT_FALSE;
+}
+
+static inline void mrbc_set_symbol(mrbc_value *p, mrbc_sym sym_id)
+{
+  p->tt = MRBC_TT_SYMBOL;
+  p->sym_id = sym_id;
+}
+
+static inline void mrbc_set_tt(mrbc_value *p, mrbc_vtype type)	// internal use only.
+{
+  p->tt = type;
+}
+
+
 
 //================================================================
 /*! Increment reference counter
