@@ -711,7 +711,7 @@ static void c_array_get(struct VM *vm, mrbc_value v[], int argc)
 
     memcpy( ret.array->data, &v[1], sizeof(mrbc_value) * argc );
     for( int i = 1; i <= argc; i++ ) {
-      mrbc_type(v[i]) = MRBC_TT_EMPTY;
+      mrbc_set_tt( &v[i], MRBC_TT_EMPTY );
     }
     ret.array->n_stored = argc;
 
@@ -987,7 +987,7 @@ static void c_array_last(struct VM *vm, mrbc_value v[], int argc)
 static void c_array_push(struct VM *vm, mrbc_value v[], int argc)
 {
   mrbc_array_push(&v[0], &v[1]);
-  mrbc_type(v[1]) = MRBC_TT_EMPTY;
+  mrbc_set_tt( &v[1], MRBC_TT_EMPTY );
 }
 
 
@@ -1025,7 +1025,7 @@ static void c_array_pop(struct VM *vm, mrbc_value v[], int argc)
 static void c_array_unshift(struct VM *vm, mrbc_value v[], int argc)
 {
   mrbc_array_unshift(&v[0], &v[1]);
-  mrbc_type(v[1]) = MRBC_TT_EMPTY;
+  mrbc_set_tt( &v[1], MRBC_TT_EMPTY );
 }
 
 
