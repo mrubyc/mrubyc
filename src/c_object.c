@@ -149,7 +149,9 @@ static void c_object_equal3(struct VM *vm, mrbc_value v[], int argc)
  */
 static void c_object_class(struct VM *vm, mrbc_value v[], int argc)
 {
-  mrbc_value value = {.tt = MRBC_TT_CLASS};
+  mrbc_value value;
+
+  mrbc_set_tt(&value, MRBC_TT_CLASS);
   value.cls = find_class_by_object( v );
   SET_RETURN( value );
 }

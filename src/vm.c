@@ -256,7 +256,7 @@ void mrbc_pop_callinfo( struct VM *vm )
   }
 
   if( callinfo->karg_keep ) {
-    mrbc_hash_delete(&(mrbc_value){.tt = MRBC_TT_HASH, .hash = callinfo->karg_keep});
+    mrbc_hash_delete(&mrbc_immediate_value(MRBC_TT_HASH, .hash = callinfo->karg_keep));
   }
 
   // copy callinfo to vm
@@ -1104,7 +1104,7 @@ CASE_OP_RETURN_BLK:
 
   // top level return ?
   if( vm->callinfo_tail == NULL ) {
-    mrbc_decref(&(mrbc_value){.tt = MRBC_TT_PROC, .proc = vm->ret_blk});
+    mrbc_decref(&mrbc_immediate_value(MRBC_TT_PROC, .proc = vm->ret_blk));
     vm->ret_blk = 0;
 
     vm->flag_preemption = 1;
@@ -1117,7 +1117,7 @@ CASE_OP_RETURN_BLK:
   mrbc_decref(reg0);
   *reg0 = vm->ret_blk->ret_val;
 
-  mrbc_decref(&(mrbc_value){.tt = MRBC_TT_PROC, .proc = vm->ret_blk});
+  mrbc_decref(&mrbc_immediate_value(MRBC_TT_PROC, .proc = vm->ret_blk));
   vm->ret_blk = 0;
 
   mrbc_pop_callinfo(vm);
@@ -1148,7 +1148,7 @@ CASE_OP_BREAK: {
   mrbc_decref(reg0);
   *reg0 = vm->ret_blk->ret_val;
 
-  mrbc_decref(&(mrbc_value){.tt = MRBC_TT_PROC, .proc = vm->ret_blk});
+  mrbc_decref(&mrbc_immediate_value(MRBC_TT_PROC, .proc = vm->ret_blk));
   vm->ret_blk = 0;
   return;
 }
@@ -1399,7 +1399,7 @@ static inline void op_argary( mrbc_vm *vm, mrbc_value *regs EXT )
   if( d ) {
     if( !callinfo ) callinfo = vm->callinfo_tail;
     assert( callinfo->karg_keep );
-    mrbc_value karg = (mrbc_value){.tt = MRBC_TT_HASH, .hash = callinfo->karg_keep};
+    mrbc_value karg = mrbc_immediate_value(MRBC_TT_HASH, .hash = callinfo->karg_keep);
     karg = mrbc_hash_dup(vm, &karg);
     mrbc_array_push( &argary, &karg );
   }
@@ -1738,7 +1738,7 @@ static inline void op_return_blk( mrbc_vm *vm, mrbc_value *regs EXT )
     mrbc_pop_callinfo(vm);
   }
 
-  mrbc_decref(&(mrbc_value){.tt = MRBC_TT_PROC, .proc = vm->ret_blk});
+  mrbc_decref(&mrbc_immediate_value(MRBC_TT_PROC, .proc = vm->ret_blk));
   vm->ret_blk = 0;
 }
 
@@ -1784,7 +1784,7 @@ static inline void op_break( mrbc_vm *vm, mrbc_value *regs EXT )
   mrbc_decref(reg0);
   *reg0 = vm->ret_blk->ret_val;
 
-  mrbc_decref(&(mrbc_value){.tt = MRBC_TT_PROC, .proc = vm->ret_blk});
+  mrbc_decref(&mrbc_immediate_value(MRBC_TT_PROC, .proc = vm->ret_blk));
   vm->ret_blk = 0;
 }
 
@@ -2612,7 +2612,7 @@ static inline void op_oclass( mrbc_vm *vm, mrbc_value *regs EXT )
   FETCH_B();
 
   mrbc_decref(&regs[a]);
-  regs[a].tt = MRBC_TT_CLASS;
+  mrbc_set_tt(&regs[a], MRBC_TT_CLASS);
   regs[a].cls = MRBC_CLASS(Object);
 }
 
@@ -2670,7 +2670,7 @@ static inline void op_class( mrbc_vm *vm, mrbc_value *regs EXT )
 
   // (note)
   //  regs[a] was set to NIL or Class by compiler. So, no need to release.
-  regs[a].tt = MRBC_TT_CLASS;
+  mrbc_set_tt(&regs[a], MRBC_TT_CLASS);
   regs[a].cls = cls;
 }
 
@@ -2704,7 +2704,7 @@ static inline void op_module( mrbc_vm *vm, mrbc_value *regs EXT )
 
   // (note)
   //  regs[a] was set to Class, Module or NIL by compiler. So, no need to release.
-  regs[a].tt = MRBC_TT_MODULE;
+  mrbc_set_tt(&regs[a], MRBC_TT_MODULE);
   regs[a].cls = cls;
 }
 
@@ -2848,7 +2848,7 @@ static inline void op_tclass( mrbc_vm *vm, mrbc_value *regs EXT )
   FETCH_B();
 
   mrbc_decref(&regs[a]);
-  regs[a].tt = MRBC_TT_CLASS;
+  mrbc_set_tt(&regs[a], MRBC_TT_CLASS);
   regs[a].cls = vm->target_class;
 }
 

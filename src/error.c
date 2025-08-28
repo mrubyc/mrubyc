@@ -100,7 +100,7 @@ mrbc_value mrbc_exception_new(struct VM *vm, struct RClass *exc_cls, const void 
   ex->message = buf;
 
  RETURN:
-  return (mrbc_value){.tt = MRBC_TT_EXCEPTION, .exception = ex};
+  return mrbc_immediate_value(MRBC_TT_EXCEPTION, .exception = ex);
 }
 
 
@@ -121,7 +121,7 @@ mrbc_value mrbc_exception_new_alloc(struct VM *vm, struct RClass *exc_cls, const
   ex->message_size = len;
   ex->message = message;
 
-  return (mrbc_value){.tt = MRBC_TT_EXCEPTION, .exception = ex};
+  return mrbc_immediate_value(MRBC_TT_EXCEPTION, .exception = ex);
 }
 
 

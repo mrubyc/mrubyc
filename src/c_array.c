@@ -81,7 +81,7 @@
 */
 mrbc_value mrbc_array_new(struct VM *vm, int size)
 {
-  mrbc_value value = {.tt = MRBC_TT_ARRAY};
+  mrbc_value value = mrbc_immediate_value(MRBC_TT_ARRAY);
 
   /*
     Allocate handle and data buffer.

@@ -145,7 +145,7 @@ mrbc_class * mrbc_define_class(struct VM *vm, const char *name, mrbc_class *supe
   };
 
   // register to global constant
-  mrbc_set_const( sym_id, &(mrbc_value){.tt = MRBC_TT_CLASS, .cls = cls});
+  mrbc_set_const( sym_id, &mrbc_immediate_value(MRBC_TT_CLASS, .cls = cls) );
 
   return cls;
 }
@@ -194,8 +194,8 @@ mrbc_class * mrbc_define_class_under(struct VM *vm, const mrbc_class *outer, con
   };
 
   // register to global constant
-  mrbc_set_class_const( outer, sym_id,
-			&(mrbc_value){.tt = MRBC_TT_CLASS, .cls = cls});
+  mrbc_set_class_const( outer, sym_id, &mrbc_immediate_value(MRBC_TT_CLASS, .cls = cls) );
+
   return cls;
 }
 
@@ -238,7 +238,7 @@ mrbc_class * mrbc_define_module(struct VM *vm, const char *name)
   };
 
   // register to global constant
-  mrbc_set_const( sym_id, &(mrbc_value){.tt = MRBC_TT_MODULE, .cls = cls});
+  mrbc_set_const( sym_id, &mrbc_immediate_value(MRBC_TT_MODULE, .cls = cls) );
 
   return cls;
 }
@@ -287,8 +287,8 @@ mrbc_class * mrbc_define_module_under(struct VM *vm, const mrbc_class *outer, co
   };
 
   // register to global constant
-  mrbc_set_class_const( outer, sym_id,
-			&(mrbc_value){.tt = MRBC_TT_MODULE, .cls = cls});
+  mrbc_set_class_const( outer, sym_id, &mrbc_immediate_value(MRBC_TT_MODULE, .cls = cls) );
+
   return cls;
 }
 
@@ -330,7 +330,8 @@ void mrbc_define_method(struct VM *vm, mrbc_class *cls, const char *name, mrbc_f
 */
 mrbc_value mrbc_instance_new(struct VM *vm, mrbc_class *cls, int size)
 {
-  mrbc_value v = {.tt = MRBC_TT_OBJECT};
+  mrbc_value v = mrbc_immediate_value(MRBC_TT_OBJECT);
+
   v.instance = mrbc_alloc(vm, sizeof(mrbc_instance) + size);
   if( v.instance == NULL ) return v;	// ENOMEM
 
@@ -640,8 +641,8 @@ void mrbc_init_class(void)
 
     cls->super = MRBC_BuiltinClass[i].super;
     cls->method_link = 0;
+    mrbc_set_tt( &vcls, cls->flag_module ? MRBC_TT_MODULE : MRBC_TT_CLASS );
     vcls.cls = cls;
-    vcls.tt = cls->flag_module ? MRBC_TT_MODULE : MRBC_TT_CLASS;
 
     mrbc_set_const( cls->sym_id, &vcls );
   }

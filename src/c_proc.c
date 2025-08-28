@@ -61,7 +61,7 @@ mrbc_value mrbc_proc_new(struct VM *vm, void *irep, uint8_t b_or_m)
   proc->irep = irep;
 
  RETURN:
-  return (mrbc_value){.tt = MRBC_TT_PROC, .proc = proc};
+  return mrbc_immediate_value(MRBC_TT_PROC, .proc = proc);
 }
 
 

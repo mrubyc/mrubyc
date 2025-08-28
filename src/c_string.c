@@ -61,7 +61,7 @@ static int is_space( int ch )
 */
 mrbc_value mrbc_string_new(struct VM *vm, const void *src, int len)
 {
-  mrbc_value value = {.tt = MRBC_TT_STRING};
+  mrbc_value value = mrbc_immediate_value(MRBC_TT_STRING);
 
   /*
     Allocate handle and string buffer.
@@ -104,7 +104,7 @@ mrbc_value mrbc_string_new(struct VM *vm, const void *src, int len)
 */
 mrbc_value mrbc_string_new_alloc(struct VM *vm, void *buf, int len)
 {
-  mrbc_value value = {.tt = MRBC_TT_STRING};
+  mrbc_value value = mrbc_immediate_value(MRBC_TT_STRING);
 
   /*
     Allocate handle

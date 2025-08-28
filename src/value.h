@@ -149,7 +149,7 @@ struct RBasic {
   Value object.
 */
 struct RObject {
-  mrbc_vtype tt : 8;
+  mrbc_vtype tt;
   union {
     mrbc_int_t i;		// MRBC_TT_INTEGER
 #if MRBC_USE_FLOAT
@@ -214,6 +214,12 @@ typedef struct RObject mrbc_value;
 #define mrbc_false_value()	((mrbc_value){.tt = MRBC_TT_FALSE})
 #define mrbc_bool_value(n)	((mrbc_value){.tt = (n)?MRBC_TT_TRUE:MRBC_TT_FALSE})
 #define mrbc_symbol_value(n)	((mrbc_value){.tt = MRBC_TT_SYMBOL, .sym_id=(n)})
+#define mrbc_immediate_value(...) MRBC_arg_choice(__VA_ARGS__, mrbc_immediate_value2, mrbc_immediate_value1) (__VA_ARGS__)
+#define mrbc_immediate_value1(type) \
+  ((mrbc_value){.tt=type})			// internal use only.
+#define mrbc_immediate_value2(type, v2) \
+  ((mrbc_value){.tt=type, v2})			// internal use only.
+
 
 // (for mruby compatible)
 #define mrb_type(o)		mrbc_type(o)

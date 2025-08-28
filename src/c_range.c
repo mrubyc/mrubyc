@@ -42,7 +42,7 @@
 */
 mrbc_value mrbc_range_new(struct VM *vm, mrbc_value *first, mrbc_value *last, int flag_exclude)
 {
-  mrbc_value value = {.tt = MRBC_TT_RANGE};
+  mrbc_value value = mrbc_immediate_value(MRBC_TT_RANGE);
 
   value.range = mrbc_alloc(vm, sizeof(mrbc_range));
   if( !value.range ) return value;		// ENOMEM
