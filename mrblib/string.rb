@@ -63,6 +63,26 @@ class String
     rstr[0, rlen] + self
   end
 
+  ##
+  # Passes each line in str to the given block.
+  #
+  def each_line(rs = "\n", chomp: false)
+    start = 0
+    while start < self.length
+      idx = self.index(rs, start)
+      if idx
+        part = self[start, idx - start + rs.length]
+        yield chomp ? part.chomp : part
+        start = idx + 1
+      else
+        part = self[start, self.length - start]
+        yield chomp ? part.chomp : part
+        break
+      end
+    end
+    self
+  end
+
   # private
 
     def __ljust_rjust_argcheck(width, padding)
