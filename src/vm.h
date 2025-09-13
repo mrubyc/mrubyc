@@ -127,7 +127,8 @@ typedef struct CALLINFO {
   mrbc_sym method_id;		//!< called method ID.
   uint8_t reg_offset;		//!< register offset after call.
   uint8_t n_args;		//!< num of arguments.
-  uint8_t is_called_super;	//!< this is called by op_super.
+  uint8_t is_called_super;	//!< flags when called by OP_SUPER.
+  uint8_t is_called_block;	//!< flags when block calls.
 
 } mrbc_callinfo;
 typedef struct CALLINFO mrb_callinfo;

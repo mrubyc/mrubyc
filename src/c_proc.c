@@ -124,6 +124,7 @@ static void c_proc_call(struct VM *vm, mrbc_value v[], int argc)
   if( callinfo_self ) {
     callinfo->own_class = callinfo_self->own_class;
   }
+  callinfo->is_called_block = 1;
 
   // target irep
   vm->cur_irep = v[0].proc->irep;

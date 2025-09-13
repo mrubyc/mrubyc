@@ -232,6 +232,7 @@ mrbc_callinfo * mrbc_push_callinfo( struct VM *vm, mrbc_sym method_id, int reg_o
   callinfo->reg_offset = reg_offset;
   callinfo->n_args = n_args;
   callinfo->is_called_super = 0;
+  callinfo->is_called_block = 0;
 
   callinfo->prev = vm->callinfo_tail;
   vm->callinfo_tail = callinfo;
@@ -1657,19 +1658,26 @@ static inline void op_return__sub( mrbc_vm *vm, mrbc_value *regs, int a )
     return;
   }
 
-  // not in initialize method, set return value.
-  if( vm->callinfo_tail->method_id != MRBC_SYM(initialize) ) goto SET_RETURN;
+  /* set the return value
+    (conditions)
+     iniialize  super   block   then
+      0          0       0       Set
+      0          0       1       Set
+      0          1       0       Set
+      0          1       1       N/A
+      1          0       0       Skip
+      1          0       1       Set
+      1          1       0       Set
+      1          1       1       N/A
+  */
+  if( vm->callinfo_tail->method_id != MRBC_SYM(initialize) ||
+      vm->callinfo_tail->is_called_super ||
+      vm->callinfo_tail->is_called_block ) {
+    mrbc_decref(&regs[0]);
+    regs[0] = regs[a];
+    regs[a].tt = MRBC_TT_EMPTY;
+  }
 
-  // not called by op_super, ignore return value.
-  if( !vm->callinfo_tail->is_called_super ) goto RETURN;
-
-  // set the return value
- SET_RETURN:
-  mrbc_decref(&regs[0]);
-  regs[0] = regs[a];
-  regs[a].tt = MRBC_TT_EMPTY;
-
- RETURN:
   mrbc_pop_callinfo(vm);
 }
 
