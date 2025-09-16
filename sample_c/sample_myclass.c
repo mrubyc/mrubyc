@@ -42,7 +42,7 @@ uint8_t * load_mrb_file(const char *filename)
 
 
 // Sample code for making a mruby/c method.
-static void c_myclass_method1(mrb_vm *vm, mrb_value v[], int argc)
+static void c_myclass_method1(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   mrbc_printf("MyClass.method1 argument list.\n");
   for( int i = 0; i <= argc; i++ ) {

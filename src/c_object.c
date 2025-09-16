@@ -596,7 +596,7 @@ static void c_object_include(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (class method) constants
  */
-static void c_object_constants(mrb_vm *vm, mrb_value v[], int argc)
+static void c_object_constants(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   if( v[0].tt != MRBC_TT_CLASS ) {
     mrbc_raise(vm, MRBC_CLASS(NoMethodError), 0);
