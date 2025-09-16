@@ -201,7 +201,7 @@ void mrbc_debug_dump_const( void )
       mrbc_printf(")");
     }
 
-    if( kv->value.tt == MRBC_TT_CLASS ) {
+    if( mrbc_type(kv->value) == MRBC_TT_CLASS ) {
       const mrbc_class *cls = kv->value.cls;
       mrbc_printf(" = Class(symid=$%x name=", cls->sym_id);
       mrbc_print_symbol(cls->sym_id);
@@ -209,7 +209,7 @@ void mrbc_debug_dump_const( void )
       continue;
     }
 
-    if( kv->value.tt == MRBC_TT_MODULE ) {
+    if( mrbc_type(kv->value) == MRBC_TT_MODULE ) {
       const mrbc_class *cls = kv->value.cls;
       mrbc_printf(" = Module(symid=$%x name=", cls->sym_id);
       mrbc_print_symbol(cls->sym_id);

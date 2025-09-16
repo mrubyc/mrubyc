@@ -97,7 +97,7 @@ static void c_integer_power(struct VM *vm, mrbc_value v[], int argc)
  */
 static void c_integer_mod(struct VM *vm, mrbc_value v[], int argc)
 {
-  if( v[1].tt != MRBC_TT_INTEGER ) {
+  if( mrbc_type(v[1]) != MRBC_TT_INTEGER ) {
     mrbc_raise(vm, MRBC_CLASS(TypeError), 0 );
     return;
   }
@@ -270,7 +270,7 @@ static void c_integer_chr(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_integer_inspect(struct VM *vm, mrbc_value v[], int argc)
 {
-  if( v[0].tt == MRBC_TT_CLASS ) {
+  if( mrbc_type(v[0]) == MRBC_TT_CLASS ) {
     v[0] = mrbc_string_new_cstr(vm, mrbc_symid_to_str( v[0].cls->sym_id ));
     return;
   }
@@ -396,7 +396,7 @@ static void c_float_to_i(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_float_inspect(struct VM *vm, mrbc_value v[], int argc)
 {
-  if( v[0].tt == MRBC_TT_CLASS ) {
+  if( mrbc_type(v[0]) == MRBC_TT_CLASS ) {
     v[0] = mrbc_string_new_cstr(vm, mrbc_symid_to_str( v[0].cls->sym_id ));
     return;
   }

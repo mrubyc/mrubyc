@@ -61,7 +61,7 @@ static int is_space( int ch )
 */
 mrbc_value mrbc_string_new(struct VM *vm, const void *src, int len)
 {
-  mrbc_value value = {.tt = MRBC_TT_STRING};
+  mrbc_value value = mrbc_immediate_value(MRBC_TT_STRING);
 
   /*
     Allocate handle and string buffer.
@@ -104,7 +104,7 @@ mrbc_value mrbc_string_new(struct VM *vm, const void *src, int len)
 */
 mrbc_value mrbc_string_new_alloc(struct VM *vm, void *buf, int len)
 {
-  mrbc_value value = {.tt = MRBC_TT_STRING};
+  mrbc_value value = mrbc_immediate_value(MRBC_TT_STRING);
 
   /*
     Allocate handle
@@ -519,7 +519,7 @@ static void c_string_to_f(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_string_to_s(struct VM *vm, mrbc_value v[], int argc)
 {
-  if( v[0].tt == MRBC_TT_CLASS ) {
+  if( mrbc_type(v[0]) == MRBC_TT_CLASS ) {
     v[0] = mrbc_string_new_cstr(vm, mrbc_symid_to_str( v[0].cls->sym_id ));
     return;
   }
@@ -546,7 +546,7 @@ static void c_string_slice(struct VM *vm, mrbc_value v[], int argc)
   int pos, len;
 
   // in case of slice(nth) -> String | nil
-  if( argc == 1 && v[1].tt == MRBC_TT_INTEGER ) {
+  if( argc == 1 && mrbc_type(v[1]) == MRBC_TT_INTEGER ) {
     pos = mrbc_integer(v[1]);
     if( pos < 0 ) pos += target_len;
     if( pos >= target_len ) goto RETURN_NIL;
@@ -554,18 +554,18 @@ static void c_string_slice(struct VM *vm, mrbc_value v[], int argc)
   }
 
   // in case of slice(nth, len) -> String | nil
-  else if( argc == 2 && v[1].tt == MRBC_TT_INTEGER &&
-	                  v[2].tt == MRBC_TT_INTEGER ) {
+  else if( argc == 2 && mrbc_type(v[1]) == MRBC_TT_INTEGER &&
+	                mrbc_type(v[2]) == MRBC_TT_INTEGER ) {
     pos = mrbc_integer(v[1]);
     if( pos < 0 ) pos += target_len;
     len = mrbc_integer(v[2]);
   }
 
   // in case of slice(Range) -> String | nil
-  else if( argc == 1 && v[1].tt == MRBC_TT_RANGE ) {
+  else if( argc == 1 && mrbc_type(v[1]) == MRBC_TT_RANGE ) {
     mrbc_value v1 = mrbc_range_first(&v[1]);
     mrbc_value v2 = mrbc_range_last(&v[1]);
-    if( v1.tt != MRBC_TT_INTEGER || v2.tt != MRBC_TT_INTEGER ) {
+    if( mrbc_type(v1) != MRBC_TT_INTEGER || mrbc_type(v2) != MRBC_TT_INTEGER ) {
       mrbc_raise( vm, MRBC_CLASS(TypeError), 0 );
       return;
     }
@@ -586,7 +586,7 @@ static void c_string_slice(struct VM *vm, mrbc_value v[], int argc)
 
   if( pos < 0 || pos > target_len ) goto RETURN_NIL;
   if( len > target_len - pos ) len = target_len - pos;
-  if( v[1].tt == MRBC_TT_RANGE && len < 0 ) len = 0;
+  if( mrbc_type(v[1]) == MRBC_TT_RANGE && len < 0 ) len = 0;
   if( len < 0 ) goto RETURN_NIL;
 
   mrbc_value ret = mrbc_string_new(vm, mrbc_string_cstr(v) + pos, len);
@@ -609,28 +609,28 @@ static void c_string_insert(struct VM *vm, mrbc_value v[], int argc)
   mrbc_value *val;
 
   // in case of self[pos] = val
-  if( argc == 2 && v[1].tt == MRBC_TT_INTEGER &&
-                   v[2].tt == MRBC_TT_STRING ) {
+  if( argc == 2 && mrbc_type(v[1]) == MRBC_TT_INTEGER &&
+                   mrbc_type(v[2]) == MRBC_TT_STRING ) {
     pos = mrbc_integer(v[1]);
     len = 1;
     val = &v[2];
   }
 
   // in case of self[pos, len] = val
-  else if( argc == 3 && v[1].tt == MRBC_TT_INTEGER &&
-	                v[2].tt == MRBC_TT_INTEGER &&
-	                v[3].tt == MRBC_TT_STRING ) {
+  else if( argc == 3 && mrbc_type(v[1]) == MRBC_TT_INTEGER &&
+	                mrbc_type(v[2]) == MRBC_TT_INTEGER &&
+	                mrbc_type(v[3]) == MRBC_TT_STRING ) {
     pos = mrbc_integer(v[1]);
     len = mrbc_integer(v[2]);
     val = &v[3];
   }
 
   // in case of self[Range] = val
-  else if( argc == 2 && v[1].tt == MRBC_TT_RANGE &&
-	                v[2].tt == MRBC_TT_STRING ) {
+  else if( argc == 2 && mrbc_type(v[1]) == MRBC_TT_RANGE &&
+	                mrbc_type(v[2]) == MRBC_TT_STRING ) {
     mrbc_value v1 = mrbc_range_first(&v[1]);
     mrbc_value v2 = mrbc_range_last(&v[1]);
-    if( v1.tt != MRBC_TT_INTEGER || v2.tt != MRBC_TT_INTEGER ) {
+    if( mrbc_type(v1) != MRBC_TT_INTEGER || mrbc_type(v2) != MRBC_TT_INTEGER ) {
       mrbc_raise( vm, MRBC_CLASS(TypeError), 0 );
       return;
     }
@@ -685,7 +685,7 @@ static void c_string_insert(struct VM *vm, mrbc_value v[], int argc)
   // return val
   mrbc_decref(&v[0]);
   v[0] = *val;
-  val->tt = MRBC_TT_EMPTY;
+  mrbc_set_tt(val, MRBC_TT_EMPTY);
 }
 
 

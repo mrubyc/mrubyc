@@ -42,7 +42,7 @@
 */
 mrbc_value mrbc_range_new(struct VM *vm, mrbc_value *first, mrbc_value *last, int flag_exclude)
 {
-  mrbc_value value = {.tt = MRBC_TT_RANGE};
+  mrbc_value value = mrbc_immediate_value(MRBC_TT_RANGE);
 
   value.range = mrbc_alloc(vm, sizeof(mrbc_range));
   if( !value.range ) return value;		// ENOMEM
@@ -170,7 +170,7 @@ static void c_range_exclude_end(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_range_inspect(struct VM *vm, mrbc_value v[], int argc)
 {
-  if( v[0].tt == MRBC_TT_CLASS ) {
+  if( mrbc_type(v[0]) == MRBC_TT_CLASS ) {
     v[0] = mrbc_string_new_cstr(vm, mrbc_symid_to_str( v[0].cls->sym_id ));
     return;
   }

@@ -81,7 +81,7 @@
 */
 mrbc_value mrbc_array_new(struct VM *vm, int size)
 {
-  mrbc_value value = {.tt = MRBC_TT_ARRAY};
+  mrbc_value value = mrbc_immediate_value(MRBC_TT_ARRAY);
 
   /*
     Allocate handle and data buffer.
@@ -711,7 +711,7 @@ static void c_array_get(struct VM *vm, mrbc_value v[], int argc)
 
     memcpy( ret.array->data, &v[1], sizeof(mrbc_value) * argc );
     for( int i = 1; i <= argc; i++ ) {
-      mrbc_type(v[i]) = MRBC_TT_EMPTY;
+      mrbc_set_tt( &v[i], MRBC_TT_EMPTY );
     }
     ret.array->n_stored = argc;
 
@@ -774,7 +774,7 @@ static void c_array_set(struct VM *vm, mrbc_value v[], int argc)
   /*
     in case of self[nth] = val
   */
-  if( argc == 2 && v[1].tt == MRBC_TT_INTEGER ) {
+  if( argc == 2 && mrbc_type(v[1]) == MRBC_TT_INTEGER ) {
     if( mrbc_array_set(v, mrbc_integer(v[1]), &v[2]) != 0 ) {
       mrbc_raise( vm, MRBC_CLASS(IndexError), "too small for array");
       return;
@@ -784,14 +784,15 @@ static void c_array_set(struct VM *vm, mrbc_value v[], int argc)
     mrbc_incref(&v[2]);
     mrbc_decref(&v[0]);
     v[0] = v[2];
-    v[2].tt = MRBC_TT_EMPTY;
+    mrbc_set_tt(&v[2], MRBC_TT_EMPTY);
     return;
   }
 
   /*
     in case of self[start, length] = val
   */
-  if( argc == 3 && v[1].tt == MRBC_TT_INTEGER && v[2].tt == MRBC_TT_INTEGER ) {
+  if( argc == 3 && mrbc_type(v[1]) == MRBC_TT_INTEGER &&
+                   mrbc_type(v[2]) == MRBC_TT_INTEGER ) {
     int pos = mrbc_integer(v[1]);
     int len = mrbc_integer(v[2]);
 
@@ -823,7 +824,7 @@ static void c_array_set(struct VM *vm, mrbc_value v[], int argc)
     }
 
     // append data
-    if( v[3].tt == MRBC_TT_ARRAY ) {
+    if( mrbc_type(v[3]) == MRBC_TT_ARRAY ) {
       mrbc_array_push_m(&v[0], &v[3]);
       for( int i = 0; i < v[3].array->n_stored; i++ ) {
 	mrbc_incref( &v[3].array->data[i] );
@@ -839,7 +840,7 @@ static void c_array_set(struct VM *vm, mrbc_value v[], int argc)
     // return val
     mrbc_decref(&v[0]);
     v[0] = v[3];
-    v[3].tt = MRBC_TT_EMPTY;
+    mrbc_set_tt(&v[3], MRBC_TT_EMPTY);
     return;
   }
 
@@ -913,7 +914,7 @@ static void c_array_include(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_array_and(struct VM *vm, mrbc_value v[], int argc)
 {
-  if (v[1].tt != MRBC_TT_ARRAY) {
+  if( mrbc_type(v[1]) != MRBC_TT_ARRAY ) {
     mrbc_raisef( vm, MRBC_CLASS(TypeError), "no implicit conversion into %s", "Array");
     return;
   }
@@ -934,7 +935,7 @@ static void c_array_and(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_array_or(struct VM *vm, mrbc_value v[], int argc)
 {
-  if (v[1].tt != MRBC_TT_ARRAY) {
+  if( mrbc_type(v[1]) != MRBC_TT_ARRAY ) {
     mrbc_raisef( vm, MRBC_CLASS(TypeError), "no implicit conversion into %s", "Array");
     return;
   }
@@ -986,7 +987,7 @@ static void c_array_last(struct VM *vm, mrbc_value v[], int argc)
 static void c_array_push(struct VM *vm, mrbc_value v[], int argc)
 {
   mrbc_array_push(&v[0], &v[1]);
-  mrbc_type(v[1]) = MRBC_TT_EMPTY;
+  mrbc_set_tt( &v[1], MRBC_TT_EMPTY );
 }
 
 
@@ -1024,7 +1025,7 @@ static void c_array_pop(struct VM *vm, mrbc_value v[], int argc)
 static void c_array_unshift(struct VM *vm, mrbc_value v[], int argc)
 {
   mrbc_array_unshift(&v[0], &v[1]);
-  mrbc_type(v[1]) = MRBC_TT_EMPTY;
+  mrbc_set_tt( &v[1], MRBC_TT_EMPTY );
 }
 
 
@@ -1179,7 +1180,7 @@ static void c_array_uniq_self(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_array_inspect(struct VM *vm, mrbc_value v[], int argc)
 {
-  if( v[0].tt == MRBC_TT_CLASS ) {
+  if( mrbc_type(v[0]) == MRBC_TT_CLASS ) {
     v[0] = mrbc_string_new_cstr(vm, mrbc_symid_to_str( v[0].cls->sym_id ));
     return;
   }

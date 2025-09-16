@@ -149,7 +149,9 @@ static void c_object_equal3(struct VM *vm, mrbc_value v[], int argc)
  */
 static void c_object_class(struct VM *vm, mrbc_value v[], int argc)
 {
-  mrbc_value value = {.tt = MRBC_TT_CLASS};
+  mrbc_value value;
+
+  mrbc_set_tt(&value, MRBC_TT_CLASS);
   value.cls = find_class_by_object( v );
   SET_RETURN( value );
 }
@@ -205,7 +207,7 @@ static void c_object_block_given(struct VM *vm, mrbc_value v[], int argc)
  */
 static void c_object_kind_of(struct VM *vm, mrbc_value v[], int argc)
 {
-  if( v[1].tt != MRBC_TT_CLASS && v[1].tt != MRBC_TT_MODULE ) {
+  if( mrbc_type(v[1]) != MRBC_TT_CLASS && mrbc_type(v[1]) != MRBC_TT_MODULE ) {
     mrbc_raise(vm, MRBC_CLASS(TypeError), "class or module required");
     return;
   }
@@ -371,9 +373,9 @@ static void c_object_object_id(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_object_instance_methods(struct VM *vm, mrbc_value v[], int argc)
 {
-  if( v[0].tt != MRBC_TT_CLASS ) return;
+  if( mrbc_type(v[0]) != MRBC_TT_CLASS ) return;
 
-  int flag_inherit = !(argc >= 1 && v[1].tt == MRBC_TT_FALSE);
+  int flag_inherit = !(argc >= 1 && mrbc_type(v[1]) == MRBC_TT_FALSE);
   mrbc_value ret = mrbc_array_new( vm, 0 );
   mrbc_class *cls = v[0].cls;
   mrbc_class *nest_buf[MRBC_TRAVERSE_NEST_LEVEL];
@@ -420,7 +422,7 @@ static void c_object_instance_variables(struct VM *vm, mrbc_value v[], int argc)
   mrbc_printf("n = %d/%d ", kvh->n_stored, kvh->data_size);
 #endif
 
-  if( v[0].tt == MRBC_TT_OBJECT ) {
+  if( mrbc_type(v[0]) == MRBC_TT_OBJECT ) {
     for( int i = 0; i < kvh->n_stored; i++ ) {
       mrbc_array_push( &ret, &mrbc_symbol_value(kvh->data[i].sym_id) );
     }
@@ -560,7 +562,7 @@ static void c_object_include(struct VM *vm, mrbc_value v[], int argc)
 {
   mrbc_class *self;
 
-  if( v[0].tt == MRBC_TT_CLASS || v[0].tt == MRBC_TT_MODULE ) {
+  if( mrbc_type(v[0]) == MRBC_TT_CLASS || mrbc_type(v[0]) == MRBC_TT_MODULE ) {
     self = v[0].cls;
   } else if( vm->callinfo_tail == 0 ) {    // is top level?
     self = MRBC_CLASS(Object);
@@ -570,7 +572,7 @@ static void c_object_include(struct VM *vm, mrbc_value v[], int argc)
   }
 
   for( int i = 1; i <= argc; i++ ) {
-    if( v[i].tt != MRBC_TT_MODULE ) {
+    if( mrbc_type(v[i]) != MRBC_TT_MODULE ) {
       mrbc_raise(vm, MRBC_CLASS(TypeError), "wrong argument type Class");
       return;
     }
@@ -598,12 +600,12 @@ static void c_object_include(struct VM *vm, mrbc_value v[], int argc)
  */
 static void c_object_constants(mrbc_vm *vm, mrbc_value v[], int argc)
 {
-  if( v[0].tt != MRBC_TT_CLASS ) {
+  if( mrbc_type(v[0]) != MRBC_TT_CLASS ) {
     mrbc_raise(vm, MRBC_CLASS(NoMethodError), 0);
     return;
   }
 
-  int flag_inherit = !(argc >= 1 && v[1].tt == MRBC_TT_FALSE);
+  int flag_inherit = !(argc >= 1 && mrbc_type(v[1]) == MRBC_TT_FALSE);
   mrbc_value ret = mrbc_array_new( vm, 0 );
   mrbc_class *cls = v[0].cls;
   mrbc_class *nest_buf[MRBC_TRAVERSE_NEST_LEVEL];
@@ -673,7 +675,7 @@ static void c_object_sprintf(struct VM *vm, mrbc_value v[], int argc)
 				     mrbc_string_size(&v[i]), ' ');
       } else {
 	const char *s;
-	switch( v[i].tt ) {
+	switch( mrbc_type(v[i]) ) {
 	case MRBC_TT_SYMBOL:	s = mrbc_symbol_cstr(&v[i]);	break;
 	case MRBC_TT_TRUE:	s = "true";			break;
 	case MRBC_TT_FALSE:	s = "false";			break;
@@ -782,7 +784,7 @@ static void c_object_to_s(struct VM *vm, mrbc_value v[], int argc)
   char buf[64];
   char *s = buf;
   mrbc_sym sym_id = find_class_by_object(&v[0])->sym_id;
-  int class_or_module = (v[0].tt == MRBC_TT_CLASS || v[0].tt == MRBC_TT_MODULE);
+  int class_or_module = (mrbc_type(v[0]) == MRBC_TT_CLASS || mrbc_type(v[0]) == MRBC_TT_MODULE);
 
   if (!class_or_module) {
     buf[0] = '#'; buf[1] = '<';
