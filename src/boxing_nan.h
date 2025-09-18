@@ -30,8 +30,9 @@ Bit field of:
   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~tt2
 
 (note)
- This assumption is valid only when using gcc on a 32-bit little-endian machine.
+ This assumption is valid only when using gcc on a 32-bit machine.
 */
+#if defined(MRBC_LITTLE_ENDIAN)
 typedef struct RObject {
   union {
     struct {
@@ -67,6 +68,42 @@ typedef struct RObject {
   };
 } mrbc_value;
 
+#elif defined(MRBC_BIG_ENDIAN)
+typedef struct RObject {
+  union {
+    struct {
+      // MSB 32bit
+      union {
+        struct {
+          uint16_t nan;
+          uint8_t  pad;
+          int8_t   tt;	// valid if nan==0xffff
+        };
+        uint32_t tt2;
+      };
+
+      // LSB 32bit
+      union {
+        int32_t i;			// MRBC_TT_INTEGER
+        mrbc_sym sym_id;		// MRBC_TT_SYMBOL
+
+        struct RBasic *obj;		// use inc/dec ref only.
+        struct RClass *cls;		// MRBC_TT_CLASS, MRBC_TT_MODULE
+        struct RInstance *instance;	// MRBC_TT_OBJECT
+        struct RProc *proc;		// MRBC_TT_PROC
+        struct RArray *array;		// MRBC_TT_ARRAY
+        struct RString *string;		// MRBC_TT_STRING
+        struct RRange *range;		// MRBC_TT_RANGE
+        struct RHash *hash;		// MRBC_TT_HASH
+        struct RException *exception;	// MRBC_TT_EXCEPTION
+        void *handle;			// internal use only.
+      };
+    };
+
+    double d;				// MRBC_TT_FLOAT
+  };
+} mrbc_value;
+#endif
 
 
 //================================================================
