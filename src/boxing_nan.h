@@ -11,6 +11,9 @@
   </pre>
 */
 
+#if defined(MRBC_INT64) || defined(MRBC_INT16)
+# error "MRBC_NAN_BOXING and MRBC_INT64/16 are mutually exclusive."
+#endif
 
 //@cond
 #define MRBC_NAN_BITS 0xFFFF

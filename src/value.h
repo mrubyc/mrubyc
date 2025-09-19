@@ -49,12 +49,10 @@ typedef mrbc_int_t mrb_int;
 
 #if MRBC_USE_FLOAT == 1
 typedef float mrbc_float_t;
-#elif MRBC_USE_FLOAT == 2
+#else
 typedef double mrbc_float_t;
 #endif
-#if MRBC_USE_FLOAT != 0
 typedef mrbc_float_t mrb_float;
-#endif
 
 typedef int16_t mrbc_sym;	//!< mruby/c symbol ID
 typedef void (*mrbc_func_t)(struct VM *vm, struct RObject *v, int argc);
@@ -130,14 +128,18 @@ typedef enum {
 /* Define the object structure having reference counter.
 */
 #if defined(MRBC_DEBUG)
-#define MRBC_OBJECT_HEADER  uint8_t obj_mark_[2]; uint16_t ref_count
+# define MRBC_OBJECT_HEADER  uint8_t obj_mark_[2]; uint16_t ref_count
+# define MRBC_INIT_OBJECT_HEADER(p, t)	(p)->obj_mark_[0] = (t)[0]; \
+                                        (p)->obj_mark_[1] = (t)[1]; \
+					(p)->ref_count = 1
 #else
-#define MRBC_OBJECT_HEADER  uint16_t ref_count
+# define MRBC_OBJECT_HEADER  uint16_t ref_count
+# define MRBC_INIT_OBJECT_HEADER(p, t)  (p)->ref_count = 1
 #endif
 
+
 //================================================================
-/*!@brief
-  Base class for some objects.
+/*! Base class for some objects.
 */
 struct RBasic {
   MRBC_OBJECT_HEADER;
@@ -158,7 +160,7 @@ typedef struct RObject mrbc_object;
 
 /***** Macros ***************************************************************/
 
-// (for mruby compatible)
+// (for mruby compatibility)
 #define mrb_type(o)		mrbc_type(o)
 #define mrb_integer(o)		mrbc_integer(o)
 #define mrb_float(o)		mrbc_float(o)
@@ -236,20 +238,16 @@ typedef struct RObject mrbc_object;
     mrbc_set_float(v,nnn);	\
 } while(0)
 
+
+#if !defined(MRBC_NOT_RECOMMEND_TO_USE)
+// GET_*_ARG; not recommend to use.
+//  maybe delete for future.
 #define GET_TT_ARG(n)		(v[(n)].tt)
 #define GET_INT_ARG(n)		(v[(n)].i)
 #define GET_ARY_ARG(n)		(v[(n)])
 #define GET_ARG(n)		(v[(n)])
 #define GET_FLOAT_ARG(n)	(v[(n)].d)
 #define GET_STRING_ARG(n)	(v[(n)].string->data)
-
-
-#if defined(MRBC_DEBUG)
-#define MRBC_INIT_OBJECT_HEADER(p, t)  (p)->ref_count = 1; (p)->obj_mark_[0] = (t)[0]; (p)->obj_mark_[1] = (t)[1]
-#else
-#define MRBC_INIT_OBJECT_HEADER(p, t)  (p)->ref_count = 1
-#endif
-
 
 // for Numeric values.
 /*!
@@ -270,6 +268,8 @@ typedef struct RObject mrbc_object;
 #define MRBC_TO_FLOAT(val) \
   (val).tt == MRBC_TT_FLOAT ? (val).d : \
   (val).tt == MRBC_TT_INTEGER ? (mrbc_float_t)(val).i : 0.0
+
+#endif  // !defined(MRBC_NOT_RECOMMEND_TO_USE)
 
 
 //================================================================
