@@ -41,3 +41,23 @@ class MyBlockTest < Picotest::Test
     assert_equal [2, 4, 6], @obj.result
   end
 end
+
+
+class MyBlockInit
+  attr_reader :a
+
+  def initialize
+    @a = ["a", "b"].map{|row| row }
+  end
+end
+
+
+class MyBlockInitTest < Picotest::Test
+
+  description "use block in initializer method"
+  def test_block_init
+    obj = MyBlockInit.new
+    assert_equal( ["a", "b"], obj.a )
+  end
+
+end
