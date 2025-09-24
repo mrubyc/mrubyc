@@ -483,15 +483,14 @@ static void c_object_getiv(struct VM *vm, mrbc_value v[], int argc)
  */
 static void c_object_setiv(struct VM *vm, mrbc_value v[], int argc)
 {
-  static const int NAMEBUFSIZ = 16;
-  char namebuf_auto[NAMEBUFSIZ];
+  char namebuf_auto[16];
   char *namebuf;
   const char *name = mrbc_get_callee_name(vm);
   int len = strlen(name);
 
-  if( NAMEBUFSIZ < len ) {
+  if( sizeof(namebuf_auto) < len ) {
     namebuf = mrbc_alloc(vm, len);
-    if( !namebuf ) return;
+    if( !namebuf ) return;	// ENOMEM
   } else {
     namebuf = namebuf_auto;
   }
@@ -502,7 +501,7 @@ static void c_object_setiv(struct VM *vm, mrbc_value v[], int argc)
 
   mrbc_instance_setiv(&v[0], sym_id, &v[1]);
 
-  if( NAMEBUFSIZ < len ) mrbc_free(vm, namebuf);
+  if( namebuf != namebuf_auto ) mrbc_free(vm, namebuf);
 }
 
 
