@@ -49,12 +49,10 @@ typedef mrbc_int_t mrb_int;
 
 #if MRBC_USE_FLOAT == 1
 typedef float mrbc_float_t;
-#elif MRBC_USE_FLOAT == 2
+#else
 typedef double mrbc_float_t;
 #endif
-#if MRBC_USE_FLOAT != 0
 typedef mrbc_float_t mrb_float;
-#endif
 
 typedef int16_t mrbc_sym;	//!< mruby/c symbol ID
 typedef void (*mrbc_func_t)(struct VM *vm, struct RObject *v, int argc);
@@ -130,14 +128,18 @@ typedef enum {
 /* Define the object structure having reference counter.
 */
 #if defined(MRBC_DEBUG)
-#define MRBC_OBJECT_HEADER  uint8_t obj_mark_[2]; uint16_t ref_count
+# define MRBC_OBJECT_HEADER  uint8_t obj_mark_[2]; uint16_t ref_count
+# define MRBC_INIT_OBJECT_HEADER(p, t)	(p)->obj_mark_[0] = (t)[0]; \
+                                        (p)->obj_mark_[1] = (t)[1]; \
+					(p)->ref_count = 1
 #else
-#define MRBC_OBJECT_HEADER  uint16_t ref_count
+# define MRBC_OBJECT_HEADER  uint16_t ref_count
+# define MRBC_INIT_OBJECT_HEADER(p, t)  (p)->ref_count = 1
 #endif
 
+
 //================================================================
-/*!@brief
-  Base class for some objects.
+/*! Base class for some objects.
 */
 struct RBasic {
   MRBC_OBJECT_HEADER;
@@ -145,73 +147,20 @@ struct RBasic {
 
 
 //================================================================
-/*!@brief
-  Value object.
-*/
-struct RObject {
-  mrbc_vtype tt : 8;
-  union {
-    mrbc_int_t i;		// MRBC_TT_INTEGER
-#if MRBC_USE_FLOAT
-    mrbc_float_t d;		// MRBC_TT_FLOAT
+#if defined(MRBC_NAN_BOXING)
+# include "boxing_nan.h"
+#else	// !defined(MRBC_NAN_BOXING)
+# include "boxing_no.h"
 #endif
-    mrbc_sym sym_id;		// MRBC_TT_SYMBOL
-    struct RBasic *obj;		// use inc/dec ref only.
-    struct RClass *cls;		// MRBC_TT_CLASS, MRBC_TT_MODULE
-    struct RInstance *instance;	// MRBC_TT_OBJECT
-    struct RProc *proc;		// MRBC_TT_PROC
-    struct RArray *array;	// MRBC_TT_ARRAY
-    struct RString *string;	// MRBC_TT_STRING
-    struct RRange *range;	// MRBC_TT_RANGE
-    struct RHash *hash;		// MRBC_TT_HASH
-    struct RException *exception; // MRBC_TT_EXCEPTION
-    void *handle;		// internal use only.
-  };
-};
+
 typedef struct RObject mrb_object;	// not recommended.
 typedef struct RObject mrb_value;	// not recommended.
 typedef struct RObject mrbc_object;
-typedef struct RObject mrbc_value;
 
 
 /***** Macros ***************************************************************/
 
-// getters
-/*!
-  @def mrbc_type(o)
-  get the type (#mrbc_vtype) from mrbc_value.
-
-  @def mrbc_integer(o)
-  get int value from mrbc_value.
-
-  @def mrbc_float(o)
-  get float(double) value from mrbc_value.
-
-  @def mrbc_symbol(o)
-  get symbol value (#mrbc_sym) from mrbc_value.
-*/
-#define mrbc_type(o)		((o).tt)
-#define mrbc_integer(o)		((o).i)
-#define mrbc_float(o)		((o).d)
-#define mrbc_symbol(o)		((o).sym_id)
-
-
-// make immediate values.
-#define mrbc_integer_value(n)	((mrbc_value){.tt = MRBC_TT_INTEGER, .i=(n)})
-#define mrbc_float_value(vm,n)	((mrbc_value){.tt = MRBC_TT_FLOAT, .d=(n)})
-#define mrbc_nil_value()	((mrbc_value){.tt = MRBC_TT_NIL})
-#define mrbc_true_value()	((mrbc_value){.tt = MRBC_TT_TRUE})
-#define mrbc_false_value()	((mrbc_value){.tt = MRBC_TT_FALSE})
-#define mrbc_bool_value(n)	((mrbc_value){.tt = (n)?MRBC_TT_TRUE:MRBC_TT_FALSE})
-#define mrbc_symbol_value(n)	((mrbc_value){.tt = MRBC_TT_SYMBOL, .sym_id=(n)})
-#define mrbc_immediate_value(...) MRBC_arg_choice(__VA_ARGS__, mrbc_immediate_value2, mrbc_immediate_value1) (__VA_ARGS__)
-#define mrbc_immediate_value1(type) \
-  ((mrbc_value){.tt=type})			// internal use only.
-#define mrbc_immediate_value2(type, v2) \
-  ((mrbc_value){.tt=type, v2})			// internal use only.
-
-
-// (for mruby compatible)
+// (for mruby compatibility)
 #define mrb_type(o)		mrbc_type(o)
 #define mrb_integer(o)		mrbc_integer(o)
 #define mrb_float(o)		mrbc_float(o)
@@ -289,20 +238,16 @@ typedef struct RObject mrbc_value;
     mrbc_set_float(v,nnn);	\
 } while(0)
 
+
+#if !defined(MRBC_NOT_RECOMMEND_TO_USE)
+// GET_*_ARG; not recommend to use.
+//  maybe delete for future.
 #define GET_TT_ARG(n)		(v[(n)].tt)
 #define GET_INT_ARG(n)		(v[(n)].i)
 #define GET_ARY_ARG(n)		(v[(n)])
 #define GET_ARG(n)		(v[(n)])
 #define GET_FLOAT_ARG(n)	(v[(n)].d)
 #define GET_STRING_ARG(n)	(v[(n)].string->data)
-
-
-#if defined(MRBC_DEBUG)
-#define MRBC_INIT_OBJECT_HEADER(p, t)  (p)->ref_count = 1; (p)->obj_mark_[0] = (t)[0]; (p)->obj_mark_[1] = (t)[1]
-#else
-#define MRBC_INIT_OBJECT_HEADER(p, t)  (p)->ref_count = 1
-#endif
-
 
 // for Numeric values.
 /*!
@@ -323,6 +268,8 @@ typedef struct RObject mrbc_value;
 #define MRBC_TO_FLOAT(val) \
   (val).tt == MRBC_TT_FLOAT ? (val).d : \
   (val).tt == MRBC_TT_INTEGER ? (mrbc_float_t)(val).i : 0.0
+
+#endif  // !defined(MRBC_NOT_RECOMMEND_TO_USE)
 
 
 //================================================================
@@ -576,54 +523,6 @@ int mrbc_arg_b2(struct VM *vm, mrbc_value v[], int argc, int n, int default_valu
 
 
 /***** Inline functions *****************************************************/
-
-//================================================================
-// mrbc_value setters
-
-static inline void mrbc_set_integer(mrbc_value *p, mrbc_int_t n)
-{
-  p->tt = MRBC_TT_INTEGER;
-  p->i = n;
-}
-
-static inline void mrbc_set_float(mrbc_value *p, mrbc_float_t d)
-{
-  p->tt = MRBC_TT_FLOAT;
-  p->d = d;
-}
-
-static inline void mrbc_set_nil(mrbc_value *p)
-{
-  p->tt = MRBC_TT_NIL;
-}
-
-static inline void mrbc_set_true(mrbc_value *p)
-{
-  p->tt = MRBC_TT_TRUE;
-}
-
-static inline void mrbc_set_false(mrbc_value *p)
-{
-  p->tt = MRBC_TT_FALSE;
-}
-
-static inline void mrbc_set_bool(mrbc_value *p, int n)
-{
-  p->tt = n ? MRBC_TT_TRUE: MRBC_TT_FALSE;
-}
-
-static inline void mrbc_set_symbol(mrbc_value *p, mrbc_sym sym_id)
-{
-  p->tt = MRBC_TT_SYMBOL;
-  p->sym_id = sym_id;
-}
-
-static inline void mrbc_set_tt(mrbc_value *p, mrbc_vtype type)	// internal use only.
-{
-  p->tt = type;
-}
-
-
 
 //================================================================
 /*! Increment reference counter
