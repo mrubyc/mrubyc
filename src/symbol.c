@@ -307,17 +307,19 @@ void mrbc_separate_nested_symid(mrbc_sym sym_id, mrbc_sym *id1, mrbc_sym *id2)
   static const int w = sizeof(mrbc_sym) * 2;
   const char *s = mrbc_symid_to_str(sym_id);
 
+  *id1 = 0;
+  if( id2 != NULL ) *id2 = 0;
+  if( s == NULL ) return;
+
   assert( mrbc_is_nested_symid( sym_id ));
   assert( strlen(s) == w*2 );
 
-  *id1 = 0;
   int i = 0;
   while( i < w ) {
     *id1 = (*id1 << 4) + (s[i++] - '0');
   }
 
   if( id2 == NULL ) return;
-  *id2 = 0;
   while( i < w*2 ) {
     *id2 = (*id2 << 4) + (s[i++] - '0');
   }
