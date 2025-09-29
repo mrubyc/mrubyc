@@ -67,11 +67,27 @@ static inline mrbc_value mrbc_range_first(const mrbc_value *v)
 }
 
 //================================================================
+/*! get first value pointer
+*/
+static inline mrbc_value *mrbc_range_first_p(const mrbc_value *v)
+{
+  return &v->range->first;
+}
+
+//================================================================
 /*! get last value
 */
 static inline mrbc_value mrbc_range_last(const mrbc_value *v)
 {
   return v->range->last;
+}
+
+//================================================================
+/*! get last value pointer
+*/
+static inline mrbc_value *mrbc_range_last_p(const mrbc_value *v)
+{
+  return &v->range->last;
 }
 
 //================================================================
@@ -81,7 +97,6 @@ static inline int mrbc_range_exclude_end(const mrbc_value *v)
 {
   return v->range->flag_exclude;
 }
-
 
 
 #ifdef __cplusplus
