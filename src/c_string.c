@@ -563,17 +563,34 @@ static void c_string_slice(struct VM *vm, mrbc_value v[], int argc)
 
   // in case of slice(Range) -> String | nil
   else if( argc == 1 && mrbc_type(v[1]) == MRBC_TT_RANGE ) {
-    mrbc_value v1 = mrbc_range_first(&v[1]);
-    mrbc_value v2 = mrbc_range_last(&v[1]);
-    if( mrbc_type(v1) != MRBC_TT_INTEGER || mrbc_type(v2) != MRBC_TT_INTEGER ) {
-      mrbc_raise( vm, MRBC_CLASS(TypeError), 0 );
-      return;
+    const mrbc_value *v1 = mrbc_range_first_p(&v[1]);
+
+    switch( mrbc_type(*v1) ) {
+    case MRBC_TT_INTEGER:
+      pos = mrbc_integer(*v1);
+      if( pos < 0 ) pos += target_len;
+      break;
+    case MRBC_TT_NIL:
+      pos = 0;
+      break;
+    default:
+      goto TYPE_ERROR;
     }
 
-    pos = mrbc_integer(v1);
-    if( pos < 0 ) pos += target_len;
-    int pos2 = mrbc_integer(v2);
-    if( pos2 < 0 ) pos2 += target_len;
+    const mrbc_value *v2 = mrbc_range_last_p(&v[1]);
+    int pos2;
+    switch( mrbc_type(*v2) ) {
+    case MRBC_TT_INTEGER:
+      pos2 = mrbc_integer(*v2);
+      if( pos2 < 0 ) pos2 += target_len;
+      break;
+    case MRBC_TT_NIL:
+      pos2 = target_len;
+      break;
+    default:
+      goto TYPE_ERROR;
+    }
+
     len = pos2 - pos;
     if( !mrbc_range_exclude_end(&v[1]) ) len++;
   }
@@ -586,8 +603,13 @@ static void c_string_slice(struct VM *vm, mrbc_value v[], int argc)
 
   if( pos < 0 || pos > target_len ) goto RETURN_NIL;
   if( len > target_len - pos ) len = target_len - pos;
-  if( mrbc_type(v[1]) == MRBC_TT_RANGE && len < 0 ) len = 0;
-  if( len < 0 ) goto RETURN_NIL;
+  if( len < 0 ) {
+    if( mrbc_type(v[1]) == MRBC_TT_RANGE ) {
+      len = 0;
+    } else {
+      goto RETURN_NIL;
+    }
+  }
 
   mrbc_value ret = mrbc_string_new(vm, mrbc_string_cstr(v) + pos, len);
   if( !ret.string ) goto RETURN_NIL;		// ENOMEM
@@ -597,6 +619,11 @@ static void c_string_slice(struct VM *vm, mrbc_value v[], int argc)
 
  RETURN_NIL:
   SET_NIL_RETURN();
+  return;
+
+ TYPE_ERROR:
+  mrbc_raise( vm, MRBC_CLASS(TypeError), 0 );
+  return;
 }
 
 
@@ -605,6 +632,7 @@ static void c_string_slice(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_string_insert(struct VM *vm, mrbc_value v[], int argc)
 {
+  int target_len = mrbc_string_size(v);
   int pos, len;
   mrbc_value *val;
 
@@ -628,22 +656,37 @@ static void c_string_insert(struct VM *vm, mrbc_value v[], int argc)
   // in case of self[Range] = val
   else if( argc == 2 && mrbc_type(v[1]) == MRBC_TT_RANGE &&
 	                mrbc_type(v[2]) == MRBC_TT_STRING ) {
-    mrbc_value v1 = mrbc_range_first(&v[1]);
-    mrbc_value v2 = mrbc_range_last(&v[1]);
-    if( mrbc_type(v1) != MRBC_TT_INTEGER || mrbc_type(v2) != MRBC_TT_INTEGER ) {
-      mrbc_raise( vm, MRBC_CLASS(TypeError), 0 );
-      return;
+    const mrbc_value *v1 = mrbc_range_first_p(&v[1]);
+    switch( mrbc_type(*v1) ) {
+    case MRBC_TT_INTEGER:
+      pos = mrbc_integer(*v1);
+      if( pos < 0 ) pos += target_len;
+      if( pos < 0 || pos > target_len ) {
+	mrbc_raise( vm, MRBC_CLASS(RangeError), 0 );
+	return;
+      }
+      break;
+    case MRBC_TT_NIL:
+      pos = 0;
+      break;
+    default:
+      goto TYPE_ERROR;
     }
 
-    pos = mrbc_integer(v1);
-    if( pos < 0 ) pos += mrbc_string_size(v);
-    if( pos < 0 || pos > mrbc_string_size(v) ) {
-      mrbc_raise( vm, MRBC_CLASS(RangeError), 0 );
-      return;
+    const mrbc_value *v2 = mrbc_range_last_p(&v[1]);
+    int pos2;
+    switch( mrbc_type(*v2) ) {
+    case MRBC_TT_INTEGER:
+      pos2 = mrbc_integer(*v2);
+      if( pos2 < 0 ) pos2 += target_len;
+      break;
+    case MRBC_TT_NIL:
+      pos2 = target_len;
+      break;
+    default:
+      goto TYPE_ERROR;
     }
 
-    int pos2 = mrbc_integer(v2);
-    if( pos2 < 0 ) pos2 += mrbc_string_size(v);
     len = pos2 - pos;
     if( !mrbc_range_exclude_end(&v[1]) ) len++;
     if( len < 0 ) len = 0;
@@ -652,11 +695,11 @@ static void c_string_insert(struct VM *vm, mrbc_value v[], int argc)
 
   // other cases
   else {
-    mrbc_raise( vm, MRBC_CLASS(TypeError), "Not supported" );
+    mrbc_raise( vm, MRBC_CLASS(ArgumentError), 0 );
     return;
   }
 
-  int len1 = mrbc_string_size(v);
+  int len1 = target_len;
   int len2 = mrbc_string_size(val);
   if( pos < 0 ) pos = len1 + pos;		// adjust to positive number.
   if( len > len1 - pos ) len = len1 - pos;
@@ -686,6 +729,12 @@ static void c_string_insert(struct VM *vm, mrbc_value v[], int argc)
   mrbc_decref(&v[0]);
   v[0] = *val;
   mrbc_set_tt(val, MRBC_TT_EMPTY);
+  return;
+
+
+ TYPE_ERROR:
+  mrbc_raise( vm, MRBC_CLASS(TypeError), 0 );
+  return;
 }
 
 
