@@ -386,10 +386,15 @@ int mrbc_p_sub(const mrbc_value *v)
 
   case MRBC_TT_RANGE:{
     mrbc_value v1 = mrbc_range_first(v);
-    mrbc_p_sub(&v1);
+    mrbc_value v2 = mrbc_range_last(v);
+
+    if( mrbc_type(v1) != MRBC_TT_NIL ||
+	mrbc_type(v2) == MRBC_TT_NIL ) mrbc_p_sub(&v1);
+
     mrbc_print( mrbc_range_exclude_end(v) ? "..." : ".." );
-    v1 = mrbc_range_last(v);
-    mrbc_p_sub(&v1);
+
+    if( mrbc_type(v1) == MRBC_TT_NIL ||
+	mrbc_type(v2) != MRBC_TT_NIL ) mrbc_p_sub(&v2);
   } break;
 
   default:
