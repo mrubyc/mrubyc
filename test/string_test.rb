@@ -377,6 +377,9 @@ class StringTest < Picotest::Test
     assert_equal 'abcd'[-3 ... 2], "b"
     assert_equal 'abcd'[-4 ... 2], "ab"
     assert_equal 'abcd'[-5 ... 2], nil
+
+    assert_equal 'abcd'[ 1 ..   ], "bcd"
+    assert_equal 'abcd'[   .. 2 ], "abc"
   end
 
   description "self[Range]="
