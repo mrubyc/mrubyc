@@ -76,7 +76,11 @@ int main(int argc, char *argv[])
   mrbc_define_method(0, my_cls, "method1", c_myclass_method1);
 
 
-  if( !mrbc_create_task(mrbbuf, NULL) ) return 1;
+  if( !mrbc_create_task(mrbbuf, NULL) ) {
+    free(mrbbuf);
+    return 1;
+  } 
+  free(mrbbuf);
   int ret = mrbc_run();
 
   /*
