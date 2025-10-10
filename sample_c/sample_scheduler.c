@@ -54,7 +54,12 @@ int main(int argc, char *argv[])
     start mruby/c with rrt0 scheduler.
   */
   mrbc_init(memory_pool, MRBC_MEMORY_SIZE);
-  if( !mrbc_create_task(mrbbuf, NULL) ) return 1;
+  if( !mrbc_create_task(mrbbuf, NULL) ) {
+    free(mrbbuf);
+    return 1;
+  }
+  free(mrbbuf);
+
   int ret = mrbc_run();
 
   /*
