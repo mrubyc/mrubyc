@@ -387,6 +387,8 @@ static void alloc_profile(void)
   if (alloc_prof.max < used) alloc_prof.max = used;
   if (used < alloc_prof.min) alloc_prof.min = used;
 }
+#else
+#define alloc_profile() ((void)0)
 #endif
 
 //================================================================
@@ -600,10 +602,7 @@ void * mrbc_raw_alloc(unsigned int size)
   memset( (uint8_t *)target + sizeof(USED_BLOCK), 0xaa,
           BLOCK_SIZE(target) - sizeof(USED_BLOCK) );
 #endif
-
-#if defined(MRBC_USE_ALLOC_PROF)
   alloc_profile();
-#endif
 
   return (uint8_t *)target + sizeof(USED_BLOCK);
 }
@@ -779,9 +778,7 @@ void mrbc_raw_free(void *ptr)
   // target, add to index
   add_free_block( pool, target );
 
-#if defined(MRBC_USE_ALLOC_PROF)
   alloc_profile();
-#endif
 }
 
 
@@ -829,9 +826,7 @@ void * mrbc_raw_realloc(void *ptr, unsigned int size)
     SET_PREV_USED(release);
   } else {
     SET_PREV_USED(next);
-#if defined(MRBC_USE_ALLOC_PROF)
     alloc_profile();
-#endif
     return ptr;
   }
 
@@ -843,9 +838,7 @@ void * mrbc_raw_realloc(void *ptr, unsigned int size)
     SET_PREV_FREE(next);
   }
   add_free_block( pool, release );
-#if defined(MRBC_USE_ALLOC_PROF)
   alloc_profile();
-#endif
   return ptr;
 
 
