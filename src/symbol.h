@@ -28,7 +28,9 @@ extern "C" {
 /*! Macros to specify built-in symbol IDs.
  */
 #define MRBC_SYM(sym) MRBC_SYMID_##sym
+//@cond
 #define MRB_SYM(sym)  MRBC_SYMID_##sym
+//@endcond
 
 
 /***** Typedefs *************************************************************/

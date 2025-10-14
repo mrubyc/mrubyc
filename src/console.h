@@ -31,12 +31,14 @@ extern "C" {
 #endif
 /***** Constant values ******************************************************/
 /***** Macros ***************************************************************/
+//@cond
 // For compatibility. Not recommended for use.
 #define mrb_p(vm, v)	mrbc_p(&v)
 #define console_print mrbc_print
 #define console_nprint mrbc_nprint
 #define console_putchar mrbc_putchar
 #define console_printf mrbc_printf
+//@endcond
 
 
 /***** Typedefs *************************************************************/

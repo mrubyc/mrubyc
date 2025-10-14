@@ -45,14 +45,17 @@ typedef uint64_t mrbc_uint_t;
 typedef int32_t mrbc_int_t;
 typedef uint32_t mrbc_uint_t;
 #endif
-typedef mrbc_int_t mrb_int;
 
 #if MRBC_USE_FLOAT == 1
 typedef float mrbc_float_t;
 #else
 typedef double mrbc_float_t;
 #endif
+
+//@cond
+typedef mrbc_int_t mrb_int;
 typedef mrbc_float_t mrb_float;
+//@endcond
 
 typedef int16_t mrbc_sym;	//!< mruby/c symbol ID
 typedef void (*mrbc_func_t)(struct VM *vm, struct RObject *v, int argc);
@@ -153,13 +156,16 @@ struct RBasic {
 # include "boxing_no.h"
 #endif
 
+typedef struct RObject mrbc_object;
+//@cond
 typedef struct RObject mrb_object;	// not recommended.
 typedef struct RObject mrb_value;	// not recommended.
-typedef struct RObject mrbc_object;
+//@endcond
 
 
 /***** Macros ***************************************************************/
 
+//@cond
 // (for mruby compatibility)
 #define mrb_type(o)		mrbc_type(o)
 #define mrb_integer(o)		mrbc_integer(o)
@@ -179,7 +185,7 @@ typedef struct RObject mrbc_object;
 #define mrbc_fixnum_value(n)	mrbc_integer_value(n)
 #define mrb_fixnum(o)		mrbc_integer(o)
 #define mrb_fixnum_value(n)	mrbc_integer_value(n)
-
+//@endcond
 
 
 // for C call

@@ -96,8 +96,12 @@ typedef struct RClass {
 #endif
 
   void (*destructor)( mrbc_value * );	//!< specify a destructor if need.
+
 } mrbc_class;
+
+//@cond
 typedef struct RClass mrb_class;
+//@endcond
 
 //================================================================
 /*!@brief
@@ -160,7 +164,10 @@ typedef struct RInstance {
   uint8_t data[];		//!< extended data
 
 } mrbc_instance;
+
+//@cond
 typedef struct RInstance mrb_instance;
+//@endcond
 
 
 //================================================================
@@ -168,8 +175,8 @@ typedef struct RInstance mrb_instance;
   Method management structure.
 */
 typedef struct RMethod {
-  uint8_t type;		//!< M:OP_DEF or OP_ALIAS, m:mrblib or define_method()
-  uint8_t c_func;	//!< 0:IREP, 1:C Func, 2:C Func (built-in)
+  uint8_t  type;	//!< M:OP_DEF or OP_ALIAS, m:mrblib or define_method()
+  uint8_t  c_func;	//!< 0:IREP, 1:C Func, 2:C Func (built-in)
   mrbc_sym sym_id;	//!< function names symbol ID
   union {
     struct IREP *irep;	//!< to IREP for ruby proc.
@@ -177,7 +184,7 @@ typedef struct RMethod {
   };
   union {
     struct RMethod *next;	//!< link to next method.
-    struct RClass *cls;		//!< return value for mrbc_find_method.
+    struct RClass  *cls;	//!< return value for mrbc_find_method.
   };
 } mrbc_method;
 

@@ -67,7 +67,9 @@ typedef struct IREP {
 				//!<  uint16_t   tbl_pools[plen]
 				//!<  mrbc_irep *tbl_ireps[rlen]
 } mrbc_irep;
+//@cond
 typedef struct IREP mrb_irep;
+//@endcond
 
 // mrbc_irep manipulate macro.
 //! get a symbol id table pointer.
@@ -131,7 +133,9 @@ typedef struct CALLINFO {
   uint8_t is_called_block;	//!< flags when block calls.
 
 } mrbc_callinfo;
+//@cond
 typedef struct CALLINFO mrb_callinfo;
+//@endcond
 
 
 //================================================================
@@ -160,8 +164,11 @@ typedef struct VM {
 
   mrbc_value	  exception;		//!< Raised exception or nil.
   mrbc_value      regs[];
+
 } mrbc_vm;
+//@cond
 typedef struct VM mrb_vm;
+//@endcond
 
 
 /***** Global variables *****************************************************/

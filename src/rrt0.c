@@ -347,7 +347,6 @@ int mrbc_start_task(mrbc_tcb *tcb)
 int mrbc_run(void)
 {
   int ret = 0;
-
   (void)ret;	// avoid warning.
 
   while( 1 ) {
@@ -426,8 +425,8 @@ int mrbc_run(void)
       q_insert_task(tcb);
       hal_enable_irq();
     }
-    continue;
-  }
+
+  } // loop infinite.
 }
 
 
