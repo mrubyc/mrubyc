@@ -792,8 +792,11 @@ void mrbc_raw_free(void *ptr)
 */
 void * mrbc_raw_realloc(void *ptr, unsigned int size)
 {
-  if (ptr != NULL && size == 0) {
-    mrbc_raw_free(ptr);
+  if( ptr == NULL ) {
+    return mrbc_raw_alloc(size);
+  }
+  if( size == 0 ) {
+    mrbc_raw_free(ptr);		// C90(glibc) compatible.
     return NULL;
   }
 
