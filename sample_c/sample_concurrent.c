@@ -57,7 +57,11 @@ int main(int argc, char *argv[])
     fprintf( stderr, "Loading: '%s'\n", argv[i+1] );
     uint8_t *mrbbuf = load_mrb_file( argv[i+1] );
     if( mrbbuf == 0 ) return 1;
-    if( !mrbc_create_task( mrbbuf, NULL ) ) return 1;
+    if( !mrbc_create_task( mrbbuf, NULL ) ) {
+      free(mrbbuf);
+      return 1;
+    }
+    free(mrbbuf);
   }
 
   // and execute all.

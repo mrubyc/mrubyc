@@ -61,11 +61,13 @@ int main(int argc, char *argv[])
   mrbc_vm *vm = mrbc_vm_open(NULL);
   if( vm == NULL ) {
     fprintf(stderr, "Error: Can't assign VM.\n");
+    free(mrbbuf);
     return 1;
   }
 
   if( mrbc_load_mrb(vm, mrbbuf) != 0 ) {
     mrbc_print_exception(&vm->exception);
+    free(mrbbuf);
     return 1;
   }
 
@@ -73,6 +75,7 @@ int main(int argc, char *argv[])
   int ret = mrbc_vm_run( vm );
   mrbc_vm_end( vm );
   mrbc_vm_close( vm );
+  free(mrbbuf);
 
   /*
     Done
