@@ -232,8 +232,8 @@ mrbc_sym mrbc_str_to_symid(const char *str)
 /*! Convert symbol value to string.
 
   @param  sym_id	Symbol value.
-  @return const char*	String.
-  @retval NULL		Invalid sym_id was given.
+  @return const char*	Symbol String.
+                        Returns an empty string if the sym_id is invalid.
 */
 const char * mrbc_symid_to_str(mrbc_sym sym_id)
 {
@@ -242,8 +242,8 @@ const char * mrbc_symid_to_str(mrbc_sym sym_id)
   }
 
   sym_id -= OFFSET_BUILTIN_SYMBOL;
-  if( sym_id < 0 ) return NULL;
-  if( sym_id >= sym_index_pos ) return NULL;
+  if( sym_id < 0 ) return "";
+  if( sym_id >= sym_index_pos ) return "";
 
   return sym_index[sym_id].cstr;
 }
@@ -309,7 +309,7 @@ void mrbc_separate_nested_symid(mrbc_sym sym_id, mrbc_sym *id1, mrbc_sym *id2)
 
   *id1 = 0;
   if( id2 != NULL ) *id2 = 0;
-  if( s == NULL ) return;
+  if( *s == 0 ) return;
 
   assert( mrbc_is_nested_symid( sym_id ));
   assert( strlen(s) == w*2 );
