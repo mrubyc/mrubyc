@@ -861,6 +861,34 @@ static void c_array_clear(struct VM *vm, mrbc_value v[], int argc)
 
 
 //================================================================
+/*! (method) difference(*other_arrays) -> Array
+*/
+static void c_array_difference(mrbc_vm *vm, mrbc_value v[], int argc)
+{
+  mrbc_value ret = mrbc_array_dup(vm, &v[0]);
+
+  for( int i = 1; i <= argc; i++ ) {
+    if( mrbc_type(v[i]) != MRBC_TT_ARRAY ) {
+      mrbc_raise( vm, MRBC_CLASS(TypeError), 0 );
+      return;
+    }
+
+    for( int j = 0; j < mrbc_array_size(&v[i]); j++ ) {
+      int idx;
+      while( (idx = mrbc_array_index( &ret, &v[i].array->data[j] )) >= 0 ) {
+	mrbc_array *ah = ret.array;
+	ah->n_stored--;
+	memmove(ah->data + idx, ah->data + idx + 1,
+		sizeof(mrbc_value) * (ah->n_stored - idx));
+      }
+    }
+  }
+
+  SET_RETURN(ret);
+}
+
+
+//================================================================
 /*! (method) delete_at
 */
 static void c_array_delete_at(struct VM *vm, mrbc_value v[], int argc)
@@ -1258,11 +1286,13 @@ static void c_array_join(struct VM *vm, mrbc_value v[], int argc)
 
   METHOD( "new",	c_array_new )
   METHOD( "+",		c_array_add )
+  METHOD( "-",		c_array_difference )
   METHOD( "[]",		c_array_get )
   METHOD( "at",		c_array_get )
   METHOD( "[]=",	c_array_set )
   METHOD( "<<",		c_array_push )
   METHOD( "clear",	c_array_clear )
+  METHOD( "difference", c_array_difference )
   METHOD( "delete_at",	c_array_delete_at )
   METHOD( "empty?",	c_array_empty )
   METHOD( "size",	c_array_size )

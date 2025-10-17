@@ -5,6 +5,7 @@
 static const mrbc_sym method_symbols_Array[] = {
   MRBC_SYM(AND),
   MRBC_SYM(PLUS),
+  MRBC_SYM(MINUS),
   MRBC_SYM(LT_LT),
   MRBC_SYM(BL_BR),
   MRBC_SYM(BL_BR_EQ),
@@ -12,6 +13,7 @@ static const mrbc_sym method_symbols_Array[] = {
   MRBC_SYM(clear),
   MRBC_SYM(count),
   MRBC_SYM(delete_at),
+  MRBC_SYM(difference),
   MRBC_SYM(dup),
   MRBC_SYM(empty_Q),
   MRBC_SYM(first),
@@ -44,6 +46,7 @@ static const mrbc_sym method_symbols_Array[] = {
 static const mrbc_func_t method_functions_Array[] = {
   c_array_and,
   c_array_add,
+  c_array_difference,
   c_array_push,
   c_array_get,
   c_array_set,
@@ -51,6 +54,7 @@ static const mrbc_func_t method_functions_Array[] = {
   c_array_clear,
   c_array_size,
   c_array_delete_at,
+  c_array_difference,
   c_array_dup,
   c_array_empty,
   c_array_first,
