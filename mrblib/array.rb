@@ -169,6 +169,44 @@ class Array
   end
 
   #
+  # select
+  #
+  def select()
+    ret = []
+    len = length()
+    i = 0
+
+    while i < len
+      if yield( self[i] )
+        ret << self[i]
+      end
+      i += 1
+    end
+
+    return ret
+  end
+  alias filter select
+
+  #
+  # select!
+  #
+  def select!
+    len = length()
+    i = 0
+
+    while i < length()
+      if yield( self[i] )
+        i += 1
+      else
+        delete_at(i)
+      end
+    end
+
+    return length == len ? nil : self
+  end
+  alias filter! select!
+
+  #
   # sort!
   #
   def sort!( &block )
