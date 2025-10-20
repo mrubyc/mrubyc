@@ -351,6 +351,7 @@ class ArrayTest < Picotest::Test
   def test_difference
     assert_equal [3,3,5], [1,1,2,2,3,3,4,5].difference( [1,2,4] )
     assert_equal [:s,"yep"], [1,'c',:s,'yep'].difference( [1], ['a','c'] )
+  end
 
   description "select test"
   def test_select
