@@ -67,7 +67,11 @@ static void send_by_name( struct VM *vm, mrbc_sym sym_id, int a, int c )
     }
 
     memmove( recv + narg + 1, recv + 2, sizeof(mrbc_value) * n_move );
-    memcpy( recv + 1, argary.array->data, sizeof(mrbc_value) * narg );
+    if( narg == 0 ) {
+      mrbc_set_tt( recv + 2, MRBC_TT_EMPTY );
+    } else {
+      memcpy( recv + 1, argary.array->data, sizeof(mrbc_value) * narg );
+    }
     mrbc_decref(&argary);
   }
 
