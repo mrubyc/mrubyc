@@ -221,20 +221,21 @@ mrbc_callinfo * mrbc_push_callinfo( struct VM *vm, mrbc_sym method_id, int reg_o
   mrbc_callinfo *callinfo = mrbc_alloc(vm, sizeof(mrbc_callinfo));
   if( !callinfo ) return callinfo;
 
-  callinfo->cur_irep = vm->cur_irep;
-  callinfo->inst = vm->inst;
-  callinfo->cur_regs = vm->cur_regs;
-  callinfo->target_class = vm->target_class;
+  *callinfo = (mrbc_callinfo){
+    .prev = vm->callinfo_tail,
+    .cur_irep = vm->cur_irep,
+    .inst = vm->inst,
+    .cur_regs = vm->cur_regs,
+    .target_class = vm->target_class,
+    .own_class = 0,
+    .karg_keep = 0,
+    .method_id = method_id,
+    .reg_offset = reg_offset,
+    .n_args = n_args,
+    .is_called_super = 0,
+    .is_called_block = 0,
+  };
 
-  callinfo->own_class = 0;
-  callinfo->karg_keep = 0;
-  callinfo->method_id = method_id;
-  callinfo->reg_offset = reg_offset;
-  callinfo->n_args = n_args;
-  callinfo->is_called_super = 0;
-  callinfo->is_called_block = 0;
-
-  callinfo->prev = vm->callinfo_tail;
   vm->callinfo_tail = callinfo;
 
   return callinfo;
