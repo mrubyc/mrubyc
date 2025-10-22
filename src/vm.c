@@ -68,31 +68,42 @@ static void send_by_name( struct VM *vm, mrbc_sym sym_id, int a, int c )
 
     memmove( recv + narg + 1, recv + 2, sizeof(mrbc_value) * n_move );
     if( narg == 0 ) {
-      mrbc_set_tt( recv + 2, MRBC_TT_EMPTY );
+      mrbc_set_tt( recv + n_move + 1, MRBC_TT_EMPTY );
     } else {
       memcpy( recv + 1, argary.array->data, sizeof(mrbc_value) * narg );
     }
     mrbc_decref(&argary);
   }
 
-  mrbc_value *r1 = recv + narg;
+  mrbc_value *r1 = recv + narg + 1;
 
-  // Convert keyword argument to hash.
-  if( karg && karg != CALL_MAXARGS ) {
-    mrbc_value hval = mrbc_hash_new( vm, karg );
-    if( !hval.hash ) return;	// ENOMEM
+  // Process keyword arguments
+  if( karg ) {
+    if( karg == CALL_MAXARGS ) {
+      assert( mrbc_type(r1[0]) == MRBC_TT_HASH );
+      if( mrbc_hash_size(&r1[0]) == 0 ) {
+	// delete zero size keyword hash.
+	mrbc_decref(&r1[0]);
+	r1[0] = r1[1];		// move block Proc
+	mrbc_set_tt(&r1[1], MRBC_TT_EMPTY);
+	r1--;
+      }
+    } else {
+      // Convert keyword argument to hash.
+      mrbc_value hval = mrbc_hash_new( vm, karg );
 
-    memcpy( hval.hash->data, r1+1, sizeof(mrbc_value) * karg * 2 );
-    hval.hash->n_stored = karg * 2;
+      memcpy( hval.hash->data, r1, sizeof(mrbc_value) * karg * 2 );
+      hval.hash->n_stored = karg * 2;
 
-    r1[1] = hval;
-    r1[2] = r1[karg * 2 + 1];	// Proc
-    memset( r1 + 3, 0, sizeof(mrbc_value) * (karg * 2 - 1) );
+      r1[0] = hval;
+      r1[1] = r1[karg * 2];	// move block Proc
+      memset( r1 + 2, 0, sizeof(mrbc_value) * (karg * 2 - 1) );
+    }
+    r1++;
   }
 
   // is not have block
   if( !have_block ) {
-    r1 += (!!karg + 1);
     mrbc_decref( r1 );
     mrbc_set_nil( r1 );
   }
@@ -1279,37 +1290,36 @@ static inline void op_super( mrbc_vm *vm, mrbc_value *regs EXT )
 
   // If it's packed in an array, expand it.
   if( narg == CALL_MAXARGS ) {
-    /* (note)
-       on mrbc ver 3.1
-         b = 15  in initialize method.
-	 b = 255 in other method.
-    */
-
     mrbc_value argary = recv[1];
     int n_move = (karg == CALL_MAXARGS) ? 2 : karg * 2 + 1;
+
     narg = mrbc_array_size(&argary);
     for( int i = 0; i < narg; i++ ) {
       mrbc_incref( &argary.array->data[i] );
     }
 
     memmove( recv + narg + 1, recv + 2, sizeof(mrbc_value) * n_move );
-    memcpy( recv + 1, argary.array->data, sizeof(mrbc_value) * narg );
+    if( narg == 0 ) {
+      mrbc_set_tt( recv + 2, MRBC_TT_EMPTY );
+    } else {
+      memcpy( recv + 1, argary.array->data, sizeof(mrbc_value) * narg );
+    }
     mrbc_decref(&argary);
   }
 
-  mrbc_value *r1 = recv + narg;
+  mrbc_value *r1 = recv + narg + 1;
 
   // Convert keyword argument to hash.
   if( karg && karg != CALL_MAXARGS ) {
     mrbc_value hval = mrbc_hash_new( vm, karg );
     if( !hval.hash ) return;	// ENOMEM
 
-    memcpy( hval.hash->data, r1+1, sizeof(mrbc_value) * karg * 2 );
+    memcpy( hval.hash->data, r1, sizeof(mrbc_value) * karg * 2 );
     hval.hash->n_stored = karg * 2;
 
-    r1[1] = hval;
-    r1[2] = r1[karg * 2 + 1];	// Proc
-    memset( r1 + 3, 0, sizeof(mrbc_value) * (karg * 2 - 1) );
+    r1[0] = hval;
+    r1[1] = r1[karg * 2];	// move block Proc
+    memset( r1 + 2, 0, sizeof(mrbc_value) * (karg * 2 - 1) );
   }
 
   // find super class
