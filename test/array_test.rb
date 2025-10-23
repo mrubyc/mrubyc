@@ -366,4 +366,32 @@ class ArrayTest < Picotest::Test
     assert_equal( %w{A B C}, a )
   end
 
+  description "all? test"
+  def test_all_
+    assert_equal( true,  [5,  6, 7].all? {|v| v > 0 } )
+    assert_equal( false, [5, -1, 7].all? {|v| v > 0 } )
+    assert_equal( true,  [].all? {|v| v > 0 } )
+    assert_equal( true,  [1, 1, 1].all?(1) )
+    assert_equal( false, [1, 1, 0].all?(1) )
+  end
+
+  description "any? test"
+  def test_any_
+    assert_equal( false, [1, 2, 3].any? {|v| v > 3 } )
+    assert_equal( true,  [1, 2, 3].any? {|v| v > 1 } )
+    assert_equal( false, [].any? {|v| v > 0 } )
+    assert_equal( true,  [nil, true, 99].any?(Integer) )
+    assert_equal( true,  [nil, true, 99].any? )
+    assert_equal( false, [].any? )
+  end
+
+  description "any? test"
+  def test_none_
+    assert_equal( true,  %w{ant bear cat}.none? {|word| word.length == 5} )
+    assert_equal( false, %w{ant bear cat}.none? {|word| word.length >= 4} )
+    assert_equal( true,  [].none? )
+    assert_equal( true,  [nil].none? )
+    assert_equal( true,  [nil,false].none? )
+    assert_equal( false, [nil,false,true].none? )
+  end
 end

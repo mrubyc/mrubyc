@@ -153,6 +153,13 @@ class Array
   alias find_index index
 
   #
+  # none?
+  #
+  def none?(...)
+    ! any?(...)
+  end
+
+  #
   # reject!
   #
   def reject!( &block )
