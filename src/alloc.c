@@ -705,7 +705,7 @@ void mrbc_raw_free(void *ptr)
 
     FREE_BLOCK *target = BLOCK_ADRS(ptr);
     if( target < (FREE_BLOCK *)BPOOL_TOP(pool) ||
-	target > (FREE_BLOCK *)BPOOL_END(pool) ) {
+        target > (FREE_BLOCK *)BPOOL_END(pool) ) {
       static const char msg[] = "mrbc_raw_free(): Outside memory pool address was specified.\n";
       hal_write(2, msg, sizeof(msg)-1);
       return;
@@ -735,9 +735,9 @@ void mrbc_raw_free(void *ptr)
     } else {
       // not found target block.
       if( block < target ) {
-	static const char msg[] = "mrbc_raw_free(): no_free address was specified.\n";
-	hal_write(2, msg, sizeof(msg)-1);
-	return;
+        static const char msg[] = "mrbc_raw_free(): no_free address was specified.\n";
+        hal_write(2, msg, sizeof(msg)-1);
+        return;
       }
 
       static const char msg[] = "mrbc_raw_free(): Illegal address.\n";
@@ -1041,7 +1041,7 @@ void mrbc_alloc_print_statistics( void )
   mrbc_alloc_statistics( &stat );
   mrbc_printf("== MEMORY STAT ==\n");
   mrbc_printf(" total:%d used:%d free:%d frag:%d\n",
-	      stat.total, stat.used, stat.free, stat.fragmentation );
+              stat.total, stat.used, stat.free, stat.fragmentation );
 }
 
 
@@ -1057,13 +1057,13 @@ void mrbc_alloc_print_pool_header( void *pool_header )
 
   mrbc_printf("== MEMORY POOL HEADER DUMP ==\n");
   mrbc_printf(" Address:%p - %p - %p  ", pool,
-	      BPOOL_TOP(pool), BPOOL_END(pool));
+              BPOOL_TOP(pool), BPOOL_END(pool));
   mrbc_printf(" Size Total:%d User:%d\n",
-	      pool->size, pool->size - sizeof(MEMORY_POOL));
+              pool->size, pool->size - sizeof(MEMORY_POOL));
   mrbc_printf(" sizeof MEMORY_POOL:%d(%04x), USED_BLOCK:%d(%02x), FREE_BLOCK:%d(%02x)\n",
-	      sizeof(MEMORY_POOL), sizeof(MEMORY_POOL),
-	      sizeof(USED_BLOCK), sizeof(USED_BLOCK),
-	      sizeof(FREE_BLOCK), sizeof(FREE_BLOCK) );
+              sizeof(MEMORY_POOL), sizeof(MEMORY_POOL),
+              sizeof(USED_BLOCK), sizeof(USED_BLOCK),
+              sizeof(FREE_BLOCK), sizeof(FREE_BLOCK) );
 
   mrbc_printf(" FLI/SLI bitmap and free_blocks table.\n");
   mrbc_printf("    FLI :S[0123 4567] -- free_blocks ");
@@ -1099,14 +1099,14 @@ void mrbc_alloc_print_memory_block( void *pool_header )
     mrbc_printf(" id:%02x", block->vm_id );
 #endif
     mrbc_printf(" size:%5d($%04x) use:%d prv:%d ",
-		block->size & ~0x03, block->size & ~0x03,
-		!!(block->size & 0x01), !!(block->size & 0x02) );
+                block->size & ~0x03, block->size & ~0x03,
+                !!(block->size & 0x01), !!(block->size & 0x02) );
 
     if( IS_USED_BLOCK(block) ) {
       /* Used block */
       int n = DUMP_BYTES;
       if( n > (BLOCK_SIZE(block) - sizeof(USED_BLOCK)) ) {
-	n = BLOCK_SIZE(block) - sizeof(USED_BLOCK);
+        n = BLOCK_SIZE(block) - sizeof(USED_BLOCK);
       }
       uint8_t *p = (uint8_t *)block + sizeof(USED_BLOCK);
       int i;
@@ -1116,15 +1116,15 @@ void mrbc_alloc_print_memory_block( void *pool_header )
       mrbc_printf("  ");
       p = (uint8_t *)block + sizeof(USED_BLOCK);
       for( i = 0; i < n; i++) {
-	int ch = *p++;
-	mrbc_printf("%c", (' ' <= ch && ch < 0x7f)? ch : '.');
+        int ch = *p++;
+        mrbc_printf("%c", (' ' <= ch && ch < 0x7f)? ch : '.');
       }
 
     } else {
       /* Free block */
       unsigned int index = calc_index(BLOCK_SIZE(block));
       mrbc_printf(" fli:%d sli:%d pf:%p nf:%p",
-		FLI(index), SLI(index), block->prev_free, block->next_free);
+                FLI(index), SLI(index), block->prev_free, block->next_free);
     }
 
     mrbc_printf("\n");

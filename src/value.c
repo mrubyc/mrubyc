@@ -531,7 +531,7 @@ mrbc_value * mrbc_arg(struct VM *vm, mrbc_value v[], int argc, int n)
 {
   if( argc < n ) {
     mrbc_raisef(vm, MRBC_CLASS(ArgumentError),
-	"wrong number of arguments (given %d, expected %d)", argc, n);
+        "wrong number of arguments (given %d, expected %d)", argc, n);
     return 0;
   }
 
@@ -555,7 +555,7 @@ mrbc_int_t mrbc_arg_i(struct VM *vm, mrbc_value v[], int argc, int n)
 {
   if( argc < n ) {
     mrbc_raisef(vm, MRBC_CLASS(ArgumentError),
-	"wrong number of arguments (given %d, expected %d)", argc, n);
+        "wrong number of arguments (given %d, expected %d)", argc, n);
     return 0;
   }
 
@@ -612,7 +612,7 @@ mrbc_float_t mrbc_arg_f(struct VM *vm, mrbc_value v[], int argc, int n)
 {
   if( argc < n ) {
     mrbc_raisef(vm, MRBC_CLASS(ArgumentError),
-	"wrong number of arguments (given %d, expected %d)", argc, n);
+        "wrong number of arguments (given %d, expected %d)", argc, n);
     return 0;
   }
 
@@ -669,7 +669,7 @@ const char * mrbc_arg_s(struct VM *vm, mrbc_value v[], int argc, int n)
 {
   if( argc < n ) {
     mrbc_raisef(vm, MRBC_CLASS(ArgumentError),
-	"wrong number of arguments (given %d, expected %d)", argc, n);
+        "wrong number of arguments (given %d, expected %d)", argc, n);
     return 0;
   }
 
@@ -723,7 +723,7 @@ int mrbc_arg_b(struct VM *vm, mrbc_value v[], int argc, int n)
 {
   if( argc < n ) {
     mrbc_raisef(vm, MRBC_CLASS(ArgumentError),
-	"wrong number of arguments (given %d, expected %d)", argc, n);
+        "wrong number of arguments (given %d, expected %d)", argc, n);
     return 0;
   }
 

@@ -79,9 +79,9 @@ mrbc_class * mrbc_traverse_class_tree( mrbc_class *cls, mrbc_class *nest_buf[], 
     if( cls->super ) {
       // save the branch point to nest_buf.
       if( *nest_idx >= MRBC_TRAVERSE_NEST_LEVEL ) {
-	mrbc_printf("Warning: Module nest exceeds upper limit.\n");
+        mrbc_printf("Warning: Module nest exceeds upper limit.\n");
       } else {
-	nest_buf[(*nest_idx)++] = cls;
+        nest_buf[(*nest_idx)++] = cls;
       }
     }
 
@@ -450,9 +450,9 @@ mrbc_method * mrbc_find_method( mrbc_method *r_method, mrbc_class *cls, mrbc_sym
     mrbc_method *method;
     for( method = cls->method_link; method != 0; method = method->next ) {
       if( method->sym_id == sym_id ) {
-	*r_method = *method;
-	r_method->cls = cls;
-	return r_method;
+        *r_method = *method;
+        r_method->cls = cls;
+        return r_method;
       }
     }
 
@@ -464,9 +464,9 @@ mrbc_method * mrbc_find_method( mrbc_method *r_method, mrbc_class *cls, mrbc_sym
     while( left < right ) {
       int mid = (left + right) / 2;
       if( c->method_symbols[mid] < sym_id ) {
-	left = mid + 1;
+        left = mid + 1;
       } else {
-	right = mid;
+        right = mid;
       }
     }
 
@@ -537,20 +537,20 @@ mrbc_class * mrbc_get_class_by_name( const char *name )
 @endcode
 */
 mrbc_value mrbc_send( struct VM *vm, mrbc_value *v, int argc,
-	mrbc_value *recv, const char *method_name, int n_params, ... )
+        mrbc_value *recv, const char *method_name, int n_params, ... )
 {
   mrbc_method method;
   mrbc_class *cls = find_class_by_object(recv);
 
   if( mrbc_find_method( &method, cls, mrbc_str_to_symid(method_name)) == 0 ) {
     mrbc_raisef(vm, MRBC_CLASS(NoMethodError), "undefined method '%s' for %s",
-		method_name, mrbc_symid_to_str(cls->sym_id) );
+                method_name, mrbc_symid_to_str(cls->sym_id) );
     goto ERROR;
   }
   if( !method.c_func ) {
     mrbc_raisef(vm, MRBC_CLASS(NotImplementedError),
-		"Method needs to be C function. '%s' for %s",
-		method_name, mrbc_symid_to_str(cls->sym_id) );
+                "Method needs to be C function. '%s' for %s",
+                method_name, mrbc_symid_to_str(cls->sym_id) );
     goto ERROR;
   }
 

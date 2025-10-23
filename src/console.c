@@ -375,9 +375,9 @@ int mrbc_p_sub(const mrbc_value *v)
 
     for( int i = 0; i < mrbc_string_size(v); i++ ) {
       if( s[i] < ' ' || 0x7f <= s[i] ) {	// tiny isprint()
-	mrbc_printf("\\x%02X", s[i]);
+        mrbc_printf("\\x%02X", s[i]);
       } else {
-	mrbc_putchar(s[i]);
+        mrbc_putchar(s[i]);
       }
     }
     mrbc_putchar('"');
@@ -389,12 +389,12 @@ int mrbc_p_sub(const mrbc_value *v)
     const mrbc_value *v2 = mrbc_range_last_p(v);
 
     if( mrbc_type(*v1) != MRBC_TT_NIL ||
-	mrbc_type(*v2) == MRBC_TT_NIL ) mrbc_p_sub(v1);
+        mrbc_type(*v2) == MRBC_TT_NIL ) mrbc_p_sub(v1);
 
     mrbc_print( mrbc_range_exclude_end(v) ? "..." : ".." );
 
     if( mrbc_type(*v1) == MRBC_TT_NIL ||
-	mrbc_type(*v2) != MRBC_TT_NIL ) mrbc_p_sub(v2);
+        mrbc_type(*v2) != MRBC_TT_NIL ) mrbc_p_sub(v2);
   } break;
 
   default:
@@ -494,7 +494,7 @@ int mrbc_print_sub(const mrbc_value *v)
   case MRBC_TT_STRING:
     mrbc_nprint( mrbc_string_cstr(v), mrbc_string_size(v) );
     if( mrbc_string_size(v) != 0 &&
-	mrbc_string_cstr(v)[ mrbc_string_size(v) - 1 ] == '\n' ) ret = 1;
+        mrbc_string_cstr(v)[ mrbc_string_size(v) - 1 ] == '\n' ) ret = 1;
     break;
 #endif
 
@@ -525,9 +525,9 @@ int mrbc_print_sub(const mrbc_value *v)
 
   case MRBC_TT_EXCEPTION:
     mrbc_printf("#<%s: %s>", mrbc_symid_to_str(v->exception->cls->sym_id),
-		 v->exception->message ?
-		   (const char *)v->exception->message :
-		   mrbc_symid_to_str(v->exception->cls->sym_id) );
+                 v->exception->message ?
+                   (const char *)v->exception->message :
+                   mrbc_symid_to_str(v->exception->cls->sym_id) );
     break;
 
   default:
@@ -573,9 +573,9 @@ int mrbc_printf_main( mrbc_printf_t *pf )
     pf->fstr++;
     if( ch == '%' ) {
       if( *pf->fstr == '%' ) {	// is "%%"
-	pf->fstr++;
+        pf->fstr++;
       } else {
-	goto PARSE_FLAG;
+        goto PARSE_FLAG;
       }
     }
     *pf->p++ = ch;

@@ -283,7 +283,7 @@ int mrbc_array_push_m(mrbc_value *ary, mrbc_value *set_val)
   }
 
   memcpy( &ha_d->data[ha_d->n_stored], ha_s->data,
-	  sizeof(mrbc_value) * ha_s->n_stored );
+          sizeof(mrbc_value) * ha_s->n_stored );
   ha_d->n_stored += ha_s->n_stored;
 
   return 0;
@@ -368,7 +368,7 @@ int mrbc_array_insert(mrbc_value *ary, int idx, mrbc_value *set_val)
   // move datas.
   if( idx < h->n_stored ) {
     memmove(h->data + idx + 1, h->data + idx,
-	    sizeof(mrbc_value) * (h->n_stored - idx));
+            sizeof(mrbc_value) * (h->n_stored - idx));
   }
 
   // set data
@@ -405,7 +405,7 @@ mrbc_value mrbc_array_remove(mrbc_value *ary, int idx)
   h->n_stored--;
   if( idx < h->n_stored ) {
     memmove(h->data + idx, h->data + idx + 1,
-	    sizeof(mrbc_value) * (h->n_stored - idx));
+            sizeof(mrbc_value) * (h->n_stored - idx));
   }
 
   return ret;
@@ -681,9 +681,9 @@ static void c_array_add(struct VM *vm, mrbc_value v[], int argc)
   if( value.array == NULL ) return;		// ENOMEM
 
   memcpy( value.array->data,                h1->data,
-	  sizeof(mrbc_value) * h1->n_stored );
+          sizeof(mrbc_value) * h1->n_stored );
   memcpy( value.array->data + h1->n_stored, h2->data,
-	  sizeof(mrbc_value) * h2->n_stored );
+          sizeof(mrbc_value) * h2->n_stored );
   value.array->n_stored = h1->n_stored + h2->n_stored;
 
   mrbc_value *p1 = value.array->data;
@@ -799,8 +799,8 @@ static void c_array_set(struct VM *vm, mrbc_value v[], int argc)
     if( pos < 0 ) {
       pos = v[0].array->n_stored + pos;
       if( pos < 0 ) {
-	mrbc_raise( vm, MRBC_CLASS(IndexError), "index too small for array");
-	return;
+        mrbc_raise( vm, MRBC_CLASS(IndexError), "index too small for array");
+        return;
       }
     } else if( pos > v[0].array->n_stored ) {
       mrbc_array_set( &v[0], pos-1, &mrbc_nil_value() );
@@ -827,7 +827,7 @@ static void c_array_set(struct VM *vm, mrbc_value v[], int argc)
     if( mrbc_type(v[3]) == MRBC_TT_ARRAY ) {
       mrbc_array_push_m(&v[0], &v[3]);
       for( int i = 0; i < v[3].array->n_stored; i++ ) {
-	mrbc_incref( &v[3].array->data[i] );
+        mrbc_incref( &v[3].array->data[i] );
       }
     } else {
       mrbc_incref(&v[3]);
@@ -876,10 +876,10 @@ static void c_array_difference(mrbc_vm *vm, mrbc_value v[], int argc)
     for( int j = 0; j < mrbc_array_size(&v[i]); j++ ) {
       int idx;
       while( (idx = mrbc_array_index( &ret, &v[i].array->data[j] )) >= 0 ) {
-	mrbc_array *ah = ret.array;
-	ah->n_stored--;
-	memmove(ah->data + idx, ah->data + idx + 1,
-		sizeof(mrbc_value) * (ah->n_stored - idx));
+        mrbc_array *ah = ret.array;
+        ah->n_stored--;
+        memmove(ah->data + idx, ah->data + idx + 1,
+                sizeof(mrbc_value) * (ah->n_stored - idx));
       }
     }
   }
@@ -1239,7 +1239,7 @@ static void c_array_inspect(struct VM *vm, mrbc_value v[], int argc)
 /*! (method) join
 */
 static void c_array_join_1(struct VM *vm, mrbc_value v[], int argc,
-			   mrbc_value *src, mrbc_value *ret, mrbc_value *separator)
+                           mrbc_value *src, mrbc_value *ret, mrbc_value *separator)
 {
   if( mrbc_array_size(src) == 0 ) return;
 

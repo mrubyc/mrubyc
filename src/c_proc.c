@@ -99,7 +99,7 @@ static void c_proc_new(struct VM *vm, mrbc_value v[], int argc)
 {
   if( mrbc_type(v[1]) != MRBC_TT_PROC ) {
     mrbc_raise(vm, MRBC_CLASS(ArgumentError),
-	       "tried to create Proc object without a block");
+               "tried to create Proc object without a block");
     return;
   }
 
@@ -117,8 +117,8 @@ static void c_proc_call(struct VM *vm, mrbc_value v[], int argc)
 
   mrbc_callinfo *callinfo_self = v[0].proc->callinfo_self;
   mrbc_callinfo *callinfo = mrbc_push_callinfo(vm,
-				(callinfo_self ? callinfo_self->method_id : 0),
-				v - vm->cur_regs, argc);
+                                (callinfo_self ? callinfo_self->method_id : 0),
+                                v - vm->cur_regs, argc);
   if( !callinfo ) return;
 
   if( callinfo_self ) {

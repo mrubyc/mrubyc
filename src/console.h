@@ -118,7 +118,7 @@ static inline void mrbc_print(const char *str)
   @param  fstr	format string.
 */
 static inline void mrbc_printf_init( mrbc_printf_t *pf, char *buf, int size,
-				     const char *fstr )
+                                     const char *fstr )
 {
   pf->p = pf->buf = buf;
   pf->buf_end = buf + size - 1;

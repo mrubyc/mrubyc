@@ -374,7 +374,7 @@ int mrbc_kv_remove(mrbc_kv_handle *kvh, mrbc_sym sym_id)
   mrbc_decref( &kvh->data[idx].value );
   kvh->n_stored--;
   memmove( kvh->data + idx, kvh->data + idx + 1,
-	   sizeof(mrbc_kv) * (kvh->n_stored - idx) );
+           sizeof(mrbc_kv) * (kvh->n_stored - idx) );
 
   return 0;
 }

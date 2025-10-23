@@ -83,10 +83,10 @@ static void send_by_name( struct VM *vm, mrbc_sym sym_id, int a, int c )
       assert( mrbc_type(r1[0]) == MRBC_TT_HASH );
       if( mrbc_hash_size(&r1[0]) == 0 ) {
 	// delete zero size keyword hash.
-	mrbc_decref(&r1[0]);
-	r1[0] = r1[1];		// move block Proc
-	mrbc_set_tt(&r1[1], MRBC_TT_EMPTY);
-	r1--;
+        mrbc_decref(&r1[0]);
+        r1[0] = r1[1];		// move block Proc
+        mrbc_set_tt(&r1[1], MRBC_TT_EMPTY);
+        r1--;
       }
     } else {
       // Convert keyword argument to hash.
@@ -116,8 +116,8 @@ static void send_by_name( struct VM *vm, mrbc_sym sym_id, int a, int c )
   // method missing?
   if( mrbc_find_method( &method, cls, MRBC_SYM(method_missing) ) == 0 ) {
     mrbc_raisef(vm, MRBC_CLASS(NoMethodError),
-		"undefined local variable or method '%s' for %s",
-		mrbc_symid_to_str(sym_id), mrbc_symid_to_str(cls->sym_id));
+                "undefined local variable or method '%s' for %s",
+                mrbc_symid_to_str(sym_id), mrbc_symid_to_str(cls->sym_id));
     if( vm->callinfo_tail != 0 ) {
       vm->exception.exception->method_id = vm->callinfo_tail->method_id;
     }
@@ -177,8 +177,8 @@ static const mrbc_irep_catch_handler *find_catch_handler_ensure( const struct VM
     const mrbc_irep_catch_handler *handler = catch_table + cnt;
     // Catch type and range check
     if( (handler->type == 1) &&		// 1=CATCH_FILTER_ENSURE
-	(bin_to_uint32(handler->begin) < inst) &&
-	(inst <= bin_to_uint32(handler->end)) ) {
+        (bin_to_uint32(handler->begin) < inst) &&
+        (inst <= bin_to_uint32(handler->end)) ) {
       return handler;
     }
   }
@@ -410,7 +410,7 @@ void mrbc_vm_end( struct VM *vm )
   (void)n_used;	// avoid warning.
 #if defined(MRBC_DEBUG_REGS)
   mrbc_printf("Finally number of registers used was %d in VM %d.\n",
-	      n_used, vm->vm_id );
+              n_used, vm->vm_id );
 #endif
 
 #if defined(MRBC_ALLOC_VMID)
@@ -762,7 +762,7 @@ static inline void op_getconst( mrbc_vm *vm, mrbc_value *regs EXT )
   ret = mrbc_get_const(sym_id);
   if( ret == NULL ) {
     mrbc_raisef( vm, MRBC_CLASS(NameError),
-		 "uninitialized constant %s", mrbc_symid_to_str(sym_id));
+                 "uninitialized constant %s", mrbc_symid_to_str(sym_id));
     return;
   }
 
@@ -822,7 +822,7 @@ static inline void op_getmcnst( mrbc_vm *vm, mrbc_value *regs EXT )
     cls = cls->super;
     if( !cls ) {
       mrbc_raisef( vm, MRBC_CLASS(NameError), "uninitialized constant %s::%s",
-	mrbc_symid_to_str( regs[a].cls->sym_id ), mrbc_symid_to_str( sym_id ));
+        mrbc_symid_to_str( regs[a].cls->sym_id ), mrbc_symid_to_str( sym_id ));
       return;
     }
   }
@@ -1332,9 +1332,9 @@ static inline void op_super( mrbc_vm *vm, mrbc_value *regs EXT )
   assert( cls );
   if( mrbc_find_method( &method, cls, callinfo->method_id ) == 0 ) {
     mrbc_raisef( vm, MRBC_CLASS(NoMethodError),
-	"no superclass method '%s' for %s",
-	mrbc_symid_to_str(callinfo->method_id),
-	mrbc_symid_to_str(callinfo->own_class->sym_id));
+        "no superclass method '%s' for %s",
+        mrbc_symid_to_str(callinfo->method_id),
+        mrbc_symid_to_str(callinfo->own_class->sym_id));
     return;
   }
 
@@ -1488,10 +1488,10 @@ static inline void op_enter( mrbc_vm *vm, mrbc_value *regs EXT )
     for( int i = argc; i > 0; i-- ) {
       if( i != 1 ) mrbc_decref( &regs[i] );
       if( argary_size >= i ) {
-	regs[i] = argary.array->data[i-1];
-	mrbc_incref(&regs[i]);
+        regs[i] = argary.array->data[i-1];
+        mrbc_incref(&regs[i]);
       } else {
-	mrbc_set_nil( &regs[i] );
+        mrbc_set_nil( &regs[i] );
       }
     }
 
@@ -1503,10 +1503,10 @@ static inline void op_enter( mrbc_vm *vm, mrbc_value *regs EXT )
     mrbc_value dict;
     if( a & (FLAG_DICT|FLAG_KW) ) {
       if( (argc - m1) > 0 && mrbc_type(regs[argc]) == MRBC_TT_HASH ) {
-	dict = regs[argc];
-	mrbc_set_tt( &regs[argc--], MRBC_TT_EMPTY );
+        dict = regs[argc];
+        mrbc_set_tt( &regs[argc--], MRBC_TT_EMPTY );
       } else {
-	dict = mrbc_hash_new( vm, 0 );
+        dict = mrbc_hash_new( vm, 0 );
       }
     }
 
@@ -1519,8 +1519,8 @@ static inline void op_enter( mrbc_vm *vm, mrbc_value *regs EXT )
 
       int rest_reg = m1 + o + 1;
       for( int i = 0; i < rest_size; i++ ) {
-	mrbc_array_push( &rest, &regs[rest_reg] );
-	mrbc_set_tt( &regs[rest_reg++], MRBC_TT_EMPTY );
+        mrbc_array_push( &rest, &regs[rest_reg] );
+        mrbc_set_tt( &regs[rest_reg++], MRBC_TT_EMPTY );
       }
     }
 
@@ -1562,8 +1562,8 @@ static inline void op_enter( mrbc_vm *vm, mrbc_value *regs EXT )
       jmp_ofs = o;
 
       if( !(a & FLAG_REST) && mrbc_type(regs[0]) != MRBC_TT_PROC ) {
-	mrbc_raise( vm, MRBC_CLASS(ArgumentError), "wrong number of arguments");
-	return;
+        mrbc_raise( vm, MRBC_CLASS(ArgumentError), "wrong number of arguments");
+        return;
       }
     }
     vm->inst += jmp_ofs * 3;	// 3 = bytecode size of OP_JMP
@@ -1611,7 +1611,7 @@ static inline void op_keyend( mrbc_vm *vm, mrbc_value *regs EXT )
     mrbc_value *kv = mrbc_hash_i_next(&ite);
 
     mrbc_raisef(vm, MRBC_CLASS(ArgumentError), "unknown keyword: %s",
-		mrbc_symid_to_str(kv->sym_id));
+                mrbc_symid_to_str(kv->sym_id));
   }
 }
 
@@ -1631,7 +1631,7 @@ static inline void op_karg( mrbc_vm *vm, mrbc_value *regs EXT )
 
   if( mrbc_type(v) == MRBC_TT_EMPTY ) {
     mrbc_raisef(vm, MRBC_CLASS(ArgumentError), "missing keywords: %s",
-		mrbc_symid_to_str(sym_id));
+                mrbc_symid_to_str(sym_id));
     return;
   }
 
@@ -2482,7 +2482,7 @@ static inline void op_strcat( mrbc_vm *vm, mrbc_value *regs EXT )
   // call "to_s"
   mrbc_method method;
   if( mrbc_find_method( &method, find_class_by_object(&regs[a+1]),
-			MRBC_SYM(to_s)) == 0 ) return;
+                        MRBC_SYM(to_s)) == 0 ) return;
   if( !method.c_func ) return;		// TODO: Not support?
 
   method.func( vm, regs + a + 1, 0 );
@@ -2667,8 +2667,8 @@ static inline void op_class( mrbc_vm *vm, mrbc_value *regs EXT )
   if( super ) {
     for( int i = 1; i < MRBC_TT_MAXVAL; i++ ) {
       if( super == mrbc_class_tbl[i] ) {
-	mrbc_raise(vm, MRBC_CLASS(NotImplementedError), "Inherit the built-in class is not supported");
-	return;
+        mrbc_raise(vm, MRBC_CLASS(NotImplementedError), "Inherit the built-in class is not supported");
+        return;
       }
     }
   }
@@ -2779,8 +2779,8 @@ static void sub_def_alias( mrbc_class *cls, mrbc_method *method, mrbc_sym sym_id
 
       method->next = del_method->next;
       if( del_method->type == 'M' ) {
-	if( !del_method->c_func ) sub_irep_incref( del_method->irep, -1 );
-	mrbc_raw_free( del_method );
+        if( !del_method->c_func ) sub_irep_incref( del_method->irep, -1 );
+        mrbc_raw_free( del_method );
       }
 
       break;
@@ -2837,7 +2837,7 @@ static inline void op_alias( mrbc_vm *vm, mrbc_value *regs EXT )
 
   if( mrbc_find_method( method, cls, sym_id_org ) == 0 ) {
     mrbc_raisef(vm, MRBC_CLASS(NameError), "undefined method '%s'",
-		mrbc_symid_to_str(sym_id_org));
+                mrbc_symid_to_str(sym_id_org));
     if(vm->vm_id != 0) mrbc_raw_free( method );
     return;
   }
@@ -2888,7 +2888,7 @@ static inline void op_ext( mrbc_vm *vm, mrbc_value *regs EXT )
 {
   FETCH_Z();
   mrbc_raise(vm, MRBC_CLASS(Exception),
-	     "Not support op_ext. Re-compile with MRBC_SUPPORT_OP_EXT");
+             "Not support op_ext. Re-compile with MRBC_SUPPORT_OP_EXT");
 }
 #endif
 
@@ -2914,7 +2914,7 @@ static inline void op_stop( mrbc_vm *vm, mrbc_value *regs EXT )
 static inline void op_unsupported( mrbc_vm *vm, mrbc_value *regs EXT )
 {
   mrbc_raisef( vm, MRBC_CLASS(Exception),
-	       "Unimplemented opcode (0x%02x) found", *(vm->inst - 1));
+               "Unimplemented opcode (0x%02x) found", *(vm->inst - 1));
 }
 #undef EXT
 
@@ -3071,14 +3071,14 @@ int mrbc_vm_run( struct VM *vm )
     while( 1 ) {
       const mrbc_irep *irep = vm->cur_irep;
       const mrbc_irep_catch_handler *catch_table =
-	(const mrbc_irep_catch_handler *)(irep->inst + irep->ilen);
+        (const mrbc_irep_catch_handler *)(irep->inst + irep->ilen);
       uint32_t inst = vm->inst - irep->inst;
       int cnt = irep->clen;
 
       for( cnt--; cnt >= 0 ; cnt-- ) {
-	handler = catch_table + cnt;
-	if( (bin_to_uint32(handler->begin) < inst) &&
-	    (inst <= bin_to_uint32(handler->end)) ) goto JUMP_TO_HANDLER;
+        handler = catch_table + cnt;
+        if( (bin_to_uint32(handler->begin) < inst) &&
+            (inst <= bin_to_uint32(handler->end)) ) goto JUMP_TO_HANDLER;
       }
 
       if( !vm->callinfo_tail ) return 2;	// return due to exception.

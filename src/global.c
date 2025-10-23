@@ -129,7 +129,7 @@ void mrbc_get_all_class_const( const struct RClass *cls, mrbc_value *ret )
 
       mrbc_separate_nested_symid( kv->sym_id, &id1, &id2 );
       if( id1 == cls->sym_id ) {
-	mrbc_array_push(ret, &mrbc_symbol_value(id2));
+        mrbc_array_push(ret, &mrbc_symbol_value(id2));
       }
 
     } else if( flag_object_class ) {

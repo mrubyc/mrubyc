@@ -98,15 +98,15 @@ static int search_builtin_symbol( const char *str )
 
     while( 1 ) {	// string compare, same order as cruby.
       if( *p1 < *p2 ) {
-	left = mid + 1;
-	break;
+        left = mid + 1;
+        break;
       }
       if( *p1 > *p2 ) {
-	right = mid;
-	break;
+        right = mid;
+        break;
       }
       if( *p1 == 0 ) {
-	return mid;
+        return mid;
       }
 
       p1++;
@@ -347,7 +347,7 @@ mrbc_value mrbc_symbol_new(struct VM *vm, const char *str)
   sym_id = add_index( calc_hash(buf), buf );
   if( sym_id < 0 ) {
     mrbc_raisef(vm, MRBC_CLASS(Exception),
-		"Overflow MAX_SYMBOLS_COUNT for '%s'", str );
+                "Overflow MAX_SYMBOLS_COUNT for '%s'", str );
     return mrbc_nil_value();
   }
 
@@ -463,7 +463,7 @@ void mrbc_debug_dump_symbol(void)
   int used, total = MAX_SYMBOLS_COUNT;
   mrbc_symbol_statistics( &used );
   mrbc_printf("Symbol table: %d/%d %d%% used.\n",
-		used, total, 100 * used / total );
+                used, total, 100 * used / total );
 */
 void mrbc_symbol_statistics( int *total_used )
 {

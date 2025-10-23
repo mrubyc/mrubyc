@@ -149,7 +149,7 @@ mrbc_value * mrbc_hash_search_by_id(const mrbc_value *hash, mrbc_sym sym_id)
 
   while( p1 < p2 ) {
     if( mrbc_type(*p1) == MRBC_TT_SYMBOL &&
-	mrbc_symbol(*p1) == sym_id ) return p1;
+        mrbc_symbol(*p1) == sym_id ) return p1;
     p1 += 2;
   }
 

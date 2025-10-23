@@ -68,7 +68,7 @@ void mrbc_instance_call_initialize( struct VM *vm, mrbc_value v[], int argc )
   }
 
   mrbc_callinfo *callinfo = mrbc_push_callinfo(vm, MRBC_SYM(initialize),
-					       (v - vm->cur_regs), argc);
+                                               (v - vm->cur_regs), argc);
   callinfo->own_class = method.cls;
 
   vm->cur_irep = method.irep;
@@ -311,7 +311,7 @@ static void c_object_raise(struct VM *vm, mrbc_value v[], int argc)
   // case 2. raise "message"
   if( argc == 1 && mrbc_type(v[1]) == MRBC_TT_STRING ) {
     vm->exception = mrbc_exception_new( vm, MRBC_CLASS(RuntimeError),
-			mrbc_string_cstr(&v[1]), mrbc_string_size(&v[1]) );
+                        mrbc_string_cstr(&v[1]), mrbc_string_size(&v[1]) );
   } else
 
   // case 3. raise ExceptionClass
@@ -330,14 +330,14 @@ static void c_object_raise(struct VM *vm, mrbc_value v[], int argc)
   if( argc == 2 && mrbc_type(v[1]) == MRBC_TT_CLASS
                 && mrbc_type(v[2]) == MRBC_TT_STRING ) {
     vm->exception = mrbc_exception_new( vm, v[1].cls,
-			mrbc_string_cstr(&v[2]), mrbc_string_size(&v[2]) );
+                        mrbc_string_cstr(&v[2]), mrbc_string_size(&v[2]) );
   } else
 
   // case 6. raise ExceptionObject, "param"
   if( argc == 2 && mrbc_type(v[1]) == MRBC_TT_EXCEPTION
                 && mrbc_type(v[2]) == MRBC_TT_STRING ) {
     vm->exception = mrbc_exception_new( vm, v[1].exception->cls,
-			mrbc_string_cstr(&v[2]), mrbc_string_size(&v[2]) );
+                        mrbc_string_cstr(&v[2]), mrbc_string_size(&v[2]) );
   } else {
 
     // fail.
@@ -452,13 +452,13 @@ static void c_object_memory_statistics(struct VM *vm, mrbc_value v[], int argc)
   // make a return value.
   mrbc_value ret = mrbc_hash_new(vm, 4);
   mrbc_hash_set(&ret, &mrbc_symbol_value( mrbc_str_to_symid("total") ),
-		      &mrbc_integer_value( mem.total ));
+                      &mrbc_integer_value( mem.total ));
   mrbc_hash_set(&ret, &mrbc_symbol_value( mrbc_str_to_symid("used") ),
-		      &mrbc_integer_value( mem.used ));
+                      &mrbc_integer_value( mem.used ));
   mrbc_hash_set(&ret, &mrbc_symbol_value( mrbc_str_to_symid("free") ),
-		      &mrbc_integer_value( mem.free ));
+                      &mrbc_integer_value( mem.free ));
   mrbc_hash_set(&ret, &mrbc_symbol_value( mrbc_str_to_symid("fragmentation") ),
-		      &mrbc_integer_value( mem.fragmentation ));
+                      &mrbc_integer_value( mem.fragmentation ));
 
   SET_RETURN(ret);
 }
@@ -662,25 +662,25 @@ static void c_object_sprintf(struct VM *vm, mrbc_value v[], int argc)
     switch(pf.fmt.type) {
     case 'c':
       if( mrbc_type(v[i]) == MRBC_TT_INTEGER ) {
-	ret = mrbc_printf_char( &pf, v[i].i );
+        ret = mrbc_printf_char( &pf, v[i].i );
       } else if( mrbc_type(v[i]) == MRBC_TT_STRING ) {
-	ret = mrbc_printf_char( &pf, mrbc_string_cstr(&v[i])[0] );
+        ret = mrbc_printf_char( &pf, mrbc_string_cstr(&v[i])[0] );
       }
       break;
 
     case 's':
       if( mrbc_type(v[i]) == MRBC_TT_STRING ) {
-	ret = mrbc_printf_bstr( &pf, mrbc_string_cstr(&v[i]),
-				     mrbc_string_size(&v[i]), ' ');
+        ret = mrbc_printf_bstr( &pf, mrbc_string_cstr(&v[i]),
+                                     mrbc_string_size(&v[i]), ' ');
       } else {
-	const char *s;
-	switch( mrbc_type(v[i]) ) {
-	case MRBC_TT_SYMBOL:	s = mrbc_symbol_cstr(&v[i]);	break;
-	case MRBC_TT_TRUE:	s = "true";			break;
-	case MRBC_TT_FALSE:	s = "false";			break;
-	default:		s = "";				break;
-	}
-	ret = mrbc_printf_str( &pf, s, ' ');
+        const char *s;
+        switch( mrbc_type(v[i]) ) {
+        case MRBC_TT_SYMBOL:	s = mrbc_symbol_cstr(&v[i]);	break;
+        case MRBC_TT_TRUE:	s = "true";			break;
+        case MRBC_TT_FALSE:	s = "false";			break;
+        default:		s = "";				break;
+        }
+        ret = mrbc_printf_str( &pf, s, ' ');
       }
       break;
 
@@ -688,34 +688,34 @@ static void c_object_sprintf(struct VM *vm, mrbc_value v[], int argc)
     case 'i':
     case 'u':
       if( mrbc_type(v[i]) == MRBC_TT_INTEGER ) {
-	ret = mrbc_printf_int( &pf, v[i].i, 10);
+        ret = mrbc_printf_int( &pf, v[i].i, 10);
 #if MRBC_USE_FLOAT
       } else if( mrbc_type(v[i]) == MRBC_TT_FLOAT ) {
-	ret = mrbc_printf_int( &pf, (mrbc_int_t)v[i].d, 10);
+        ret = mrbc_printf_int( &pf, (mrbc_int_t)v[i].d, 10);
 #endif
       } else if( mrbc_type(v[i]) == MRBC_TT_STRING ) {
-	mrbc_int_t ival = atol(mrbc_string_cstr(&v[i]));
-	ret = mrbc_printf_int( &pf, ival, 10 );
+        mrbc_int_t ival = atol(mrbc_string_cstr(&v[i]));
+        ret = mrbc_printf_int( &pf, ival, 10 );
       }
       break;
 
     case 'b':
     case 'B':
       if( mrbc_type(v[i]) == MRBC_TT_INTEGER ) {
-	ret = mrbc_printf_bit( &pf, v[i].i, 1);
+        ret = mrbc_printf_bit( &pf, v[i].i, 1);
       }
       break;
 
     case 'x':
     case 'X':
       if( mrbc_type(v[i]) == MRBC_TT_INTEGER ) {
-	ret = mrbc_printf_bit( &pf, v[i].i, 4);
+        ret = mrbc_printf_bit( &pf, v[i].i, 4);
       }
       break;
 
     case 'o':
       if( mrbc_type(v[i]) == MRBC_TT_INTEGER ) {
-	ret = mrbc_printf_bit( &pf, v[i].i, 3);
+        ret = mrbc_printf_bit( &pf, v[i].i, 3);
       }
       break;
 
@@ -726,9 +726,9 @@ static void c_object_sprintf(struct VM *vm, mrbc_value v[], int argc)
     case 'g':
     case 'G':
       if( mrbc_type(v[i]) == MRBC_TT_FLOAT ) {
-	ret = mrbc_printf_float( &pf, v[i].d );
+        ret = mrbc_printf_float( &pf, v[i].d );
       } else if( mrbc_type(v[i]) == MRBC_TT_INTEGER ) {
-	ret = mrbc_printf_float( &pf, v[i].i );
+        ret = mrbc_printf_float( &pf, v[i].i );
       }
       break;
 #endif
