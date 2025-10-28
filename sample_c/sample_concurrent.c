@@ -61,7 +61,6 @@ int main(int argc, char *argv[])
       free(mrbbuf);
       return 1;
     }
-    free(mrbbuf);
   }
 
   // and execute all.

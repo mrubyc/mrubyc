@@ -58,7 +58,6 @@ int main(int argc, char *argv[])
     free(mrbbuf);
     return 1;
   }
-  free(mrbbuf);
 
   int ret = mrbc_run();
 
