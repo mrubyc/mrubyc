@@ -374,7 +374,7 @@ int mrbc_p_sub(const mrbc_value *v)
     const unsigned char *s = (const unsigned char *)mrbc_string_cstr(v);
 
     for( int i = 0; i < mrbc_string_size(v); i++ ) {
-      if( s[i] < ' ' || 0x7f <= s[i] ) {	// tiny isprint()
+      if( s[i] < ' ' || 0x7f == s[i] ) {	// tiny isprint()
         mrbc_printf("\\x%02X", s[i]);
       } else {
         mrbc_putchar(s[i]);
