@@ -77,6 +77,32 @@ void mrbc_instance_call_initialize( struct VM *vm, mrbc_value v[], int argc )
 }
 
 
+//================================================================
+/*! Object#inspect, Object.inspect method main routine.
+ */
+void mrbc_object_inspect(struct VM *vm, mrbc_value v[], int argc)
+{
+  char buf[64];		// max length of class (or object) name.
+  char *s = buf;
+  mrbc_sym sym_id = find_class_by_object(&v[0])->sym_id;
+  int class_or_module = (mrbc_type(v[0]) == MRBC_TT_CLASS || mrbc_type(v[0]) == MRBC_TT_MODULE);
+
+  if (!class_or_module) {
+    buf[0] = '#'; buf[1] = '<';
+    s = buf + 2;
+  }
+
+  int bufsiz = sizeof(buf) - (s - buf);
+  int n = set_sym_name_by_id( s, bufsiz, sym_id );
+
+  if (!class_or_module) {
+    mrbc_snprintf(s+n, bufsiz-n, ":%08x>", MRBC_PTR_TO_UINT32(v->instance));
+  }
+
+  SET_RETURN( mrbc_string_new_cstr( vm, buf ));
+}
+
+
 /***** Object class *********************************************************/
 //================================================================
 /*! (method) new
@@ -776,28 +802,11 @@ static void c_object_printf(struct VM *vm, mrbc_value v[], int argc)
 
 
 //================================================================
-/*! (method) to_s
+/*! (method) inspect
  */
-static void c_object_to_s(struct VM *vm, mrbc_value v[], int argc)
+static void c_object_inspect(struct VM *vm, mrbc_value v[], int argc)
 {
-  char buf[64];
-  char *s = buf;
-  mrbc_sym sym_id = find_class_by_object(&v[0])->sym_id;
-  int class_or_module = (mrbc_type(v[0]) == MRBC_TT_CLASS || mrbc_type(v[0]) == MRBC_TT_MODULE);
-
-  if (!class_or_module) {
-    buf[0] = '#'; buf[1] = '<';
-    s = buf + 2;
-  }
-
-  int bufsiz = sizeof(buf) - (s - buf);
-  int n = set_sym_name_by_id( s, bufsiz, sym_id );
-
-  if (!class_or_module) {
-    mrbc_snprintf(s+n, bufsiz-n, ":%08x>", MRBC_PTR_TO_UINT32(v->instance));
-  }
-
-  SET_RETURN( mrbc_string_new_cstr( vm, buf ));
+  mrbc_object_inspect(vm, v, argc);
 }
 #endif  // MRBC_USE_STRING
 
@@ -840,8 +849,8 @@ static void c_object_to_s(struct VM *vm, mrbc_value v[], int argc)
 #if !defined(MRBC_NO_STDIO)
   METHOD( "printf",	c_object_printf )
 #endif
-  METHOD( "inspect",	c_object_to_s )
-  METHOD( "to_s",	c_object_to_s )
+  METHOD( "inspect",	c_object_inspect )
+  METHOD( "to_s",	c_object_inspect )
 #endif
 
 #if defined(MRBC_DEBUG)
@@ -901,6 +910,11 @@ static void c_nil_to_f(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_nil_inspect(struct VM *vm, mrbc_value v[], int argc)
 {
+  if( mrbc_type(v[0]) == MRBC_TT_CLASS ) {
+    mrbc_object_inspect(vm, v, argc);
+    return;
+  }
+
   v[0] = mrbc_string_new_cstr(vm, "nil");
 }
 
@@ -910,6 +924,11 @@ static void c_nil_inspect(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_nil_to_s(struct VM *vm, mrbc_value v[], int argc)
 {
+  if( mrbc_type(v[0]) == MRBC_TT_CLASS ) {
+    mrbc_object_inspect(vm, v, argc);
+    return;
+  }
+
   v[0] = mrbc_string_new(vm, NULL, 0);
 }
 #endif  // MRBC_USE_STRING
@@ -939,10 +958,15 @@ static void c_nil_to_s(struct VM *vm, mrbc_value v[], int argc)
 /***** True class ***********************************************************/
 #if MRBC_USE_STRING
 //================================================================
-/*! (method) to_s
+/*! (method) inspect, to_s
 */
-static void c_true_to_s(struct VM *vm, mrbc_value v[], int argc)
+static void c_true_inspect(struct VM *vm, mrbc_value v[], int argc)
 {
+  if( mrbc_type(v[0]) == MRBC_TT_CLASS ) {
+    mrbc_object_inspect(vm, v, argc);
+    return;
+  }
+
   v[0] = mrbc_string_new_cstr(vm, "true");
 }
 #endif
@@ -954,8 +978,8 @@ static void c_true_to_s(struct VM *vm, mrbc_value v[], int argc)
   APPEND("_autogen_class_object.h")
 
 #if MRBC_USE_STRING
-  METHOD( "inspect",	c_true_to_s )
-  METHOD( "to_s",	c_true_to_s )
+  METHOD( "inspect",	c_true_inspect )
+  METHOD( "to_s",	c_true_inspect )
 #endif
 */
 
@@ -964,10 +988,15 @@ static void c_true_to_s(struct VM *vm, mrbc_value v[], int argc)
 /***** False class **********************************************************/
 #if MRBC_USE_STRING
 //================================================================
-/*! (method) False#to_s
+/*! (method) inspect, to_s
 */
-static void c_false_to_s(struct VM *vm, mrbc_value v[], int argc)
+static void c_false_inspect(struct VM *vm, mrbc_value v[], int argc)
 {
+  if( mrbc_type(v[0]) == MRBC_TT_CLASS ) {
+    mrbc_object_inspect(vm, v, argc);
+    return;
+  }
+
   v[0] = mrbc_string_new_cstr(vm, "false");
 }
 #endif  // MRBC_USE_STRING
@@ -979,8 +1008,8 @@ static void c_false_to_s(struct VM *vm, mrbc_value v[], int argc)
   APPEND("_autogen_class_object.h")
 
 #if MRBC_USE_STRING
-  METHOD( "inspect",	c_false_to_s )
-  METHOD( "to_s",	c_false_to_s )
+  METHOD( "inspect",	c_false_inspect )
+  METHOD( "to_s",	c_false_inspect )
 #endif
 */
 #include "_autogen_class_object.h"

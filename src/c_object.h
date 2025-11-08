@@ -27,10 +27,8 @@ extern "C" {
 /***** Global variables *****************************************************/
 /***** Function prototypes **************************************************/
 //@cond
-struct VM;
-struct RObject;
-
-void mrbc_instance_call_initialize(struct VM *vm, struct RObject v[], int argc);
+void mrbc_instance_call_initialize(struct VM *vm, mrbc_value v[], int argc);
+void mrbc_object_inspect(struct VM *vm, mrbc_value v[], int argc);
 //@endcond
 
 

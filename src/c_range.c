@@ -171,7 +171,7 @@ static void c_range_exclude_end(struct VM *vm, mrbc_value v[], int argc)
 static void c_range_inspect(struct VM *vm, mrbc_value v[], int argc)
 {
   if( mrbc_type(v[0]) == MRBC_TT_CLASS ) {
-    v[0] = mrbc_string_new_cstr(vm, mrbc_symid_to_str( v[0].cls->sym_id ));
+    mrbc_object_inspect(vm, v, argc);
     return;
   }
 

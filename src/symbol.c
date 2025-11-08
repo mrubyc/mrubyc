@@ -384,17 +384,20 @@ static void c_symbol_all_symbols(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_symbol_inspect(struct VM *vm, mrbc_value v[], int argc)
 {
+  if( mrbc_type(v[0]) == MRBC_TT_CLASS ) {
+    mrbc_object_inspect(vm, v, argc);
+    return;
+  }
+
   const char *s = mrbc_symid_to_str( mrbc_symbol(v[0]) );
-  int colon_include = 0;
-  if (strchr(s, ':')) {
-    colon_include = 1;
+
+  if( strchr(s, ':') ) {
     v[0] = mrbc_string_new_cstr(vm, ":\"");
+    mrbc_string_append_cstr(&v[0], s);
+    mrbc_string_append_cstr(&v[0], "\"");
   } else {
     v[0] = mrbc_string_new_cstr(vm, ":");
-  }
-  mrbc_string_append_cstr(&v[0], s);
-  if (colon_include) {
-    mrbc_string_append_cstr(&v[0], "\"");
+    mrbc_string_append_cstr(&v[0], s);
   }
 }
 
@@ -405,7 +408,7 @@ static void c_symbol_inspect(struct VM *vm, mrbc_value v[], int argc)
 static void c_symbol_to_s(struct VM *vm, mrbc_value v[], int argc)
 {
   if( mrbc_type(v[0]) == MRBC_TT_CLASS ) {
-    v[0] = mrbc_string_new_cstr(vm, mrbc_symid_to_str( v[0].cls->sym_id ));
+    mrbc_object_inspect(vm, v, argc);
     return;
   }
 
@@ -421,11 +424,11 @@ static void c_symbol_to_s(struct VM *vm, mrbc_value v[], int argc)
 
   METHOD( "all_symbols", c_symbol_all_symbols )
 #if MRBC_USE_STRING
-  METHOD( "inspect", c_symbol_inspect )
-  METHOD( "to_s", c_symbol_to_s )
-  METHOD( "id2name", c_symbol_to_s )
+  METHOD( "inspect",     c_symbol_inspect )
+  METHOD( "to_s",        c_symbol_to_s )
+  METHOD( "id2name",     c_symbol_to_s )
 #endif
-  METHOD( "to_sym", c_ineffect )
+  METHOD( "to_sym",      c_ineffect )
 */
 #include "_autogen_class_symbol.h"
 

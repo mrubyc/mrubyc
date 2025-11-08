@@ -78,7 +78,7 @@ static const mrbc_func_t method_functions_Object[] = {
   c_object_include,
   c_object_include,
 #if MRBC_USE_STRING
-  c_object_to_s,
+  c_object_inspect,
 #endif
 #if defined(MRBC_DEBUG)
   c_object_instance_methods,
@@ -120,7 +120,7 @@ static const mrbc_func_t method_functions_Object[] = {
   c_object_sprintf,
 #endif
 #if MRBC_USE_STRING
-  c_object_to_s,
+  c_object_inspect,
 #endif
 };
 
@@ -193,10 +193,10 @@ static const mrbc_sym method_symbols_TrueClass[] = {
 
 static const mrbc_func_t method_functions_TrueClass[] = {
 #if MRBC_USE_STRING
-  c_true_to_s,
+  c_true_inspect,
 #endif
 #if MRBC_USE_STRING
-  c_true_to_s,
+  c_true_inspect,
 #endif
 };
 
@@ -225,10 +225,10 @@ static const mrbc_sym method_symbols_FalseClass[] = {
 
 static const mrbc_func_t method_functions_FalseClass[] = {
 #if MRBC_USE_STRING
-  c_false_to_s,
+  c_false_inspect,
 #endif
 #if MRBC_USE_STRING
-  c_false_to_s,
+  c_false_inspect,
 #endif
 };
 

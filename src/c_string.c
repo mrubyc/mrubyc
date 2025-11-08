@@ -520,7 +520,7 @@ static void c_string_to_f(struct VM *vm, mrbc_value v[], int argc)
 static void c_string_to_s(struct VM *vm, mrbc_value v[], int argc)
 {
   if( mrbc_type(v[0]) == MRBC_TT_CLASS ) {
-    v[0] = mrbc_string_new_cstr(vm, mrbc_symid_to_str( v[0].cls->sym_id ));
+    mrbc_object_inspect(vm, v, argc);
     return;
   }
 }
@@ -877,12 +877,17 @@ static void c_string_index(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_string_inspect(struct VM *vm, mrbc_value v[], int argc)
 {
+  if( mrbc_type(v[0]) == MRBC_TT_CLASS ) {
+    mrbc_object_inspect(vm, v, argc);
+    return;
+  }
+
   char buf[10] = "\\x";
   mrbc_value ret = mrbc_string_new_cstr(vm, "\"");
   const unsigned char *s = (const unsigned char *)mrbc_string_cstr(v);
 
   for( int i = 0; i < mrbc_string_size(v); i++ ) {
-    if( s[i] < ' ' || 0x7f <= s[i] ) {	// tiny isprint()
+    if( s[i] < ' ' || 0x7f == s[i] ) {	// tiny isprint()
       buf[2] = "0123456789ABCDEF"[s[i] >> 4];
       buf[3] = "0123456789ABCDEF"[s[i] & 0x0f];
       mrbc_string_append_cstr(&ret, buf);
