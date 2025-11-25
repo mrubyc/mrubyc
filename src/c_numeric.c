@@ -403,7 +403,7 @@ static void c_float_inspect(struct VM *vm, mrbc_value v[], int argc)
 
   char buf[16];
 
-  snprintf( buf, sizeof(buf), "%g", v->d );
+  snprintf(buf, sizeof(buf), ((v->d - floor(v->d)) == 0.0)? "%.1f": "%g", v->d);
   mrbc_value value = mrbc_string_new_cstr(vm, buf);
   SET_RETURN(value);
 }
