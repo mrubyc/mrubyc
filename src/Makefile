@@ -30,8 +30,7 @@ $(BUILD_DIR)/%.o: %.c
 
 .PHONY: clean clean_all autogen check_depend
 clean:
-	@rm -f $(TARGET) $(OBJS) *~
-	@rmdir $(BUILD_DIR)
+	@rm -rf $(TARGET) $(OBJS) $(BUILD_DIR) *~
 
 clean_all: clean
 	@rm -f $(AUTOGEN_SYMBOL_TABLE) $(AUTOGEN_CLASS_TABLE) $(AUTOGEN_METHOD_TABLE)
