@@ -13,9 +13,11 @@
 
 /***** Feature test switches ************************************************/
 /***** System headers *******************************************************/
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#include <time.h>
 #include <sys/time.h>
 
 
@@ -63,14 +65,18 @@ void hal_init(void)
   sigemptyset(&sigset_);
   sigaddset(&sigset_, SIGALRM);
 
-  // タイマー用シグナル準備
+  // prepare signal handler for timer.
   struct sigaction sa;
   sa.sa_handler = sig_alarm;
   sa.sa_flags   = SA_RESTART;
   sa.sa_mask    = sigset_;
   sigaction(SIGALRM, &sa, 0);
 
-  // タイマー設定
+#if 1
+  /*
+    For compatibility, use the setitimer function.
+  */
+  // start the timer.
   struct itimerval tval;
   int sec  = 0;
   int usec = MRBC_TICK_UNIT * 1000;
@@ -79,6 +85,33 @@ void hal_init(void)
   tval.it_value.tv_sec     = sec;
   tval.it_value.tv_usec    = usec;
   setitimer(ITIMER_REAL, &tval, 0);
+
+#else
+  /*
+    Uses modern timer_* functions.
+  */
+  // create a timer using a signal (SIGALRM)
+  timer_t timer_id;
+  struct sigevent ev = {
+    .sigev_notify = SIGEV_SIGNAL,
+    .sigev_signo  = SIGALRM,
+    .sigev_value = {.sival_ptr = &timer_id}};
+
+  if( timer_create(CLOCK_REALTIME, &ev, &timer_id) != 0 ) {
+    perror("timer_create");
+    exit(1);
+  }
+
+  // start the timer.
+  struct itimerspec ts = {
+    .it_interval = {.tv_sec = 0, .tv_nsec = MRBC_TICK_UNIT * 1000000},
+    .it_value    = {.tv_sec = 0, .tv_nsec = MRBC_TICK_UNIT * 1000000}};
+
+  if( timer_settime(timer_id, 0, &ts, NULL) != 0 ) {
+    perror("timer_settime");
+    exit(1);
+  }
+#endif
 }
 
 
