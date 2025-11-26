@@ -353,7 +353,10 @@ int mrbc_run(void)
     mrbc_tcb *tcb = q_ready_;
     if( tcb == NULL ) {		// no task to run.
 #if MRBC_SCHEDULER_EXIT
-      if( !q_waiting_ && !q_suspended_ ) return ret;
+      hal_disable_irq();
+      int flag_exit = !q_ready_ && !q_waiting_ && !q_suspended_;
+      hal_enable_irq();
+      if( flag_exit ) return ret;
 #endif
       hal_idle_cpu();
       continue;
