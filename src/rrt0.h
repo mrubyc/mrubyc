@@ -16,6 +16,7 @@
 /***** Feature test switches ************************************************/
 /***** System headers *******************************************************/
 //@cond
+#include <stddef.h>
 #include <stdint.h>
 //@endcond
 
@@ -134,6 +135,16 @@ void pqall(void);
 
 
 /***** Inline functions *****************************************************/
+//================================================================
+/*! get TCB from VM pointer
+
+  @param  vm  Pointer to mrbc_vm
+  @return     Pointer to mrbc_tcb
+*/
+static inline mrbc_tcb * mrbc_get_tcb( const mrbc_vm *vm )
+{
+  return (mrbc_tcb *)((uint8_t *)vm - offsetof(mrbc_tcb, vm));
+}
 
 
 #ifdef __cplusplus

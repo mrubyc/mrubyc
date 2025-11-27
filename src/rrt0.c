@@ -14,7 +14,6 @@
 /***** System headers *******************************************************/
 //@cond
 #include "vm_config.h"
-#include <stddef.h>
 #include <stdint.h>
 #include <string.h>
 #include <assert.h>
@@ -28,7 +27,6 @@
 #define MRBC_SCHEDULER_EXIT 0
 #endif
 
-#define VM2TCB(p) ((mrbc_tcb *)((uint8_t *)p - offsetof(mrbc_tcb, vm)))
 #define MRBC_MUTEX_TRACE(...) ((void)0)
 
 
@@ -859,7 +857,7 @@ void mrbc_cleanup(void)
 */
 static void c_sleep(mrbc_vm *vm, mrbc_value v[], int argc)
 {
-  mrbc_tcb *tcb = VM2TCB(vm);
+  mrbc_tcb *tcb = mrbc_get_tcb(vm);
 
   if( argc == 0 ) {
     mrbc_suspend_task(tcb);
@@ -899,7 +897,7 @@ static void c_sleep(mrbc_vm *vm, mrbc_value v[], int argc)
 */
 static void c_sleep_ms(mrbc_vm *vm, mrbc_value v[], int argc)
 {
-  mrbc_tcb *tcb = VM2TCB(vm);
+  mrbc_tcb *tcb = mrbc_get_tcb(vm);
 
   mrbc_int_t sec = mrbc_integer(v[1]);
   SET_INT_RETURN(sec);
@@ -925,7 +923,7 @@ static void c_task_get(mrbc_vm *vm, mrbc_value v[], int argc)
 
   // in case of Task.get()
   if( argc == 0 ) {
-    tcb = VM2TCB(vm);
+    tcb = mrbc_get_tcb(vm);
   }
 
   // in case of Task.get("TasName")
@@ -1009,7 +1007,7 @@ static void c_task_set_name(mrbc_vm *vm, mrbc_value v[], int argc)
   mrbc_tcb *tcb;
 
   if( mrbc_type(v[0]) == MRBC_TT_CLASS ) {
-    tcb = VM2TCB(vm);
+    tcb = mrbc_get_tcb(vm);
   } else {
     tcb = *(mrbc_tcb **)v[0].instance->data;
   }
@@ -1031,7 +1029,7 @@ static void c_task_name(mrbc_vm *vm, mrbc_value v[], int argc)
   mrbc_value ret;
 
   if( mrbc_type(v[0]) == MRBC_TT_CLASS ) {
-    ret = mrbc_string_new_cstr( vm, VM2TCB(vm)->name );
+    ret = mrbc_string_new_cstr( vm, mrbc_get_tcb(vm)->name );
   } else {
     mrbc_tcb *tcb = *(mrbc_tcb **)v[0].instance->data;
     ret = mrbc_string_new_cstr(vm, tcb->name );
@@ -1052,7 +1050,7 @@ static void c_task_set_priority(mrbc_vm *vm, mrbc_value v[], int argc)
   mrbc_tcb *tcb;
 
   if( mrbc_type(v[0]) == MRBC_TT_CLASS ) {
-    tcb = VM2TCB(vm);
+    tcb = mrbc_get_tcb(vm);
   } else {
     tcb = *(mrbc_tcb **)v[0].instance->data;
   }
@@ -1083,7 +1081,7 @@ static void c_task_priority(mrbc_vm *vm, mrbc_value v[], int argc)
   mrbc_tcb *tcb;
 
   if( mrbc_type(v[0]) == MRBC_TT_CLASS ) {
-    tcb = VM2TCB(vm);
+    tcb = mrbc_get_tcb(vm);
   } else {
     tcb = *(mrbc_tcb **)v[0].instance->data;
   }
@@ -1128,7 +1126,7 @@ static void c_task_suspend(mrbc_vm *vm, mrbc_value v[], int argc)
   mrbc_tcb *tcb;
 
   if( mrbc_type(v[0]) == MRBC_TT_CLASS ) {
-    tcb = VM2TCB(vm);
+    tcb = mrbc_get_tcb(vm);
   } else {
     tcb = *(mrbc_tcb **)v[0].instance->data;
   }
@@ -1162,7 +1160,7 @@ static void c_task_terminate(mrbc_vm *vm, mrbc_value v[], int argc)
   mrbc_tcb *tcb;
 
   if( mrbc_type(v[0]) == MRBC_TT_CLASS ) {
-    tcb = VM2TCB(vm);
+    tcb = mrbc_get_tcb(vm);
   } else {
     tcb = *(mrbc_tcb **)v[0].instance->data;
   }
@@ -1214,7 +1212,7 @@ static void c_task_join(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   if( mrbc_type(v[0]) == MRBC_TT_CLASS ) return;
 
-  mrbc_tcb *tcb_me = VM2TCB(vm);
+  mrbc_tcb *tcb_me = mrbc_get_tcb(vm);
   mrbc_tcb *tcb_join = *(mrbc_tcb **)v[0].instance->data;
 
   mrbc_join_task(tcb_me, tcb_join);
@@ -1251,7 +1249,7 @@ static void c_task_pass(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   if( mrbc_type(v[0]) != MRBC_TT_CLASS ) return;
 
-  mrbc_tcb *tcb = VM2TCB(vm);
+  mrbc_tcb *tcb = mrbc_get_tcb(vm);
   mrbc_relinquish(tcb);
 }
 
@@ -1383,7 +1381,7 @@ static void c_mutex_new(mrbc_vm *vm, mrbc_value v[], int argc)
 */
 static void c_mutex_lock(mrbc_vm *vm, mrbc_value v[], int argc)
 {
-  int r = mrbc_mutex_lock( (mrbc_mutex *)v->instance->data, VM2TCB(vm) );
+  int r = mrbc_mutex_lock( (mrbc_mutex *)v->instance->data, mrbc_get_tcb(vm) );
   if( r == 0 ) return;  // return self
 
   // raise ThreadError
@@ -1397,7 +1395,7 @@ static void c_mutex_lock(mrbc_vm *vm, mrbc_value v[], int argc)
 */
 static void c_mutex_unlock(mrbc_vm *vm, mrbc_value v[], int argc)
 {
-  int r = mrbc_mutex_unlock( (mrbc_mutex *)v->instance->data, VM2TCB(vm) );
+  int r = mrbc_mutex_unlock( (mrbc_mutex *)v->instance->data, mrbc_get_tcb(vm));
   if( r == 0 ) return;  // return self
 
   // raise ThreadError
@@ -1411,7 +1409,7 @@ static void c_mutex_unlock(mrbc_vm *vm, mrbc_value v[], int argc)
 */
 static void c_mutex_trylock(mrbc_vm *vm, mrbc_value v[], int argc)
 {
-  int r = mrbc_mutex_trylock( (mrbc_mutex *)v->instance->data, VM2TCB(vm) );
+  int r = mrbc_mutex_trylock( (mrbc_mutex *)v->instance->data, mrbc_get_tcb(vm));
   SET_BOOL_RETURN( r == 0 );
 }
 
@@ -1434,7 +1432,7 @@ static void c_mutex_locked(mrbc_vm *vm, mrbc_value v[], int argc)
 static void c_mutex_owned(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   mrbc_mutex *mutex = (mrbc_mutex *)v->instance->data;
-  SET_BOOL_RETURN( mutex->lock != 0 && mutex->tcb == VM2TCB(vm) );
+  SET_BOOL_RETURN( mutex->lock != 0 && mutex->tcb == mrbc_get_tcb(vm) );
 }
 
 
