@@ -31,7 +31,7 @@
 /***** Function prototypes **************************************************/
 /***** Local variables ******************************************************/
 #if !defined(MRBC_NO_TIMER)
-static sigset_t sigset_, sigset2_;
+static sigset_t sigset_;
 #endif
 
 
@@ -122,7 +122,7 @@ void hal_init(void)
 */
 void hal_enable_irq(void)
 {
-  sigprocmask(SIG_SETMASK, &sigset2_, 0);
+  sigprocmask(SIG_UNBLOCK, &sigset_, 0);
 }
 
 
@@ -133,7 +133,7 @@ void hal_enable_irq(void)
 */
 void hal_disable_irq(void)
 {
-  sigprocmask(SIG_BLOCK, &sigset_, &sigset2_);
+  sigprocmask(SIG_BLOCK, &sigset_, 0);
 }
 
 #endif /* if !defined(MRBC_NO_TIMER) */
