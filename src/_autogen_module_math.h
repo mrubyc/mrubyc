@@ -61,6 +61,7 @@ struct RBuiltinClass mrbc_class_Math = {
   .num_builtin_method = sizeof(method_symbols_Math) / sizeof(mrbc_sym),
   .super = 0,
 #if defined(MRBC_DEBUG)
+  .obj_mark_ = "MO",
   .name = "Math",
 #endif
   .method_symbols = method_symbols_Math,

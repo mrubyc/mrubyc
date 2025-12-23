@@ -90,6 +90,7 @@ struct RBuiltinClass mrbc_class_Array = {
   .num_builtin_method = sizeof(method_symbols_Array) / sizeof(mrbc_sym),
   .super = MRBC_CLASS(Object),
 #if defined(MRBC_DEBUG)
+  .obj_mark_ = "CL",
   .name = "Array",
 #endif
   .method_symbols = method_symbols_Array,

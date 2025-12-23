@@ -95,6 +95,7 @@ def write_file( param )
          end
     file.puts "  .super = #{sp},"
     file.puts "#if defined(MRBC_DEBUG)"
+    file.puts "  .obj_mark_ = \"#{type.to_s.upcase[0,2]}\","
     file.puts "  .name = \"#{cls_name}\","
     file.puts "#endif"
     if cls[:methods]

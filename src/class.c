@@ -137,6 +137,9 @@ mrbc_class * mrbc_define_class(struct VM *vm, const char *name, mrbc_class *supe
   if( !cls ) return cls;	// ENOMEM
 
   *cls = (mrbc_class){
+#if defined(MRBC_DEBUG)
+    .obj_mark_ = "CL",
+#endif
     .sym_id = sym_id,
     .super = super ? super : MRBC_CLASS(Object),
 #if defined(MRBC_DEBUG)
@@ -186,6 +189,9 @@ mrbc_class * mrbc_define_class_under(struct VM *vm, const mrbc_class *outer, con
   make_nested_symbol_s( buf, outer->sym_id, sym_id );
 
   *cls = (mrbc_class){
+#if defined(MRBC_DEBUG)
+    .obj_mark_ = "CL",
+#endif
     .sym_id = mrbc_symbol( mrbc_symbol_new( vm, buf )),
     .super = super ? super : MRBC_CLASS(Object),
 #if defined(MRBC_DEBUG)
@@ -229,6 +235,9 @@ mrbc_class * mrbc_define_module(struct VM *vm, const char *name)
   if( !cls ) return cls;	// ENOMEM
 
   *cls = (mrbc_class){
+#if defined(MRBC_DEBUG)
+    .obj_mark_ = "MO",
+#endif
     .sym_id = sym_id,
     .flag_module = 1,
     .super = 0,
@@ -278,6 +287,9 @@ mrbc_class * mrbc_define_module_under(struct VM *vm, const mrbc_class *outer, co
   make_nested_symbol_s( buf, outer->sym_id, sym_id );
 
   *cls = (mrbc_class){
+#if defined(MRBC_DEBUG)
+    .obj_mark_ = "MO",
+#endif
     .sym_id = mrbc_symbol( mrbc_symbol_new( vm, buf )),
     .flag_module = 1,
     .super = 0,

@@ -130,6 +130,7 @@ struct RBuiltinClass mrbc_class_Object = {
   .num_builtin_method = sizeof(method_symbols_Object) / sizeof(mrbc_sym),
   .super = 0,
 #if defined(MRBC_DEBUG)
+  .obj_mark_ = "CL",
   .name = "Object",
 #endif
   .method_symbols = method_symbols_Object,
@@ -174,6 +175,7 @@ struct RBuiltinClass mrbc_class_NilClass = {
   .num_builtin_method = sizeof(method_symbols_NilClass) / sizeof(mrbc_sym),
   .super = MRBC_CLASS(Object),
 #if defined(MRBC_DEBUG)
+  .obj_mark_ = "CL",
   .name = "NilClass",
 #endif
   .method_symbols = method_symbols_NilClass,
@@ -206,6 +208,7 @@ struct RBuiltinClass mrbc_class_TrueClass = {
   .num_builtin_method = sizeof(method_symbols_TrueClass) / sizeof(mrbc_sym),
   .super = MRBC_CLASS(Object),
 #if defined(MRBC_DEBUG)
+  .obj_mark_ = "CL",
   .name = "TrueClass",
 #endif
   .method_symbols = method_symbols_TrueClass,
@@ -238,6 +241,7 @@ struct RBuiltinClass mrbc_class_FalseClass = {
   .num_builtin_method = sizeof(method_symbols_FalseClass) / sizeof(mrbc_sym),
   .super = MRBC_CLASS(Object),
 #if defined(MRBC_DEBUG)
+  .obj_mark_ = "CL",
   .name = "FalseClass",
 #endif
   .method_symbols = method_symbols_FalseClass,

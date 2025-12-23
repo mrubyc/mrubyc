@@ -41,7 +41,7 @@ extern "C" {
 */
 typedef struct IREP {
 #if defined(MRBC_DEBUG)
-  uint8_t obj_mark_[2];		//!< set "RP" for debug.
+  uint8_t obj_mark_[2];		//!< set "IR" for debug.
 #endif
 
   uint16_t ref_count;		//!< reference counter
@@ -118,6 +118,10 @@ typedef struct IREP_CATCH_HANDLER {
   Call information
 */
 typedef struct CALLINFO {
+#if defined(MRBC_DEBUG)
+  uint8_t obj_mark_[2];		//!< set "CI" for debug.
+#endif
+
   struct CALLINFO *prev;	//!< previous linked list.
   const mrbc_irep *cur_irep;	//!< copy from mrbc_vm.
   const uint8_t *inst;		//!< copy from mrbc_vm.

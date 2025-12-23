@@ -36,6 +36,7 @@ struct RBuiltinClass mrbc_class_Symbol = {
   .num_builtin_method = sizeof(method_symbols_Symbol) / sizeof(mrbc_sym),
   .super = MRBC_CLASS(Object),
 #if defined(MRBC_DEBUG)
+  .obj_mark_ = "CL",
   .name = "Symbol",
 #endif
   .method_symbols = method_symbols_Symbol,

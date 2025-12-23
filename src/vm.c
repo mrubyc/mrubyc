@@ -237,6 +237,9 @@ mrbc_callinfo * mrbc_push_callinfo( struct VM *vm, mrbc_sym method_id, int reg_o
   if( !callinfo ) return callinfo;
 
   *callinfo = (mrbc_callinfo){
+#if defined(MRBC_DEBUG)
+    .obj_mark_ = "CI",
+#endif
     .prev = vm->callinfo_tail,
     .cur_irep = vm->cur_irep,
     .inst = vm->inst,

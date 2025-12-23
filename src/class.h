@@ -81,6 +81,14 @@ extern "C" {
   Class object.
 */
 typedef struct RClass {
+  /* (note)
+     Must match the initial layout of RClass, RBuiltinClass,
+     and RBuiltinNoMethodClass for safe casting.
+  */
+#if defined(MRBC_DEBUG)
+  uint8_t obj_mark_[2];		//!< set "CL" or "MO" for debug.
+#endif
+
   mrbc_sym sym_id;		 //!< class name's symbol ID
   unsigned int flag_builtin : 1; //!< is built-in class? (= 0)
   unsigned int flag_module : 1;  //!< is module?
@@ -110,6 +118,10 @@ typedef struct RClass mrb_class;
   @extends RClass
 */
 struct RBuiltinClass {
+#if defined(MRBC_DEBUG)
+  uint8_t obj_mark_[2];		//!< set "CL" or "MO" for debug.
+#endif
+
   mrbc_sym sym_id;		 //!< class name's symbol ID
   unsigned int flag_builtin : 1; //!< is built-in class? (= 1)
   unsigned int flag_module : 1;  //!< is module?
@@ -135,6 +147,10 @@ struct RBuiltinClass {
   @extends RBuiltinClass
 */
 struct RBuiltinNoMethodClass {
+#if defined(MRBC_DEBUG)
+  uint8_t obj_mark_[2];		//!< set "CL" or "MO" for debug.
+#endif
+
   mrbc_sym sym_id;		 //!< class name's symbol ID
   unsigned int flag_builtin : 1; //!< is built-in class? (= 1)
   unsigned int flag_module : 1;  //!< is module?
