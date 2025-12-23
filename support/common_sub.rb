@@ -136,15 +136,12 @@ def parse_source_string( src )
 
     flag_arg_ok = true
     case key.upcase
-    when "FILE", "APPEND"
-      ret[key.downcase.to_sym] = strip_double_quot(args[0])
-
     when "CLASS"
-      cls = { class: strip_double_quot(args[0]), :super=>"Object" }
+      cls = { class:strip_double_quot(args[0]), super:"Object", methods:[] }
       ret[:classes] << cls
 
     when "MODULE"
-      cls = { module: strip_double_quot(args[0]), :super=>"0" }
+      cls = { module:strip_double_quot(args[0]), super:"0", methods:[] }
       ret[:classes] << cls
 
     when "SUPER"
@@ -161,8 +158,13 @@ def parse_source_string( src )
       end
       m = { name:strip_double_quot(args[0]), func:strip_double_quot(args[1]) }
       m[:if_exp] = if_exp.dup  if !if_exp.empty?
-      cls[:methods] ||= []
       cls[:methods] << m
+
+    when "FILE"
+      ret[:file] = strip_double_quot(args[0])
+
+    when "APPEND"
+      ret[:append] = strip_double_quot(args[0])
 
     else
       puts "Error: Invalid keyword. '#{key}'"

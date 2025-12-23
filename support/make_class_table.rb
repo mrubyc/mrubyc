@@ -61,7 +61,7 @@ def fetch_builtin_classes( filename )
       param[:classes].each {|cls|
         ret << {
           :class => [ cls[:class], cls[:module] ].compact[0],
-          :struct_name => cls[:methods] ? "RBuiltinClass" : "RBuiltinNoMethodClass",
+          :struct_name => cls[:methods].empty? ? "RBuiltinNoMethodClass" : "RBuiltinClass",
           :super => cls[:super],
         }
       }
@@ -90,15 +90,18 @@ def write_file( all_classes )
     file.puts "extern struct #{cls[:struct_name]} mrbc_class_#{cls[:class]};"
   }
 
-  file.puts "\n#if defined(MRBC_DEFINE_BUILTIN_CLASS_TABLE)
+  file.puts <<EOL
+
+#if defined(MRBC_DEFINE_BUILTIN_CLASS_TABLE)
 static const struct MRBC_BuiltinClass {
   mrbc_class *cls;
   mrbc_class *super;
-} MRBC_BuiltinClass[] = {"
+} MRBC_BuiltinClass[] = {
+EOL
 
   all_classes.each {|cls|
     cls_name = "MRBC_CLASS(#{cls[:class]})"
-    cls_super = cls[:super] == "0" ? "0" : "MRBC_CLASS(#{cls[:super]})"
+    cls_super = cls[:super] == "0" ? cls[:super] : "MRBC_CLASS(#{cls[:super]})"
     case cls[:class]
     when "Float", "String", "Math"
       file.puts "#if MRBC_USE_#{cls[:class].upcase}"
@@ -108,9 +111,10 @@ static const struct MRBC_BuiltinClass {
       file.puts "  { #{cls_name}, #{cls_super} },"
     end
   }
-  file.puts "};"
-
-  file.puts "#endif"
+  file.puts <<EOL
+};
+#endif
+EOL
   file.close  if $opts[:out_file]
 end
 
