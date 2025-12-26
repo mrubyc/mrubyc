@@ -29,6 +29,9 @@
 
 #define MRBC_MUTEX_TRACE(...) ((void)0)
 
+#if !defined(MRBC_TIMESLICE_TICK_COUNT) || (MRBC_TIMESLICE_TICK_COUNT <= 0)
+#error "MRBC_TIMESLICE_TICK_COUNT must be a natural number."
+#endif
 
 /***** Typedefs *************************************************************/
 /***** Function prototypes **************************************************/
@@ -372,7 +375,7 @@ int mrbc_run(void)
     tcb->vm.flag_preemption = 0;
 #else
     // Emulate time slice preemption.
-    int ret_vm_run;
+    int ret_vm_run = 0;
     tcb->vm.flag_preemption = 1;
     while( tcb->timeslice != 0 ) {
       ret_vm_run = mrbc_vm_run( &tcb->vm );
