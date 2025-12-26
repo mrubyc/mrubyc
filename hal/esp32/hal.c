@@ -20,8 +20,7 @@
 #include "freertos/task.h"
 #include "freertos/queue.h"
 #include "soc/timer_group_struct.h"
-#include "driver/periph_ctrl.h"
-#include "driver/timer.h"
+#include "driver/gptimer.h"
 
 
 /***** Local headers ********************************************************/
@@ -29,7 +28,9 @@
 
 
 /***** Constat values *******************************************************/
-#define TIMER_DIVIDER 80
+#ifndef MRBC_NO_TIMER
+#define GPTIMER_RESOLUTION (1000*1000) // 1 MHz
+#endif
 
 /***** Macros ***************************************************************/
 /***** Typedefs *************************************************************/
@@ -47,14 +48,17 @@ static portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
   Timer ISR function
 
 */
-static void on_timer(void *arg)
+static bool on_timer(gptimer_handle_t timer, const gptimer_alarm_event_data_t *edata, void *user_ctx)
 {
-    TIMERG0.int_clr_timers.t0 = 1;
-    TIMERG0.hw_timer[TIMER_0].config.alarm_en = TIMER_ALARM_EN;
     mrbc_tick();
+    return false;
 }
+//================================================================
+/*!@brief
+  Converting ms value to timer ticks.
 
-
+*/
+#define GPTIMER_FROM_MS(ms) ((ms)*GPTIMER_RESOLUTION/1000)
 #endif
 
 
@@ -68,22 +72,25 @@ static void on_timer(void *arg)
 */
 void hal_init(void)
 {
-  timer_config_t config;
-
-  config.divider = TIMER_DIVIDER;
-  config.counter_dir = TIMER_COUNT_UP;
-  config.counter_en = TIMER_PAUSE;
-  config.alarm_en = TIMER_ALARM_EN;
-  config.intr_type = TIMER_INTR_LEVEL;
-  config.auto_reload = TIMER_AUTORELOAD_EN;
-
-  timer_init(TIMER_GROUP_0, TIMER_0, &config);
-  timer_set_counter_value(TIMER_GROUP_0, TIMER_0, 0x00000000ULL);
-  timer_set_alarm_value(TIMER_GROUP_0, TIMER_0, MRBC_TICK_UNIT * 1000);
-  timer_enable_intr(TIMER_GROUP_0, TIMER_0);
-  timer_isr_register(TIMER_GROUP_0, TIMER_0, on_timer, NULL, 0, NULL);
-
-  timer_start(TIMER_GROUP_0, TIMER_0);
+  gptimer_handle_t gptimer = NULL;
+  gptimer_config_t timer_config = {
+    .clk_src = GPTIMER_CLK_SRC_DEFAULT,
+    .direction = GPTIMER_COUNT_UP,
+    .resolution_hz = GPTIMER_RESOLUTION,
+  };
+  ESP_ERROR_CHECK(gptimer_new_timer(&timer_config, &gptimer));
+  gptimer_alarm_config_t alarm_config = {
+    .reload_count = 0,
+    .alarm_count = GPTIMER_FROM_MS(MRBC_TICK_UNIT),
+    .flags.auto_reload_on_alarm = true
+  };
+  ESP_ERROR_CHECK(gptimer_set_alarm_action(gptimer, &alarm_config));
+  gptimer_event_callbacks_t cbs = {
+    .on_alarm = on_timer
+  };
+  ESP_ERROR_CHECK(gptimer_register_event_callbacks(gptimer, &cbs, NULL));
+  ESP_ERROR_CHECK(gptimer_enable(gptimer));
+  ESP_ERROR_CHECK(gptimer_start(gptimer));
 }
 
 
