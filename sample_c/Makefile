@@ -11,7 +11,7 @@ include ../src/hal_selector.mk
 
 TARGETS = sample_scheduler sample_no_scheduler sample_include sample_concurrent sample_myclass
 CFLAGS += -I../src -Wall -g
-LDFLAGS += -lm
+LDFLAGS +=
 LIBMRUBYC = ../build/libmrubyc.a
 
 %: %.c
