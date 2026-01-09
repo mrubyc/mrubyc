@@ -139,12 +139,10 @@ mrbc_class * mrbc_define_class(struct VM *vm, const char *name, mrbc_class *supe
   *cls = (mrbc_class){
 #if defined(MRBC_DEBUG)
     .obj_mark_ = "CL",
+    .name = name,
 #endif
     .sym_id = sym_id,
     .super = super ? super : MRBC_CLASS(Object),
-#if defined(MRBC_DEBUG)
-    .name = name,
-#endif
   };
 
   // register to global constant
@@ -191,12 +189,10 @@ mrbc_class * mrbc_define_class_under(struct VM *vm, const mrbc_class *outer, con
   *cls = (mrbc_class){
 #if defined(MRBC_DEBUG)
     .obj_mark_ = "CL",
+    .name = name,
 #endif
     .sym_id = mrbc_symbol( mrbc_symbol_new( vm, buf )),
     .super = super ? super : MRBC_CLASS(Object),
-#if defined(MRBC_DEBUG)
-    .name = name,
-#endif
   };
 
   // register to global constant
@@ -237,13 +233,11 @@ mrbc_class * mrbc_define_module(struct VM *vm, const char *name)
   *cls = (mrbc_class){
 #if defined(MRBC_DEBUG)
     .obj_mark_ = "MO",
+    .name = name,
 #endif
     .sym_id = sym_id,
     .flag_module = 1,
     .super = 0,
-#if defined(MRBC_DEBUG)
-    .name = name,
-#endif
   };
 
   // register to global constant
@@ -289,13 +283,11 @@ mrbc_class * mrbc_define_module_under(struct VM *vm, const mrbc_class *outer, co
   *cls = (mrbc_class){
 #if defined(MRBC_DEBUG)
     .obj_mark_ = "MO",
+    .name = name,
 #endif
     .sym_id = mrbc_symbol( mrbc_symbol_new( vm, buf )),
     .flag_module = 1,
     .super = 0,
-#if defined(MRBC_DEBUG)
-    .name = name,
-#endif
   };
 
   // register to global constant
