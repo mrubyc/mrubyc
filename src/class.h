@@ -93,6 +93,7 @@ typedef struct RClass {
   unsigned int flag_builtin : 1; //!< is built-in class? (= 0)
   unsigned int flag_module : 1;  //!< is module?
   unsigned int flag_alias : 1;   //!< is module alias?
+  unsigned int flag_singleton : 1; //!< is singleton class?
   uint8_t num_builtin_method;	 //!< num of built-in method.
   struct RClass *super;		 //!< pointer to super class.
   union {
@@ -125,7 +126,8 @@ struct RBuiltinClass {
   mrbc_sym sym_id;		 //!< class name's symbol ID
   unsigned int flag_builtin : 1; //!< is built-in class? (= 1)
   unsigned int flag_module : 1;  //!< is module?
-  unsigned int flag_alias : 1;   //!< is alias class?
+  unsigned int flag_alias : 1;   //!< is module alias?
+  unsigned int flag_singleton : 1; //!< is singleton class?
   uint8_t num_builtin_method;	 //!< num of built-in method.
   struct RClass *super;		 //!< pointer to super class.
   union {
@@ -154,7 +156,8 @@ struct RBuiltinNoMethodClass {
   mrbc_sym sym_id;		 //!< class name's symbol ID
   unsigned int flag_builtin : 1; //!< is built-in class? (= 1)
   unsigned int flag_module : 1;  //!< is module?
-  unsigned int flag_alias : 1;   //!< is alias class?
+  unsigned int flag_alias : 1;   //!< is module alias?
+  unsigned int flag_singleton : 1; //!< is singleton class?
   uint8_t num_builtin_method;	 //!< num of built-in method.
   struct RClass *super;		 //!< pointer to super class.
   union {
@@ -191,7 +194,12 @@ typedef struct RInstance mrb_instance;
   Method management structure.
 */
 typedef struct RMethod {
-  uint8_t  type;	//!< M:OP_DEF or OP_ALIAS, m:mrblib or define_method()
+  //! * M:OP_DEF or OP_ALIAS method.
+  //! * m:mrblib or define_method() method.
+  //! * S:OP_DEF or OP_ALIAS singleton method.
+  //! * s:mrblib or define_method() singleton method.
+  uint8_t  type;
+
   uint8_t  c_func;	//!< 0:IREP, 1:C Func, 2:C Func (built-in)
   mrbc_sym sym_id;	//!< function names symbol ID
   union {
@@ -200,7 +208,7 @@ typedef struct RMethod {
   };
   union {
     struct RMethod *next;	//!< link to next method.
-    struct RClass  *cls;	//!< return value for mrbc_find_method.
+    struct RClass  *cls;	//!< return value of mrbc_find_method.
   };
 } mrbc_method;
 

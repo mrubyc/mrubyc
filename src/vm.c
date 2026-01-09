@@ -2767,8 +2767,14 @@ static void sub_irep_incref( mrbc_irep *irep, int inc_dec )
   irep->ref_count += inc_dec;
 }
 
-static void sub_def_alias( mrbc_class *cls, mrbc_method *method, mrbc_sym sym_id )
+static void sub_op_def_alias( mrbc_class *cls, mrbc_method *method, mrbc_sym sym_id )
 {
+  if( cls->flag_singleton && cls->flag_alias ) {
+    mrbc_class *cls1 = cls;
+    cls = cls->aliased;
+    mrbc_raw_free( cls1 );
+  }
+
   method->next = cls->method_link;
   cls->method_link = method;
 
@@ -2781,7 +2787,11 @@ static void sub_def_alias( mrbc_class *cls, mrbc_method *method, mrbc_sym sym_id
       mrbc_method *del_method = method->next;
 
       method->next = del_method->next;
-      if( del_method->type == 'M' ) {
+      if( del_method->type == 'M' || del_method->type == 'S' ) {
+	if( del_method->type != method->type ) {
+	  mrbc_printf("Warning: Method overrided.\n");
+	}
+
         if( !del_method->c_func ) sub_irep_incref( del_method->irep, -1 );
         mrbc_raw_free( del_method );
       }
@@ -2811,12 +2821,12 @@ static inline void op_def( mrbc_vm *vm, mrbc_value *regs EXT )
     mrbc_raw_alloc( sizeof(mrbc_method) );
   if( !method ) return; // ENOMEM
 
-  method->type = (vm->vm_id == 0) ? 'm' : 'M';
+  method->type = "MmSs"[cls->flag_singleton << 1 | (vm->vm_id == 0)];
   method->c_func = 0;
   method->sym_id = sym_id;
   method->irep = proc->irep;
 
-  sub_def_alias( cls, method, sym_id );
+  sub_op_def_alias( cls, method, sym_id );
   mrbc_set_symbol(&regs[a], sym_id);
 }
 
@@ -2845,10 +2855,10 @@ static inline void op_alias( mrbc_vm *vm, mrbc_value *regs EXT )
     return;
   }
 
-  method->type = (vm->vm_id == 0) ? 'm' : 'M';
+  method->type = "MmSs"[cls->flag_singleton << 1 | (vm->vm_id == 0)];
   method->sym_id = sym_id_new;
 
-  sub_def_alias( cls, method, sym_id_new );
+  sub_op_def_alias( cls, method, sym_id_new );
 }
 
 
@@ -2859,8 +2869,15 @@ static inline void op_alias( mrbc_vm *vm, mrbc_value *regs EXT )
 */
 static inline void op_sclass( mrbc_vm *vm, mrbc_value *regs EXT )
 {
-  // currently, not supported
   FETCH_B();
+
+  mrbc_class *scls = mrbc_alloc( vm, sizeof(mrbc_class) );
+  *scls = *(regs[a].cls);
+  scls->flag_singleton = 1;
+  scls->flag_alias = 1;
+  scls->aliased = regs[a].cls;
+
+  regs[a].cls = scls;
 }
 
 
