@@ -2285,7 +2285,7 @@ static inline void op_arycat( mrbc_vm *vm, mrbc_value *regs EXT )
 
   // need resize?
   if( regs[a].array->data_size < new_size ) {
-    mrbc_array_resize(&regs[a], new_size);
+    if( mrbc_array_resize(&regs[a], new_size) != 0 ) return;  // ENOMEM
   }
 
   for( int i = 0; i < size_2; i++ ) {

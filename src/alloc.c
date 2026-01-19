@@ -561,8 +561,9 @@ void * mrbc_raw_alloc(unsigned int size)
 #else
   static const char msg[] = "Fatal error: Out of memory.\n";
   hal_write(2, msg, sizeof(msg)-1);
+  hal_abort(0);
 #endif
-  return NULL;  // ENOMEM
+  return NULL;  // ENOMEM (unreachable if hal_abort doesn't return)
 
 
  FOUND_FLI_SLI:

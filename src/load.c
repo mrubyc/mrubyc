@@ -208,6 +208,7 @@ static mrbc_irep * load_irep_1(struct VM *vm, const uint8_t *bin, int *len)
     char *sym_str;
     if (vm->flag_permanence == 1) {
       sym_str = mrbc_raw_alloc_no_free(siz);
+      if( !sym_str ) return NULL;  // ENOMEM
       memcpy(sym_str, p, siz);
     } else {
       sym_str = (char *)p;

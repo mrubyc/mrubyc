@@ -126,7 +126,9 @@
 // Nesting level for exception printing (default 8)
 // #define MRBC_EXCEPTION_CALL_NEST_LEVEL 8
 
-// Examples of override actions when some fatal errors.
+// Override actions when some fatal errors.
+// Default behavior for MRBC_OUT_OF_MEMORY is to print error and call hal_abort().
+// Uncomment and customize if you need different behavior:
 // #define MRBC_OUT_OF_MEMORY() mrbc_alloc_print_memory_pool(); hal_abort(0)
 // #define MRBC_ABORT_BY_EXCEPTION(vm) mrbc_p( &vm->exception ); hal_abort(0)
 
