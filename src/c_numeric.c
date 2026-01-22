@@ -401,9 +401,8 @@ static void c_float_inspect(struct VM *vm, mrbc_value v[], int argc)
     return;
   }
 
-  char buf[16];
-
-  snprintf( buf, sizeof(buf), "%g", v->d );
+  char buf[32];
+  mrbc_format_float(buf, sizeof(buf), v->d);
   mrbc_value value = mrbc_string_new_cstr(vm, buf);
   SET_RETURN(value);
 }

@@ -507,6 +507,7 @@ extern void (* const mrbc_delfunc[])(mrbc_value *);
 int mrbc_compare(const mrbc_value *v1, const mrbc_value *v2);
 mrbc_int_t mrbc_atoi(const char *s, int base);
 int mrbc_strcpy(char *dest, int destsize, const char *src);
+void mrbc_format_float(char *buf, int bufsiz, mrbc_float_t flo);
 mrbc_int_t mrbc_val_i(struct VM *vm, const mrbc_value *val);
 mrbc_int_t mrbc_val_i2(struct VM *vm, const mrbc_value *val, mrbc_int_t default_value);
 double mrbc_val_f(struct VM *vm, const mrbc_value *val);

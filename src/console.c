@@ -458,7 +458,11 @@ int mrbc_print_sub(const mrbc_value *v)
   case MRBC_TT_TRUE:	mrbc_print("true");		break;
   case MRBC_TT_INTEGER:	mrbc_printf("%D", v->i);	break;
 #if MRBC_USE_FLOAT
-  case MRBC_TT_FLOAT:	mrbc_printf("%g", v->d);	break;
+  case MRBC_TT_FLOAT: {
+    char buf[32];
+    mrbc_format_float(buf, sizeof(buf), v->d);
+    mrbc_printf("%s", buf);
+  } break;
 #endif
   case MRBC_TT_SYMBOL:	mrbc_print_symbol(v->sym_id);	break;
   case MRBC_TT_CLASS:   // fall through.

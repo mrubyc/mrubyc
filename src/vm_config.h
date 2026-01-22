@@ -47,15 +47,6 @@
 #if !defined(MRBC_USE_MATH)
 #define MRBC_USE_MATH 0
 #endif
-/* (NOTE)
-   maybe you need
-   $ export LDFLAGS=-lm
-   $ make
-
-   on ubuntu
-   $ export LDFLAGS="-Wl,--no-as-needed -lm"
-   $ make
-*/
 
 // USE String. Support String class.
 #if !defined(MRBC_USE_STRING)

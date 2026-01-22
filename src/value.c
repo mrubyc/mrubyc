@@ -15,6 +15,7 @@
 /***** System headers *******************************************************/
 //@cond
 #include "vm_config.h"
+#include <stdio.h>
 #include <string.h>
 #include <assert.h>
 //@endcond
@@ -248,6 +249,23 @@ int mrbc_strcpy( char *dest, int destsize, const char *src )
 
  RETURN:
   return destsize - n - 1;
+}
+
+
+//================================================================
+/*! format float value to string
+
+  @param  buf		destination buffer.
+  @param  bufsiz	size of buffer.
+  @param  flo		float value.
+*/
+void mrbc_format_float(char *buf, int bufsiz, mrbc_float_t flo)
+{
+  snprintf(buf, bufsiz, "%g", flo);
+  if( strpbrk(buf, ".e") ) return;
+
+  int len = strlen(buf);
+  mrbc_strcpy( buf + len,  bufsiz - len, ".0" );
 }
 
 

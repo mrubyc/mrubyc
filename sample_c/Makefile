@@ -15,7 +15,7 @@ LDFLAGS +=
 LIBMRUBYC = ../build/libmrubyc.a
 
 %: %.c
-	$(CC) $(CFLAGS) $(LDFLAGS) $(EXTRA_CSRCS) -o $@ $^
+	$(CC) $(CFLAGS) $(EXTRA_CSRCS) -o $@ $^ $(LDFLAGS)
 
 all: $(TARGETS)
 
