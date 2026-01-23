@@ -45,7 +45,6 @@ mrbc_value mrbc_range_new(struct VM *vm, mrbc_value *first, mrbc_value *last, in
   mrbc_value value = mrbc_immediate_value(MRBC_TT_RANGE);
 
   value.range = mrbc_alloc(vm, sizeof(mrbc_range));
-  if( !value.range ) return value;		// ENOMEM
 
   MRBC_INIT_OBJECT_HEADER( value.range, "RA" );
   value.range->flag_exclude = flag_exclude;
@@ -176,10 +175,8 @@ static void c_range_inspect(struct VM *vm, mrbc_value v[], int argc)
   }
 
   mrbc_value ret = mrbc_string_new(vm, NULL, 0);
-  if( !ret.string ) goto RETURN_NIL;		// ENOMEM
 
-  int i;
-  for( i = 0; i < 2; i++ ) {
+  for( int i = 0; i < 2; i++ ) {
     if( i != 0 ) mrbc_string_append_cstr( &ret, ".." );
     mrbc_value v1 = (i == 0) ? mrbc_range_first(v) : mrbc_range_last(v);
     mrbc_value s1 = mrbc_send( vm, v, argc, &v1, "inspect", 0 );
@@ -188,10 +185,6 @@ static void c_range_inspect(struct VM *vm, mrbc_value v[], int argc)
   }
 
   SET_RETURN(ret);
-  return;
-
- RETURN_NIL:
-  SET_NIL_RETURN();
 }
 #endif
 

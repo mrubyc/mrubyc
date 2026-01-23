@@ -33,7 +33,6 @@ static mrbc_exception * sub_exception_new(struct VM *vm, struct RClass *exc_cls)
 {
   // allocate memory for instance.
   mrbc_exception *ex = mrbc_alloc( vm, sizeof(mrbc_exception) );
-  if( !ex ) return ex;		// ENOMEM
 
   MRBC_INIT_OBJECT_HEADER( ex, "EX" );
   ex->cls = exc_cls;
@@ -65,7 +64,6 @@ static mrbc_exception * sub_exception_new(struct VM *vm, struct RClass *exc_cls)
 mrbc_value mrbc_exception_new(struct VM *vm, struct RClass *exc_cls, const void *message, int len )
 {
   mrbc_exception *ex = sub_exception_new( vm, exc_cls );
-  if( !ex ) return mrbc_nil_value();
 
   // in case of no message.
   if( !message ) {
@@ -90,13 +88,10 @@ mrbc_value mrbc_exception_new(struct VM *vm, struct RClass *exc_cls, const void 
 
   // else, copy the message.
   uint8_t *buf = mrbc_alloc( vm, len+1 );
-  if( buf ) {
-    memcpy( buf, message, len );
-    buf[len] = 0;
-    ex->message_size = len;
-  } else {
-    ex->message_size = 0;
-  }
+
+  memcpy( buf, message, len );
+  buf[len] = 0;
+  ex->message_size = len;
   ex->message = buf;
 
  RETURN:
@@ -116,7 +111,6 @@ mrbc_value mrbc_exception_new(struct VM *vm, struct RClass *exc_cls, const void 
 mrbc_value mrbc_exception_new_alloc(struct VM *vm, struct RClass *exc_cls, const void *message, int len )
 {
   mrbc_exception *ex = sub_exception_new( vm, exc_cls );
-  if( !ex ) return mrbc_nil_value();
 
   ex->message_size = len;
   ex->message = message;

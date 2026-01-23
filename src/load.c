@@ -195,10 +195,6 @@ static mrbc_irep * load_irep_1(struct VM *vm, const uint8_t *bin, int *len)
   // allocate new irep
   siz = sizeof(mrbc_irep) + siz + sizeof(mrbc_irep*) * irep.rlen;
   mrbc_irep *p_irep = mrbc_raw_alloc( siz );
-  if( !p_irep ) {	// ENOMEM
-    mrbc_raise(vm, MRBC_CLASS(NoMemoryError),0);
-    return NULL;
-  }
   *p_irep = irep;
 
   // make a symbol ID table. (tbl_syms[slen])
@@ -208,7 +204,6 @@ static mrbc_irep * load_irep_1(struct VM *vm, const uint8_t *bin, int *len)
     char *sym_str;
     if (vm->flag_permanence == 1) {
       sym_str = mrbc_raw_alloc_no_free(siz);
-      if( !sym_str ) return NULL;  // ENOMEM
       memcpy(sym_str, p, siz);
     } else {
       sym_str = (char *)p;

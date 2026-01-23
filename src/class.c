@@ -134,7 +134,6 @@ mrbc_class * mrbc_define_class(struct VM *vm, const char *name, mrbc_class *supe
 
   // create a new class.
   mrbc_class *cls = mrbc_raw_alloc_no_free( sizeof(mrbc_class) );
-  if( !cls ) return cls;	// ENOMEM
 
   *cls = (mrbc_class){
 #if defined(MRBC_DEBUG)
@@ -181,7 +180,6 @@ mrbc_class * mrbc_define_class_under(struct VM *vm, const mrbc_class *outer, con
 
   // create a new nested class.
   mrbc_class *cls = mrbc_raw_alloc_no_free( sizeof(mrbc_class) );
-  if( !cls ) return cls;	// ENOMEM
 
   char buf[sizeof(mrbc_sym)*4+1];
   make_nested_symbol_s( buf, outer->sym_id, sym_id );
@@ -228,7 +226,6 @@ mrbc_class * mrbc_define_module(struct VM *vm, const char *name)
 
   // create a new module.
   mrbc_class *cls = mrbc_raw_alloc_no_free( sizeof(mrbc_class) );
-  if( !cls ) return cls;	// ENOMEM
 
   *cls = (mrbc_class){
 #if defined(MRBC_DEBUG)
@@ -275,7 +272,6 @@ mrbc_class * mrbc_define_module_under(struct VM *vm, const mrbc_class *outer, co
 
   // create a new nested module
   mrbc_class *cls = mrbc_raw_alloc_no_free( sizeof(mrbc_class) );
-  if( !cls ) return cls;	// ENOMEM
 
   char buf[sizeof(mrbc_sym)*4+1];
   make_nested_symbol_s( buf, outer->sym_id, sym_id );
@@ -310,7 +306,6 @@ void mrbc_define_method(struct VM *vm, mrbc_class *cls, const char *name, mrbc_f
   if( cls == NULL ) cls = MRBC_CLASS(Object);	// set default to Object.
 
   mrbc_method *method = mrbc_raw_alloc_no_free( sizeof(mrbc_method) );
-  if( !method ) return; // ENOMEM
 
   method->type = 'm';
   method->c_func = 1;
@@ -337,14 +332,7 @@ mrbc_value mrbc_instance_new(struct VM *vm, mrbc_class *cls, int size)
   mrbc_value v = mrbc_immediate_value(MRBC_TT_OBJECT);
 
   v.instance = mrbc_alloc(vm, sizeof(mrbc_instance) + size);
-  if( v.instance == NULL ) return v;	// ENOMEM
-
-  if( mrbc_kv_init_handle(vm, &v.instance->ivar, 0) != 0 ) {
-    mrbc_raw_free(v.instance);
-    v.instance = NULL;
-    return v;
-  }
-
+  mrbc_kv_init_handle(vm, &v.instance->ivar, 0);
   MRBC_INIT_OBJECT_HEADER( v.instance, "IN" );
   v.instance->cls = cls;
 
@@ -609,7 +597,6 @@ int mrbc_run_mrblib(const void *bytecode)
 {
   // instead of mrbc_vm_open()
   mrbc_vm *vm = mrbc_vm_new( MAX_REGS_SIZE );
-  if( !vm ) return -1;	// ENOMEM
 
   if( mrbc_load_mrb(vm, bytecode) ) {
     mrbc_print_vm_exception(vm);

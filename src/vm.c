@@ -234,7 +234,6 @@ const char *mrbc_get_callee_name( struct VM *vm )
 mrbc_callinfo * mrbc_push_callinfo( struct VM *vm, mrbc_sym method_id, int reg_offset, int n_args )
 {
   mrbc_callinfo *callinfo = mrbc_alloc(vm, sizeof(mrbc_callinfo));
-  if( !callinfo ) return callinfo;
 
   *callinfo = (mrbc_callinfo){
 #if defined(MRBC_DEBUG)
@@ -312,9 +311,7 @@ void mrbc_pop_callinfo( struct VM *vm )
 mrbc_vm * mrbc_vm_new( int regs_size )
 {
   unsigned int vm_total_size = sizeof(mrbc_vm) + sizeof(mrbc_value) * regs_size;
-
   mrbc_vm *vm = mrbc_raw_alloc(vm_total_size);
-  if( !vm ) return NULL;
 
   memset(vm, 0, vm_total_size);	// caution: assume NULL is zero.
 #if defined(MRBC_DEBUG)
@@ -336,7 +333,6 @@ mrbc_vm * mrbc_vm_new( int regs_size )
 mrbc_vm * mrbc_vm_open( struct VM *vm )
 {
   if( !vm ) vm = mrbc_vm_new( MAX_REGS_SIZE );
-  if( !vm ) return NULL;
 
   // allocate vm id.
   int vm_id;
@@ -380,7 +376,6 @@ void mrbc_vm_begin( struct VM *vm )
   // set self to reg[0], others nil
   mrbc_decref( &vm->regs[0] );
   vm->regs[0] = mrbc_instance_new(vm, MRBC_CLASS(Object), 0);
-  if( vm->regs[0].instance == NULL ) return;	// ENOMEM
   for( int i = 1; i < vm->regs_size; i++ ) {
     vm->regs[i] = mrbc_nil_value();
   }
@@ -1315,7 +1310,6 @@ static inline void op_super( mrbc_vm *vm, mrbc_value *regs EXT )
   // Convert keyword argument to hash.
   if( karg && karg != CALL_MAXARGS ) {
     mrbc_value hval = mrbc_hash_new( vm, karg );
-    if( !hval.hash ) return;	// ENOMEM
 
     memcpy( hval.hash->data, r1, sizeof(mrbc_value) * karg * 2 );
     hval.hash->n_stored = karg * 2;
@@ -1408,7 +1402,6 @@ static inline void op_argary( mrbc_vm *vm, mrbc_value *regs EXT )
   // create argument array.
   int array_size = m1 + d;
   mrbc_value argary = mrbc_array_new( vm, array_size );
-  if( !argary.array ) return;	// ENOMEM
 
   for( int i = 1; i <= m1; i++ ) {
     mrbc_incref( &reg0[i] );
@@ -1518,7 +1511,6 @@ static inline void op_enter( mrbc_vm *vm, mrbc_value *regs EXT )
       int rest_size = argc - m1 - o;
       if( rest_size < 0 ) rest_size = 0;
       rest = mrbc_array_new(vm, rest_size);
-      if( !rest.array ) return;	// ENOMEM
 
       int rest_reg = m1 + o + 1;
       for( int i = 0; i < rest_size; i++ ) {
@@ -2226,7 +2218,6 @@ static inline void op_array( mrbc_vm *vm, mrbc_value *regs EXT )
   FETCH_BB();
 
   mrbc_value ret = mrbc_array_new(vm, b);
-  if( ret.array == NULL ) return;  // ENOMEM
 
   memcpy( ret.array->data, &regs[a], sizeof(mrbc_value) * b );
   memset( &regs[a], 0, sizeof(mrbc_value) * b );
@@ -2247,7 +2238,6 @@ static inline void op_array2( mrbc_vm *vm, mrbc_value *regs EXT )
   FETCH_BBB();
 
   mrbc_value ret = mrbc_array_new(vm, c);
-  if( ret.array == NULL ) return;  // ENOMEM
 
   memcpy( ret.array->data, &regs[b], sizeof(mrbc_value) * c );
   memset( &regs[b], 0, sizeof(mrbc_value) * c );
@@ -2285,7 +2275,7 @@ static inline void op_arycat( mrbc_vm *vm, mrbc_value *regs EXT )
 
   // need resize?
   if( regs[a].array->data_size < new_size ) {
-    if( mrbc_array_resize(&regs[a], new_size) != 0 ) return;  // ENOMEM
+    mrbc_array_resize(&regs[a], new_size);
   }
 
   for( int i = 0; i < size_2; i++ ) {
@@ -2307,8 +2297,7 @@ static inline void op_arypush( mrbc_vm *vm, mrbc_value *regs EXT )
 
   int sz1 = mrbc_array_size(&regs[a]);
 
-  int ret = mrbc_array_resize(&regs[a], sz1 + b);
-  if( ret != 0 ) return;	// ENOMEM ?
+  mrbc_array_resize(&regs[a], sz1 + b);
 
   // data copy.
   memcpy( regs[a].array->data + sz1, &regs[a+1], sizeof(mrbc_value) * b );
@@ -2508,7 +2497,6 @@ static inline void op_hash( mrbc_vm *vm, mrbc_value *regs EXT )
   FETCH_BB();
 
   mrbc_value value = mrbc_hash_new(vm, b);
-  if( value.hash == NULL ) return;   // ENOMEM
 
   // note: Do not detect duplicate keys.
   b *= 2;
@@ -2533,8 +2521,7 @@ static inline void op_hashadd( mrbc_vm *vm, mrbc_value *regs EXT )
   int sz1 = mrbc_array_size(&regs[a]);
   int sz2 = b * 2;
 
-  int ret = mrbc_array_resize(&regs[a], sz1 + sz2);
-  if( ret != 0 ) return;	// ENOMEM
+  mrbc_array_resize(&regs[a], sz1 + sz2);
 
   // data copy.
   // note: Do not detect duplicate keys.
@@ -2574,7 +2561,6 @@ static inline void op_block( mrbc_vm *vm, mrbc_value *regs EXT )
   FETCH_BB();
 
   mrbc_value ret = mrbc_proc_new(vm, mrbc_irep_child_irep(vm->cur_irep, b), 'B');
-  if( !ret.proc ) return;	// ENOMEM
 
   mrbc_decref(&regs[a]);
   regs[a] = ret;
@@ -2591,7 +2577,6 @@ static inline void op_method( mrbc_vm *vm, mrbc_value *regs EXT )
   FETCH_BB();
 
   mrbc_value ret = mrbc_proc_new(vm, mrbc_irep_child_irep(vm->cur_irep, b), 'M');
-  if( !ret.proc ) return;	// ENOMEM
 
   mrbc_decref(&regs[a]);
   regs[a] = ret;
@@ -2809,7 +2794,6 @@ static inline void op_def( mrbc_vm *vm, mrbc_value *regs EXT )
   mrbc_method *method = (vm->vm_id == 0) ?
     mrbc_raw_alloc_no_free( sizeof(mrbc_method) ) :
     mrbc_raw_alloc( sizeof(mrbc_method) );
-  if( !method ) return; // ENOMEM
 
   method->type = (vm->vm_id == 0) ? 'm' : 'M';
   method->c_func = 0;
@@ -2836,7 +2820,6 @@ static inline void op_alias( mrbc_vm *vm, mrbc_value *regs EXT )
   mrbc_method *method = (vm->vm_id == 0) ?
     mrbc_raw_alloc_no_free( sizeof(mrbc_method) ) :
     mrbc_raw_alloc( sizeof(mrbc_method) );
-  if( !method ) return; // ENOMEM
 
   if( mrbc_find_method( method, cls, sym_id_org ) == 0 ) {
     mrbc_raisef(vm, MRBC_CLASS(NameError), "undefined method '%s'",
