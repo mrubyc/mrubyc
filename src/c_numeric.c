@@ -258,10 +258,46 @@ static void c_integer_to_f(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_integer_chr(struct VM *vm, mrbc_value v[], int argc)
 {
+#if MRBC_USE_STRING_UTF8
+  mrbc_int_t codepoint = mrbc_integer(v[0]);
+  char buf[5];
+  int len;
+
+  if( codepoint < 0 ) {
+    mrbc_raise(vm, MRBC_CLASS(RangeError), "negative integer");
+    return;
+  }
+  if( codepoint <= 0x7F ) {
+    buf[0] = (char)codepoint;
+    len = 1;
+  } else if( codepoint <= 0x7FF ) {
+    buf[0] = (char)(0xC0 | (codepoint >> 6));
+    buf[1] = (char)(0x80 | (codepoint & 0x3F));
+    len = 2;
+  } else if( codepoint <= 0xFFFF ) {
+    buf[0] = (char)(0xE0 | (codepoint >> 12));
+    buf[1] = (char)(0x80 | ((codepoint >> 6) & 0x3F));
+    buf[2] = (char)(0x80 | (codepoint & 0x3F));
+    len = 3;
+  } else if( codepoint <= 0x10FFFF ) {
+    buf[0] = (char)(0xF0 | (codepoint >> 18));
+    buf[1] = (char)(0x80 | ((codepoint >> 12) & 0x3F));
+    buf[2] = (char)(0x80 | ((codepoint >> 6) & 0x3F));
+    buf[3] = (char)(0x80 | (codepoint & 0x3F));
+    len = 4;
+  } else {
+    mrbc_raise(vm, MRBC_CLASS(RangeError), "codepoint too large");
+    return;
+  }
+
+  mrbc_value value = mrbc_string_new(vm, buf, len);
+  SET_RETURN(value);
+#else
   char buf[2] = { mrbc_integer(v[0]) };
 
   mrbc_value value = mrbc_string_new(vm, buf, 1);
   SET_RETURN(value);
+#endif
 }
 
 

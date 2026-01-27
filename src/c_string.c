@@ -398,6 +398,93 @@ int mrbc_string_downcase(mrbc_value *str)
 }
 
 
+#if MRBC_USE_STRING_UTF8
+//================================================================
+/*! Get byte length of a UTF-8 character
+
+  @param  str     pointer to UTF-8 character
+  @return         byte length (1-4), or 0 if invalid/continuation byte
+*/
+int mrbc_string_utf8_size(const char *str)
+{
+  unsigned char c = (unsigned char)*str;
+
+  if( (c & 0x80) == 0x00 ) return 1;       // ASCII: 0xxxxxxx
+  if( (c & 0xE0) == 0xC0 ) return 2;       // 2-byte: 110xxxxx
+  if( (c & 0xF0) == 0xE0 ) return 3;       // 3-byte: 1110xxxx
+  if( (c & 0xF8) == 0xF0 ) return 4;       // 4-byte: 11110xxx
+  return 0;                                 // continuation or invalid
+}
+
+
+//================================================================
+/*! Count UTF-8 characters in a byte string
+
+  @param  str     pointer to string
+  @param  len     byte length of string
+  @return         number of UTF-8 characters
+*/
+int mrbc_string_char_size(const char *str, int len)
+{
+  int count = 0;
+
+  for( int i = 0; i < len; i++ ) {
+    unsigned char c = (unsigned char)str[i];
+    // Count only leading bytes (not continuation bytes 10xxxxxx)
+    if( (c & 0xC0) != 0x80 ) count++;
+  }
+  return count;
+}
+
+
+//================================================================
+/*! Convert character index to byte offset
+
+  @param  src     pointer to string value
+  @param  off     byte offset to start from
+  @param  idx     character index (from offset)
+  @return         byte length for idx characters
+*/
+int mrbc_string_chars2bytes(mrbc_value *src, int off, int idx)
+{
+  const char *str = mrbc_string_cstr(src) + off;
+  const char *end = mrbc_string_cstr(src) + src->string->size;
+  int bytes = 0;
+
+  for( int i = 0; i < idx && str < end; i++ ) {
+    int char_len = mrbc_string_utf8_size(str);
+    if( char_len == 0 ) char_len = 1;  // skip invalid byte
+    bytes += char_len;
+    str += char_len;
+  }
+  return bytes;
+}
+
+
+//================================================================
+/*! Convert byte offset to character index
+
+  @param  src         pointer to string value
+  @param  byte_index  byte offset
+  @return             character index, or -1 if invalid
+*/
+int mrbc_string_bytes2chars(const mrbc_value *src, int byte_index)
+{
+  const char *str = mrbc_string_cstr(src);
+  const char *target = str + byte_index;
+  int count = 0;
+
+  while( str < target ) {
+    int char_len = mrbc_string_utf8_size(str);
+    if( char_len == 0 ) char_len = 1;
+    str += char_len;
+    count++;
+  }
+  return (str == target) ? count : -1;
+}
+#endif // MRBC_USE_STRING_UTF8
+
+
 //================================================================
 /*! (method) new
 */
@@ -474,7 +561,11 @@ static void c_string_mul(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_string_size(struct VM *vm, mrbc_value v[], int argc)
 {
+#if MRBC_USE_STRING_UTF8
+  mrbc_int_t size = mrbc_string_char_size(mrbc_string_cstr(&v[0]), v[0].string->size);
+#else
   mrbc_int_t size = mrbc_string_size(&v[0]);
+#endif
 
   SET_INT_RETURN( size );
 }
@@ -542,7 +633,11 @@ static void c_string_append(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_string_slice(struct VM *vm, mrbc_value v[], int argc)
 {
+#if MRBC_USE_STRING_UTF8
+  int target_len = mrbc_string_char_size(mrbc_string_cstr(&v[0]), v[0].string->size);
+#else
   int target_len = mrbc_string_size(v);
+#endif
   int pos, len;
 
   // in case of slice(nth) -> String | nil
@@ -611,7 +706,14 @@ static void c_string_slice(struct VM *vm, mrbc_value v[], int argc)
     }
   }
 
+#if MRBC_USE_STRING_UTF8
+  // Convert character position/length to byte position/length
+  int byte_pos = mrbc_string_chars2bytes(&v[0], 0, pos);
+  int byte_len = mrbc_string_chars2bytes(&v[0], byte_pos, len);
+  mrbc_value ret = mrbc_string_new(vm, mrbc_string_cstr(v) + byte_pos, byte_len);
+#else
   mrbc_value ret = mrbc_string_new(vm, mrbc_string_cstr(v) + pos, len);
+#endif
   if( !ret.string ) goto RETURN_NIL;		// ENOMEM
 
   SET_RETURN(ret);
@@ -632,7 +734,11 @@ static void c_string_slice(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_string_insert(struct VM *vm, mrbc_value v[], int argc)
 {
+#if MRBC_USE_STRING_UTF8
+  int target_len = mrbc_string_char_size(mrbc_string_cstr(&v[0]), v[0].string->size);
+#else
   int target_len = mrbc_string_size(v);
+#endif
   int pos, len;
   mrbc_value *val;
 
@@ -699,8 +805,8 @@ static void c_string_insert(struct VM *vm, mrbc_value v[], int argc)
     return;
   }
 
-  int len1 = target_len;
-  int len2 = mrbc_string_size(val);
+  int len1 = target_len;  // character length
+  int len2 = mrbc_string_size(val);  // byte length of replacement
   if( pos < 0 ) pos = len1 + pos;		// adjust to positive number.
   if( len > len1 - pos ) len = len1 - pos;
   if( pos < 0 || pos > len1 || len < 0) {
@@ -708,6 +814,29 @@ static void c_string_insert(struct VM *vm, mrbc_value v[], int argc)
     return;
   }
 
+#if MRBC_USE_STRING_UTF8
+  // Convert character position/length to byte position/length
+  int byte_pos = mrbc_string_chars2bytes(&v[0], 0, pos);
+  int byte_len = mrbc_string_chars2bytes(&v[0], byte_pos, len);
+  int byte_len1 = v[0].string->size;  // original byte length
+
+  int byte_len3 = byte_len1 + len2 - byte_len;  // final byte length
+  uint8_t *str = v->string->data;
+  if( byte_len1 < byte_len3 ) {
+    str = mrbc_realloc(vm, str, byte_len3+1);	// expand
+    if( !str ) return;
+  }
+
+  memmove( str + byte_pos + len2, str + byte_pos + byte_len, byte_len1 - byte_pos - byte_len + 1 );
+  memcpy( str + byte_pos, mrbc_string_cstr(val), len2 );
+
+  if( byte_len1 > byte_len3 ) {
+    str = mrbc_realloc(vm, str, byte_len3+1);	// shrink
+  }
+
+  v->string->size = byte_len3;
+  v->string->data = str;
+#else
   int len3 = len1 + len2 - len;			// final length.
   uint8_t *str = v->string->data;
   if( len1 < len3 ) {
@@ -724,6 +853,7 @@ static void c_string_insert(struct VM *vm, mrbc_value v[], int argc)
 
   v->string->size = len1 + len2 - len;
   v->string->data = str;
+#endif
 
   // return val
   mrbc_decref(&v[0]);
@@ -853,8 +983,16 @@ static void c_string_index(struct VM *vm, mrbc_value v[], int argc)
 
   } else if( argc == 2 && mrbc_type(v[2]) == MRBC_TT_INTEGER ) {
     offset = v[2].i;
+#if MRBC_USE_STRING_UTF8
+    int char_len = mrbc_string_char_size(mrbc_string_cstr(&v[0]), v[0].string->size);
+    if( offset < 0 ) offset += char_len;
+    if( offset < 0 ) goto NIL_RETURN;
+    // Convert character offset to byte offset
+    offset = mrbc_string_chars2bytes(&v[0], 0, offset);
+#else
     if( offset < 0 ) offset += mrbc_string_size(&v[0]);
     if( offset < 0 ) goto NIL_RETURN;
+#endif
 
   } else {
     mrbc_raise( vm, MRBC_CLASS(ArgumentError), 0 );
@@ -863,6 +1001,12 @@ static void c_string_index(struct VM *vm, mrbc_value v[], int argc)
 
   index = mrbc_string_index(&v[0], &v[1], offset);
   if( index < 0 ) goto NIL_RETURN;
+
+#if MRBC_USE_STRING_UTF8
+  // Convert byte index to character index
+  index = mrbc_string_bytes2chars(&v[0], index);
+  if( index < 0 ) goto NIL_RETURN;
+#endif
 
   SET_INT_RETURN(index);
   return;
@@ -912,9 +1056,30 @@ static void c_string_ord(struct VM *vm, mrbc_value v[], int argc)
     return;
   }
 
+#if MRBC_USE_STRING_UTF8
+  const uint8_t *s = (const uint8_t *)mrbc_string_cstr(v);
+  int char_len = mrbc_string_utf8_size((const char *)s);
+  mrbc_int_t codepoint;
+
+  if( char_len == 1 ) {
+    codepoint = s[0];
+  } else if( char_len == 2 ) {
+    codepoint = ((s[0] & 0x1F) << 6) | (s[1] & 0x3F);
+  } else if( char_len == 3 ) {
+    codepoint = ((s[0] & 0x0F) << 12) | ((s[1] & 0x3F) << 6) | (s[2] & 0x3F);
+  } else if( char_len == 4 ) {
+    codepoint = ((s[0] & 0x07) << 18) | ((s[1] & 0x3F) << 12) |
+                ((s[2] & 0x3F) << 6) | (s[3] & 0x3F);
+  } else {
+    codepoint = s[0];  // fallback for invalid UTF-8
+  }
+
+  SET_INT_RETURN( codepoint );
+#else
   int i = ((uint8_t *)mrbc_string_cstr(v))[0];
 
   SET_INT_RETURN( i );
+#endif
 }
 
 
@@ -1476,6 +1641,88 @@ static void c_string_downcase_self(struct VM *vm, mrbc_value v[], int argc)
 }
 
 
+//================================================================
+/*! (method) bytesize
+*/
+static void c_string_bytesize(struct VM *vm, mrbc_value v[], int argc)
+{
+  SET_INT_RETURN( mrbc_string_size(&v[0]) );
+}
+
+
+#if MRBC_USE_STRING_UTF8
+//================================================================
+/*! (method) encoding
+*/
+static void c_string_encoding(struct VM *vm, mrbc_value v[], int argc)
+{
+  mrbc_value ret = mrbc_string_new_cstr(vm, "UTF-8");
+  SET_RETURN(ret);
+}
+
+
+//================================================================
+/*! (method) valid_encoding?
+*/
+static void c_string_valid_encoding(struct VM *vm, mrbc_value v[], int argc)
+{
+  const uint8_t *s = (const uint8_t *)mrbc_string_cstr(&v[0]);
+  int len = mrbc_string_size(&v[0]);
+  int i = 0;
+
+  while( i < len ) {
+    int char_len = mrbc_string_utf8_size((const char *)&s[i]);
+    if( char_len == 0 ) {
+      // Invalid leading byte or continuation byte at start
+      SET_BOOL_RETURN(0);
+      return;
+    }
+    if( i + char_len > len ) {
+      // Truncated sequence
+      SET_BOOL_RETURN(0);
+      return;
+    }
+    // Verify continuation bytes
+    for( int j = 1; j < char_len; j++ ) {
+      if( (s[i + j] & 0xC0) != 0x80 ) {
+        SET_BOOL_RETURN(0);
+        return;
+      }
+    }
+    i += char_len;
+  }
+
+  SET_BOOL_RETURN(1);
+}
+
+
+//================================================================
+/*! (method) chars
+*/
+static void c_string_chars(struct VM *vm, mrbc_value v[], int argc)
+{
+  const uint8_t *s = (const uint8_t *)mrbc_string_cstr(&v[0]);
+  int len = mrbc_string_size(&v[0]);
+  int char_count = mrbc_string_char_size((const char *)s, len);
+  mrbc_value ret = mrbc_array_new(vm, char_count);
+
+  int i = 0;
+  int idx = 0;
+  while( i < len ) {
+    int char_len = mrbc_string_utf8_size((const char *)&s[i]);
+    if( char_len == 0 ) char_len = 1;  // skip invalid byte
+    if( i + char_len > len ) char_len = len - i;
+
+    mrbc_value ch = mrbc_string_new(vm, &s[i], char_len);
+    mrbc_array_set(&ret, idx++, &ch);
+    i += char_len;
+  }
+
+  SET_RETURN(ret);
+}
+#endif // MRBC_USE_STRING_UTF8
+
+
 /* MRBC_AUTOGEN_METHOD_TABLE
 
   CLASS("String")
@@ -1523,9 +1770,16 @@ static void c_string_downcase_self(struct VM *vm, mrbc_value v[], int argc)
   METHOD( "upcase!",	c_string_upcase_self )
   METHOD( "downcase",	c_string_downcase )
   METHOD( "downcase!",	c_string_downcase_self )
+  METHOD( "bytesize",	c_string_bytesize )
 
 #if MRBC_USE_FLOAT
   METHOD( "to_f",	c_string_to_f )
+#endif
+
+#if MRBC_USE_STRING_UTF8
+  METHOD( "encoding",	c_string_encoding )
+  METHOD( "valid_encoding?", c_string_valid_encoding )
+  METHOD( "chars",	c_string_chars )
 #endif
 */
 #include "_autogen_class_string.h"
