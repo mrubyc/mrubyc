@@ -11,6 +11,14 @@ include hal_selector.mk
 
 TARGET = $(BUILD_DIR)/libmrubyc.a
 CFLAGS += -Wall -g   #-std=c99 -pedantic -pedantic-errors
+
+# Optional feature flags (pass to make, e.g., make MRBC_USE_STRING_UTF8=1)
+ifdef MRBC_USE_STRING_UTF8
+CFLAGS += -DMRBC_USE_STRING_UTF8=$(MRBC_USE_STRING_UTF8)
+endif
+ifdef MRBC_USE_UNICODE_CASE
+CFLAGS += -DMRBC_USE_UNICODE_CASE=$(MRBC_USE_UNICODE_CASE)
+endif
 SRCS = alloc.c c_array.c c_hash.c c_math.c c_numeric.c c_object.c c_proc.c \
        c_range.c c_string.c class.c console.c error.c global.c keyvalue.c \
        load.c mrblib.c rrt0.c symbol.c value.c vm.c hal.c

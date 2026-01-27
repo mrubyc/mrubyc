@@ -23,6 +23,7 @@
 
 /***** Local headers ********************************************************/
 #include "mrubyc.h"
+#include "_autogen_unicode_case.h"
 
 /***** Constat values *******************************************************/
 /***** Macros ***************************************************************/
@@ -354,8 +355,9 @@ int mrbc_string_chomp(mrbc_value *src)
 }
 
 
+#if !MRBC_USE_STRING_UTF8 || !MRBC_USE_UNICODE_CASE
 //================================================================
-/*! upcase myself
+/*! upcase myself (ASCII-only version)
 
   @param    str     pointer to target value
   @return   count   number of upcased characters
@@ -377,7 +379,7 @@ int mrbc_string_upcase(mrbc_value *str)
 
 
 //================================================================
-/*! downcase myself
+/*! downcase myself (ASCII-only version)
 
   @param    str     pointer to target value
   @return   count   number of downcased characters
@@ -396,6 +398,7 @@ int mrbc_string_downcase(mrbc_value *str)
   }
   return count;
 }
+#endif /* !MRBC_USE_STRING_UTF8 || !MRBC_USE_UNICODE_CASE */
 
 
 #if MRBC_USE_STRING_UTF8
@@ -482,6 +485,295 @@ int mrbc_string_bytes2chars(const mrbc_value *src, int byte_index)
   }
   return (str == target) ? count : -1;
 }
+
+
+#if MRBC_USE_UNICODE_CASE
+//================================================================
+/*! Decode a UTF-8 character to codepoint
+
+  @param  str     pointer to UTF-8 character
+  @param  len_out output: byte length consumed
+  @return         Unicode codepoint, or -1 if invalid
+*/
+static int32_t unicode_decode_utf8(const uint8_t *str, int *len_out)
+{
+  uint8_t c = str[0];
+  int32_t cp;
+  int len;
+
+  if( (c & 0x80) == 0 ) {
+    cp = c;
+    len = 1;
+  } else if( (c & 0xE0) == 0xC0 ) {
+    cp = (c & 0x1F) << 6 | (str[1] & 0x3F);
+    len = 2;
+  } else if( (c & 0xF0) == 0xE0 ) {
+    cp = (c & 0x0F) << 12 | (str[1] & 0x3F) << 6 | (str[2] & 0x3F);
+    len = 3;
+  } else if( (c & 0xF8) == 0xF0 ) {
+    cp = (c & 0x07) << 18 | (str[1] & 0x3F) << 12 | (str[2] & 0x3F) << 6 | (str[3] & 0x3F);
+    len = 4;
+  } else {
+    *len_out = 1;
+    return -1;
+  }
+  *len_out = len;
+  return cp;
+}
+
+
+//================================================================
+/*! Encode a codepoint to UTF-8
+
+  @param  cp      Unicode codepoint
+  @param  buf     output buffer (must have space for 4 bytes)
+  @return         number of bytes written
+*/
+static int unicode_encode_utf8(int32_t cp, uint8_t *buf)
+{
+  if( cp < 0x80 ) {
+    buf[0] = cp;
+    return 1;
+  } else if( cp < 0x800 ) {
+    buf[0] = 0xC0 | (cp >> 6);
+    buf[1] = 0x80 | (cp & 0x3F);
+    return 2;
+  } else if( cp < 0x10000 ) {
+    buf[0] = 0xE0 | (cp >> 12);
+    buf[1] = 0x80 | ((cp >> 6) & 0x3F);
+    buf[2] = 0x80 | (cp & 0x3F);
+    return 3;
+  } else {
+    buf[0] = 0xF0 | (cp >> 18);
+    buf[1] = 0x80 | ((cp >> 12) & 0x3F);
+    buf[2] = 0x80 | ((cp >> 6) & 0x3F);
+    buf[3] = 0x80 | (cp & 0x3F);
+    return 4;
+  }
+}
+
+
+//================================================================
+/*! Look up case conversion in range table
+
+  @param  cp      codepoint to convert
+  @param  ranges  range table
+  @param  count   number of ranges
+  @return         converted codepoint, or original if not found
+*/
+static int32_t unicode_case_lookup_range(int32_t cp, const case_range_t *ranges, int count)
+{
+  for( int i = 0; i < count; i++ ) {
+    if( cp >= ranges[i].start && cp <= ranges[i].end ) {
+      // Check if this character matches the XOR pattern
+      int32_t converted = cp ^ ranges[i].xor_val;
+      // Verify the conversion is in the expected direction
+      // For upcase: converted should be < cp (or same block)
+      // For downcase: converted should be > cp (or same block)
+      return converted;
+    }
+  }
+  return cp;  // Not found in ranges
+}
+
+
+//================================================================
+/*! Look up case conversion in exception table (binary search)
+
+  @param  cp          codepoint to convert
+  @param  exceptions  exception table (sorted by 'from')
+  @param  count       number of exceptions
+  @return             converted codepoint, or original if not found
+*/
+static int32_t unicode_case_lookup_exception(int32_t cp, const case_exception_t *exceptions, int count)
+{
+  int low = 0, high = count - 1;
+
+  while( low <= high ) {
+    int mid = (low + high) / 2;
+    if( exceptions[mid].from == cp ) {
+      return exceptions[mid].to;
+    } else if( exceptions[mid].from < cp ) {
+      low = mid + 1;
+    } else {
+      high = mid - 1;
+    }
+  }
+  return cp;  // Not found
+}
+
+
+//================================================================
+/*! Convert a codepoint to uppercase
+
+  @param  cp      codepoint
+  @return         uppercase codepoint
+*/
+static int32_t unicode_upcase_codepoint(int32_t cp)
+{
+  if( cp < 0 || cp > 0xFFFF ) return cp;  // BMP only
+
+  // Try ranges first (more common patterns)
+  int32_t result = unicode_case_lookup_range(cp, upcase_ranges, UPCASE_RANGES_COUNT);
+  if( result != cp ) return result;
+
+  // Fall back to exceptions
+  return unicode_case_lookup_exception(cp, upcase_exceptions, UPCASE_EXCEPTIONS_COUNT);
+}
+
+
+//================================================================
+/*! Convert a codepoint to lowercase
+
+  @param  cp      codepoint
+  @return         lowercase codepoint
+*/
+static int32_t unicode_downcase_codepoint(int32_t cp)
+{
+  if( cp < 0 || cp > 0xFFFF ) return cp;  // BMP only
+
+  // Try ranges first
+  int32_t result = unicode_case_lookup_range(cp, downcase_ranges, DOWNCASE_RANGES_COUNT);
+  if( result != cp ) return result;
+
+  // Fall back to exceptions
+  return unicode_case_lookup_exception(cp, downcase_exceptions, DOWNCASE_EXCEPTIONS_COUNT);
+}
+
+
+//================================================================
+/*! upcase myself (Unicode-aware version)
+
+  @param    str     pointer to target value
+  @return   count   number of upcased characters
+*/
+int mrbc_string_upcase(mrbc_value *str)
+{
+  int len = str->string->size;
+  uint8_t *data = str->string->data;
+  int count = 0;
+
+  // First pass: check if any conversion changes byte length
+  int new_len = 0;
+  int needs_realloc = 0;
+  for( int i = 0; i < len; ) {
+    int char_len;
+    int32_t cp = unicode_decode_utf8(data + i, &char_len);
+    int32_t upper_cp = unicode_upcase_codepoint(cp);
+
+    uint8_t buf[4];
+    int new_char_len = unicode_encode_utf8(upper_cp, buf);
+    new_len += new_char_len;
+    if( new_char_len != char_len ) needs_realloc = 1;
+    i += char_len;
+  }
+
+  if( needs_realloc ) {
+    // Need to allocate new buffer
+    uint8_t *new_data = mrbc_raw_alloc(new_len + 1);
+    if( !new_data ) return 0;
+
+    int j = 0;
+    for( int i = 0; i < len; ) {
+      int char_len;
+      int32_t cp = unicode_decode_utf8(data + i, &char_len);
+      int32_t upper_cp = unicode_upcase_codepoint(cp);
+
+      int new_char_len = unicode_encode_utf8(upper_cp, new_data + j);
+      if( upper_cp != cp ) count++;
+      j += new_char_len;
+      i += char_len;
+    }
+    new_data[new_len] = '\0';
+
+    mrbc_raw_free(data);
+    str->string->data = new_data;
+    str->string->size = new_len;
+  } else {
+    // In-place conversion
+    for( int i = 0; i < len; ) {
+      int char_len;
+      int32_t cp = unicode_decode_utf8(data + i, &char_len);
+      int32_t upper_cp = unicode_upcase_codepoint(cp);
+
+      if( upper_cp != cp ) {
+        unicode_encode_utf8(upper_cp, data + i);
+        count++;
+      }
+      i += char_len;
+    }
+  }
+
+  return count;
+}
+
+
+//================================================================
+/*! downcase myself (Unicode-aware version)
+
+  @param    str     pointer to target value
+  @return   count   number of downcased characters
+*/
+int mrbc_string_downcase(mrbc_value *str)
+{
+  int len = str->string->size;
+  uint8_t *data = str->string->data;
+  int count = 0;
+
+  // First pass: check if any conversion changes byte length
+  int new_len = 0;
+  int needs_realloc = 0;
+  for( int i = 0; i < len; ) {
+    int char_len;
+    int32_t cp = unicode_decode_utf8(data + i, &char_len);
+    int32_t lower_cp = unicode_downcase_codepoint(cp);
+
+    uint8_t buf[4];
+    int new_char_len = unicode_encode_utf8(lower_cp, buf);
+    new_len += new_char_len;
+    if( new_char_len != char_len ) needs_realloc = 1;
+    i += char_len;
+  }
+
+  if( needs_realloc ) {
+    // Need to allocate new buffer
+    uint8_t *new_data = mrbc_raw_alloc(new_len + 1);
+    if( !new_data ) return 0;
+
+    int j = 0;
+    for( int i = 0; i < len; ) {
+      int char_len;
+      int32_t cp = unicode_decode_utf8(data + i, &char_len);
+      int32_t lower_cp = unicode_downcase_codepoint(cp);
+
+      int new_char_len = unicode_encode_utf8(lower_cp, new_data + j);
+      if( lower_cp != cp ) count++;
+      j += new_char_len;
+      i += char_len;
+    }
+    new_data[new_len] = '\0';
+
+    mrbc_raw_free(data);
+    str->string->data = new_data;
+    str->string->size = new_len;
+  } else {
+    // In-place conversion
+    for( int i = 0; i < len; ) {
+      int char_len;
+      int32_t cp = unicode_decode_utf8(data + i, &char_len);
+      int32_t lower_cp = unicode_downcase_codepoint(cp);
+
+      if( lower_cp != cp ) {
+        unicode_encode_utf8(lower_cp, data + i);
+        count++;
+      }
+      i += char_len;
+    }
+  }
+
+  return count;
+}
+#endif /* MRBC_USE_UNICODE_CASE */
 #endif // MRBC_USE_STRING_UTF8
 
 

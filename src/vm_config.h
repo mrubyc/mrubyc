@@ -63,6 +63,17 @@
 #define MRBC_USE_STRING_UTF8 0
 #endif
 
+/* USE Unicode case mapping. Enable full BMP Unicode case conversion.
+   Requires MRBC_USE_STRING_UTF8 to be enabled.
+   When enabled, upcase/downcase work with Greek, Cyrillic, etc.
+   Adds ~5KB to binary size.
+   0: NOT USE (ASCII-only case conversion - default)
+   1: USE full Unicode BMP case mapping
+*/
+#if !defined(MRBC_USE_UNICODE_CASE)
+#define MRBC_USE_UNICODE_CASE 0
+#endif
+
 
 /* Hardware dependent flags
 
