@@ -114,7 +114,7 @@ void mrbc_hash_delete(mrbc_value *hash)
 
 
 //================================================================
-/*! search by key
+/*! search by key (binary search)
 
   @param  hash	pointer to target hash
   @param  key	pointer to key value
@@ -122,12 +122,23 @@ void mrbc_hash_delete(mrbc_value *hash)
 */
 mrbc_value * mrbc_hash_search(const mrbc_value *hash, const mrbc_value *key)
 {
-  mrbc_value *p1 = hash->hash->data;
-  const mrbc_value *p2 = p1 + hash->hash->n_stored;
+  mrbc_value *data = hash->hash->data;
+  int n = hash->hash->n_stored / 2;  // number of key-value pairs
 
-  while( p1 < p2 ) {
-    if( mrbc_compare(p1, key) == 0 ) return p1;
-    p1 += 2;
+  int left = 0;
+  int right = n - 1;
+
+  while( left <= right ) {
+    int mid = left + (right - left) / 2;
+    mrbc_value *mid_key = &data[mid * 2];
+    int cmp = mrbc_compare(mid_key, key);
+
+    if( cmp == 0 ) return mid_key;
+    if( cmp < 0 ) {
+      left = mid + 1;
+    } else {
+      right = mid - 1;
+    }
   }
 
   return NULL;
@@ -135,7 +146,7 @@ mrbc_value * mrbc_hash_search(const mrbc_value *hash, const mrbc_value *key)
 
 
 //================================================================
-/*! search by symbol ID
+/*! search by symbol ID (binary search)
 
   @param  hash		pointer to target hash
   @param  sym_id	symbol ID
@@ -144,21 +155,13 @@ mrbc_value * mrbc_hash_search(const mrbc_value *hash, const mrbc_value *key)
 */
 mrbc_value * mrbc_hash_search_by_id(const mrbc_value *hash, mrbc_sym sym_id)
 {
-  mrbc_value *p1 = hash->hash->data;
-  const mrbc_value *p2 = p1 + hash->hash->n_stored;
-
-  while( p1 < p2 ) {
-    if( mrbc_type(*p1) == MRBC_TT_SYMBOL &&
-        mrbc_symbol(*p1) == sym_id ) return p1;
-    p1 += 2;
-  }
-
-  return NULL;
+  mrbc_value key = mrbc_symbol_value(sym_id);
+  return mrbc_hash_search(hash, &key);
 }
 
 
 //================================================================
-/*! setter
+/*! setter (maintains sorted order for binary search)
 
   @param  hash	pointer to target hash
   @param  key	pointer to key value
@@ -167,23 +170,59 @@ mrbc_value * mrbc_hash_search_by_id(const mrbc_value *hash, mrbc_sym sym_id)
 */
 int mrbc_hash_set(mrbc_value *hash, mrbc_value *key, mrbc_value *val)
 {
-  mrbc_value *v = mrbc_hash_search(hash, key);
-  int ret = 0;
-  if( v == NULL ) {
-    // set a new value
-    if( (ret = mrbc_array_push(hash, key)) != 0 ) goto RETURN;
-    ret = mrbc_array_push(hash, val);
+  mrbc_hash *h = hash->hash;
+  mrbc_value *data = h->data;
+  int n = h->n_stored / 2;  // number of key-value pairs
 
-  } else {
-    // replace a value
-    mrbc_decref(v);
-    *v = *key;
-    mrbc_decref(++v);
-    *v = *val;
+  // Binary search to find insertion position
+  int left = 0;
+  int right = n;
+
+  while( left < right ) {
+    int mid = left + (right - left) / 2;
+    mrbc_value *mid_key = &data[mid * 2];
+    int cmp = mrbc_compare(mid_key, key);
+
+    if( cmp == 0 ) {
+      // Key exists, replace value
+      mrbc_decref(mid_key);
+      *mid_key = *key;
+      mrbc_decref(mid_key + 1);
+      *(mid_key + 1) = *val;
+      return 0;
+    }
+    if( cmp < 0 ) {
+      left = mid + 1;
+    } else {
+      right = mid;
+    }
   }
 
- RETURN:
-  return ret;
+  // Key not found, insert at position 'left'
+  // Ensure we have space
+  if( h->n_stored >= h->data_size ) {
+    int new_size = h->data_size + 6;
+    if( new_size < 6 ) new_size = 6;
+    mrbc_value *new_data = mrbc_raw_realloc(data, sizeof(mrbc_value) * new_size);
+    if( !new_data ) return E_NOMEMORY_ERROR;
+    h->data = new_data;
+    h->data_size = new_size;
+    data = new_data;
+  }
+
+  // Shift elements to make room
+  int insert_pos = left * 2;
+  if( insert_pos < h->n_stored ) {
+    memmove(&data[insert_pos + 2], &data[insert_pos],
+            sizeof(mrbc_value) * (h->n_stored - insert_pos));
+  }
+
+  // Insert new key-value pair
+  data[insert_pos] = *key;
+  data[insert_pos + 1] = *val;
+  h->n_stored += 2;
+
+  return 0;
 }
 
 
