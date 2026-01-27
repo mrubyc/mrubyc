@@ -1088,7 +1088,11 @@ static void c_string_ord(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_string_slice_self(struct VM *vm, mrbc_value v[], int argc)
 {
+#if MRBC_USE_STRING_UTF8
+  int target_len = mrbc_string_char_size(mrbc_string_cstr(&v[0]), v[0].string->size);
+#else
   int target_len = mrbc_string_size(v);
+#endif
   int pos = mrbc_integer(v[1]);
   int len;
 
@@ -1113,6 +1117,22 @@ static void c_string_slice_self(struct VM *vm, mrbc_value v[], int argc)
   if( len < 0 ) goto RETURN_NIL;
   if( argc == 1 && len <= 0 ) goto RETURN_NIL;
 
+#if MRBC_USE_STRING_UTF8
+  // Convert character position/length to byte position/length
+  int byte_pos = mrbc_string_chars2bytes(&v[0], 0, pos);
+  int byte_len = mrbc_string_chars2bytes(&v[0], byte_pos, len);
+  int byte_size = v[0].string->size;
+
+  mrbc_value ret = mrbc_string_new(vm, mrbc_string_cstr(v) + byte_pos, byte_len);
+  if( !ret.string ) goto RETURN_NIL;		// ENOMEM
+
+  if( byte_len > 0 ) {
+    memmove( mrbc_string_cstr(v) + byte_pos, mrbc_string_cstr(v) + byte_pos + byte_len,
+             byte_size - byte_pos - byte_len + 1 );
+    v->string->size = byte_size - byte_len;
+    mrbc_raw_realloc( mrbc_string_cstr(v), v->string->size + 1 );
+  }
+#else
   mrbc_value ret = mrbc_string_new(vm, mrbc_string_cstr(v) + pos, len);
   if( !ret.string ) goto RETURN_NIL;		// ENOMEM
 
@@ -1122,6 +1142,7 @@ static void c_string_slice_self(struct VM *vm, mrbc_value v[], int argc)
     v->string->size = mrbc_string_size(v) - len;
     mrbc_raw_realloc( mrbc_string_cstr(v), mrbc_string_size(v)+1 );
   }
+#endif
 
   SET_RETURN(ret);
   return;		// normal return
@@ -1203,8 +1224,17 @@ static void c_string_split(struct VM *vm, mrbc_value v[], int argc)
 
     // split by each character.
     if( mrbc_string_size(&sep) == 0 ) {
+#if MRBC_USE_STRING_UTF8
+      // Get UTF-8 character length at current offset
+      int char_len = mrbc_string_utf8_size(mrbc_string_cstr(&v[0]) + offset);
+      if( char_len == 0 ) char_len = 1;  // skip invalid byte
+      pos = (offset + char_len < mrbc_string_size(&v[0])) ? offset : -1;
+      len = char_len;
+      sep_len = char_len;  // advance by character length
+#else
       pos = (offset < mrbc_string_size(&v[0])-1) ? offset : -1;
       len = 1;
+#endif
       goto SPLIT_ITEM;
     }
 
@@ -1641,15 +1671,6 @@ static void c_string_downcase_self(struct VM *vm, mrbc_value v[], int argc)
 }
 
 
-//================================================================
-/*! (method) bytesize
-*/
-static void c_string_bytesize(struct VM *vm, mrbc_value v[], int argc)
-{
-  SET_INT_RETURN( mrbc_string_size(&v[0]) );
-}
-
-
 #if MRBC_USE_STRING_UTF8
 //================================================================
 /*! (method) encoding
@@ -1770,7 +1791,6 @@ static void c_string_chars(struct VM *vm, mrbc_value v[], int argc)
   METHOD( "upcase!",	c_string_upcase_self )
   METHOD( "downcase",	c_string_downcase )
   METHOD( "downcase!",	c_string_downcase_self )
-  METHOD( "bytesize",	c_string_bytesize )
 
 #if MRBC_USE_FLOAT
   METHOD( "to_f",	c_string_to_f )

@@ -10,7 +10,6 @@ static const mrbc_sym method_symbols_String[] = {
   MRBC_SYM(BL_BR_EQ),
   MRBC_SYM(b),
   MRBC_SYM(bytes),
-  MRBC_SYM(bytesize),
 #if MRBC_USE_STRING_UTF8
   MRBC_SYM(chars),
 #endif
@@ -68,7 +67,6 @@ static const mrbc_func_t method_functions_String[] = {
   c_string_insert,
   c_ineffect,
   c_string_bytes,
-  c_string_bytesize,
 #if MRBC_USE_STRING_UTF8
   c_string_chars,
 #endif
