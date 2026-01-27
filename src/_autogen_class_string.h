@@ -35,6 +35,12 @@ static const mrbc_sym method_symbols_String[] = {
   MRBC_SYM(lstrip_E),
   MRBC_SYM(new),
   MRBC_SYM(ord),
+#if MRBC_USE_STRING_UTF8
+  MRBC_SYM(reverse),
+#endif
+#if MRBC_USE_STRING_UTF8
+  MRBC_SYM(reverse_E),
+#endif
   MRBC_SYM(rstrip),
   MRBC_SYM(rstrip_E),
   MRBC_SYM(setbyte),
@@ -93,6 +99,12 @@ static const mrbc_func_t method_functions_String[] = {
   c_string_lstrip_self,
   c_string_new,
   c_string_ord,
+#if MRBC_USE_STRING_UTF8
+  c_string_reverse,
+#endif
+#if MRBC_USE_STRING_UTF8
+  c_string_reverse_self,
+#endif
   c_string_rstrip,
   c_string_rstrip_self,
   c_string_setbyte,
