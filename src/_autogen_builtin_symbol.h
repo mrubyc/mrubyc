@@ -239,6 +239,10 @@ static const char *builtin_symbols[] = {
   "values",		// MRBC_SYMID_values = 232(0xe8)
   "|",			// MRBC_SYMID_OR = 233(0xe9)
   "~",			// MRBC_SYMID_NEG = 234(0xea)
+  "bytesize",		// MRBC_SYMID_bytesize = 235(0xeb)
+  "chars",		// MRBC_SYMID_chars = 236(0xec)
+  "encoding",		// MRBC_SYMID_encoding = 237(0xed)
+  "valid_encoding?",	// MRBC_SYMID_valid_encoding_Q = 238(0xee)
 };
 #endif
 
@@ -477,6 +481,10 @@ enum {
   MRBC_SYMID_values = 232,
   MRBC_SYMID_OR = 233,
   MRBC_SYMID_NEG = 234,
+  MRBC_SYMID_bytesize = 235,
+  MRBC_SYMID_chars = 236,
+  MRBC_SYMID_encoding = 237,
+  MRBC_SYMID_valid_encoding_Q = 238,
 };
 
 #endif

@@ -53,6 +53,16 @@
 #define MRBC_USE_STRING 1
 #endif
 
+/* USE UTF-8 String. Enable UTF-8 encoding support for String class.
+   When enabled, String methods like size, [], []=, index work with
+   UTF-8 character indices instead of byte indices.
+   0: NOT USE (ASCII/binary mode - default)
+   1: USE UTF-8
+*/
+#if !defined(MRBC_USE_STRING_UTF8)
+#define MRBC_USE_STRING_UTF8 0
+#endif
+
 
 /* Hardware dependent flags
 
