@@ -384,4 +384,233 @@ class StringUtf8Test < Picotest::Test
     assert_equal ["あ"], "あ".chars
   end
 
+  #
+  # String#bytesize
+  #
+  description "bytesize returns byte count for ASCII"
+  def test_bytesize_ascii
+    assert_equal 5, "hello".bytesize
+  end
+
+  description "bytesize returns byte count for Japanese"
+  def test_bytesize_japanese
+    # "あいう" is 9 bytes in UTF-8 (3 bytes each)
+    assert_equal 9, "あいう".bytesize
+  end
+
+  description "bytesize returns byte count for mixed"
+  def test_bytesize_mixed
+    # "aあb" = 1 + 3 + 1 = 5 bytes
+    assert_equal 5, "aあb".bytesize
+  end
+
+  description "bytesize returns byte count for emoji"
+  def test_bytesize_emoji
+    # "😀" is 4 bytes in UTF-8
+    assert_equal 4, "😀".bytesize
+  end
+
+  description "bytesize differs from size for multibyte"
+  def test_bytesize_vs_size
+    s = "あいう"
+    assert_equal 3, s.size        # 3 characters
+    assert_equal 9, s.bytesize    # 9 bytes
+  end
+
+  #
+  # String#reverse
+  #
+  description "reverse returns reversed ASCII string"
+  def test_reverse_ascii
+    assert_equal "olleh", "hello".reverse
+  end
+
+  description "reverse returns reversed Japanese string"
+  def test_reverse_japanese
+    assert_equal "語本日", "日本語".reverse
+  end
+
+  description "reverse handles mixed ASCII and multibyte"
+  def test_reverse_mixed
+    assert_equal "cあba", "abあc".reverse
+  end
+
+  description "reverse handles emoji"
+  def test_reverse_emoji
+    assert_equal "🎊🎉", "🎉🎊".reverse
+  end
+
+  description "reverse handles accented characters"
+  def test_reverse_accented
+    assert_equal "éfac", "café".reverse
+  end
+
+  description "reverse! modifies string in place"
+  def test_reverse_self
+    s = "あいう"
+    s.reverse!
+    assert_equal "ういあ", s
+  end
+
+  description "reverse! returns self"
+  def test_reverse_self_returns_self
+    s = "abc"
+    result = s.reverse!
+    assert_equal "cba", result
+    assert_equal "cba", s
+  end
+
+  description "reverse empty string"
+  def test_reverse_empty
+    assert_equal "", "".reverse
+  end
+
+  description "reverse single character"
+  def test_reverse_single_char
+    assert_equal "あ", "あ".reverse
+  end
+
+  #
+  # Outer BMP characters (4-byte UTF-8)
+  #
+  description "size counts 4-byte UTF-8 characters correctly"
+  def test_size_outer_bmp
+    # 𩸽 (U+29E3D) is outside BMP, 4 bytes in UTF-8
+    assert_equal 1, "𩸽".size
+  end
+
+  description "slice works with 4-byte UTF-8 characters"
+  def test_slice_outer_bmp
+    s = "a𩸽b"
+    assert_equal "a", s[0]
+    assert_equal "𩸽", s[1]
+    assert_equal "b", s[2]
+    assert_equal 3, s.size
+  end
+
+  description "ord returns correct codepoint for 4-byte UTF-8"
+  def test_ord_outer_bmp
+    # 𩸽 is U+29E3D = 171581
+    assert_equal 171581, "𩸽".ord
+  end
+
+  description "chr creates 4-byte UTF-8 character"
+  def test_chr_outer_bmp
+    # U+29E3D = 171581 = "𩸽"
+    assert_equal "𩸽", 171581.chr
+  end
+
+  description "reverse works with 4-byte UTF-8 characters"
+  def test_reverse_outer_bmp
+    assert_equal "ba𩸽", "𩸽ab".reverse
+  end
+
+  description "concatenation with 4-byte UTF-8 characters"
+  def test_concat_outer_bmp
+    s = "あ" + "𩸽"
+    assert_equal "あ𩸽", s
+    assert_equal 2, s.size
+  end
+
+  description "chars with 4-byte UTF-8 characters"
+  def test_chars_outer_bmp
+    s = "a𩸽b"
+    result = s.chars
+    assert_equal 3, result.size
+    assert_equal "a", result[0]
+    assert_equal "𩸽", result[1]
+    assert_equal "b", result[2]
+  end
+
+  #
+  # String#<< with codepoint
+  #
+  description "append codepoint creates UTF-8 character"
+  def test_append_codepoint
+    s = "a"
+    s << 12354  # U+3042 = "あ"
+    assert_equal "aあ", s
+    assert_equal 2, s.size
+  end
+
+  description "append ASCII codepoint"
+  def test_append_ascii_codepoint
+    s = "a"
+    s << 65  # "A"
+    assert_equal "aA", s
+  end
+
+  description "append 4-byte codepoint"
+  def test_append_outer_bmp_codepoint
+    s = "a"
+    s << 171581  # U+29E3D = "𩸽"
+    assert_equal "a𩸽", s
+    assert_equal 2, s.size
+  end
+
+  #
+  # each_char
+  #
+  description "each_char iterates over UTF-8 characters"
+  def test_each_char
+    chars = []
+    "あいう".each_char { |c| chars << c }
+    assert_equal 3, chars.size
+    assert_equal "あ", chars[0]
+    assert_equal "い", chars[1]
+    assert_equal "う", chars[2]
+  end
+
+  description "each_char with mixed content"
+  def test_each_char_mixed
+    chars = []
+    "aあ𩸽".each_char { |c| chars << c }
+    assert_equal 3, chars.size
+    assert_equal "a", chars[0]
+    assert_equal "あ", chars[1]
+    assert_equal "𩸽", chars[2]
+  end
+
+  #
+  # each_byte
+  #
+  description "each_byte iterates over bytes"
+  def test_each_byte
+    bytes = []
+    "あ".each_byte { |b| bytes << b }
+    # "あ" = E3 81 82 in UTF-8
+    assert_equal 3, bytes.size
+    assert_equal 0xE3, bytes[0]
+    assert_equal 0x81, bytes[1]
+    assert_equal 0x82, bytes[2]
+  end
+
+  #
+  # tr with UTF-8
+  #
+  description "tr with UTF-8 characters"
+  def test_tr_utf8
+    assert_equal "あXう", "あいう".tr("い", "X")
+  end
+
+  description "tr! with UTF-8 characters"
+  def test_tr_self_utf8
+    s = "あいう"
+    s.tr!("い", "X")
+    assert_equal "あXう", s
+  end
+
+  #
+  # upcase/downcase with UTF-8 (ASCII only by default)
+  #
+  description "upcase works with ASCII in UTF-8 string"
+  def test_upcase_utf8_ascii
+    assert_equal "ABCあいう", "abcあいう".upcase
+  end
+
+  description "downcase works with ASCII in UTF-8 string"
+  def test_downcase_utf8_ascii
+    assert_equal "abcあいう", "ABCあいう".downcase
+  end
+
 end
