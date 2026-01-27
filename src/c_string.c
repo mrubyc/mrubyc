@@ -2344,6 +2344,98 @@ static void c_string_chars(struct VM *vm, mrbc_value v[], int argc)
 
   SET_RETURN(ret);
 }
+
+
+//================================================================
+/*! (method) reverse
+*/
+static void c_string_reverse(struct VM *vm, mrbc_value v[], int argc)
+{
+  const uint8_t *s = (const uint8_t *)mrbc_string_cstr(&v[0]);
+  int len = mrbc_string_size(&v[0]);
+
+  // Allocate result buffer (same byte length as original)
+  mrbc_value ret = mrbc_string_new(vm, NULL, len);
+  if( ret.string == NULL ) return;
+  uint8_t *dst = ret.string->data;
+
+  // Find all character boundaries first
+  int char_count = mrbc_string_char_size((const char *)s, len);
+  int *offsets = mrbc_raw_alloc(sizeof(int) * (char_count + 1));
+  if( offsets == NULL ) {
+    mrbc_decref(&ret);
+    return;
+  }
+
+  int i = 0;
+  int idx = 0;
+  while( i < len ) {
+    offsets[idx++] = i;
+    int char_len = mrbc_string_utf8_size((const char *)&s[i]);
+    if( char_len == 0 ) char_len = 1;
+    i += char_len;
+  }
+  offsets[idx] = len;
+
+  // Copy characters in reverse order
+  int dst_pos = 0;
+  for( i = char_count - 1; i >= 0; i-- ) {
+    int char_start = offsets[i];
+    int char_len = offsets[i + 1] - char_start;
+    memcpy(dst + dst_pos, s + char_start, char_len);
+    dst_pos += char_len;
+  }
+  dst[len] = '\0';
+
+  mrbc_raw_free(offsets);
+  SET_RETURN(ret);
+}
+
+
+//================================================================
+/*! (method) reverse!
+*/
+static void c_string_reverse_self(struct VM *vm, mrbc_value v[], int argc)
+{
+  const uint8_t *s = (const uint8_t *)mrbc_string_cstr(&v[0]);
+  int len = mrbc_string_size(&v[0]);
+
+  // Find all character boundaries
+  int char_count = mrbc_string_char_size((const char *)s, len);
+  int *offsets = mrbc_raw_alloc(sizeof(int) * (char_count + 1));
+  if( offsets == NULL ) return;
+
+  int i = 0;
+  int idx = 0;
+  while( i < len ) {
+    offsets[idx++] = i;
+    int char_len = mrbc_string_utf8_size((const char *)&s[i]);
+    if( char_len == 0 ) char_len = 1;
+    i += char_len;
+  }
+  offsets[idx] = len;
+
+  // Create temp buffer and copy reversed
+  uint8_t *tmp = mrbc_raw_alloc(len);
+  if( tmp == NULL ) {
+    mrbc_raw_free(offsets);
+    return;
+  }
+
+  int dst_pos = 0;
+  for( i = char_count - 1; i >= 0; i-- ) {
+    int char_start = offsets[i];
+    int char_len = offsets[i + 1] - char_start;
+    memcpy(tmp + dst_pos, s + char_start, char_len);
+    dst_pos += char_len;
+  }
+
+  // Copy back to original
+  memcpy(v[0].string->data, tmp, len);
+
+  mrbc_raw_free(tmp);
+  mrbc_raw_free(offsets);
+}
 #endif // MRBC_USE_STRING_UTF8
 
 
@@ -2404,6 +2496,8 @@ static void c_string_chars(struct VM *vm, mrbc_value v[], int argc)
   METHOD( "encoding",	c_string_encoding )
   METHOD( "valid_encoding?", c_string_valid_encoding )
   METHOD( "chars",	c_string_chars )
+  METHOD( "reverse",	c_string_reverse )
+  METHOD( "reverse!",	c_string_reverse_self )
 #endif
 */
 #include "_autogen_class_string.h"
