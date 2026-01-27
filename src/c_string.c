@@ -1400,6 +1400,269 @@ static void c_string_to_sym(struct VM *vm, mrbc_value v[], int argc)
   <in order> ::= (<ch>)+
   <range> ::= <ch> '-' <ch>
 */
+
+#if MRBC_USE_STRING_UTF8
+//================================================================
+// UTF-8 version of tr - uses codepoints instead of bytes
+//================================================================
+
+/*! Decode UTF-8 character to codepoint
+    Returns codepoint and advances *str by the number of bytes consumed
+*/
+static int32_t tr_utf8_decode(const char **str)
+{
+  const unsigned char *s = (const unsigned char *)*str;
+  int32_t codepoint;
+  int len;
+
+  if( s[0] < 0x80 ) {
+    codepoint = s[0];
+    len = 1;
+  } else if( (s[0] & 0xE0) == 0xC0 ) {
+    codepoint = ((s[0] & 0x1F) << 6) | (s[1] & 0x3F);
+    len = 2;
+  } else if( (s[0] & 0xF0) == 0xE0 ) {
+    codepoint = ((s[0] & 0x0F) << 12) | ((s[1] & 0x3F) << 6) | (s[2] & 0x3F);
+    len = 3;
+  } else if( (s[0] & 0xF8) == 0xF0 ) {
+    codepoint = ((s[0] & 0x07) << 18) | ((s[1] & 0x3F) << 12) | ((s[2] & 0x3F) << 6) | (s[3] & 0x3F);
+    len = 4;
+  } else {
+    // Invalid UTF-8, treat as single byte
+    codepoint = s[0];
+    len = 1;
+  }
+
+  *str += len;
+  return codepoint;
+}
+
+// UTF-8 pattern stores codepoints
+struct tr_pattern_utf8 {
+  uint8_t type;           // 1:in-order, 2:range
+  uint8_t flag_reverse;
+  int16_t n;              // number of codepoints
+  struct tr_pattern_utf8 *next;
+  int32_t codepoints[];   // flexible array of codepoints
+};
+
+static void tr_free_pattern_utf8(struct tr_pattern_utf8 *pat)
+{
+  while( pat ) {
+    struct tr_pattern_utf8 *p = pat->next;
+    mrbc_raw_free(pat);
+    pat = p;
+  }
+}
+
+static struct tr_pattern_utf8 *tr_parse_pattern_utf8(struct VM *vm, const mrbc_value *v_pattern, int flag_reverse_enable)
+{
+  const char *pattern = mrbc_string_cstr(v_pattern);
+  const char *pattern_end = pattern + mrbc_string_size(v_pattern);
+  int flag_reverse = 0;
+  struct tr_pattern_utf8 *ret = NULL;
+  struct tr_pattern_utf8 *last = NULL;
+
+  // Check for ^ at start
+  if( flag_reverse_enable && pattern < pattern_end && *pattern == '^' ) {
+    flag_reverse = 1;
+    pattern++;
+  }
+
+  while( pattern < pattern_end ) {
+    const char *start = pattern;
+    int32_t first_cp = tr_utf8_decode(&pattern);
+
+    // Check if this is a range pattern (cp1 - cp2)
+    if( pattern < pattern_end && *pattern == '-' && (pattern + 1) < pattern_end ) {
+      pattern++;  // skip '-'
+      int32_t second_cp = tr_utf8_decode(&pattern);
+
+      // Create range pattern
+      struct tr_pattern_utf8 *pat1 = mrbc_alloc(vm, sizeof(struct tr_pattern_utf8) + 2 * sizeof(int32_t));
+      if( pat1 != NULL ) {
+        pat1->type = 2;  // range
+        pat1->flag_reverse = flag_reverse;
+        pat1->n = second_cp - first_cp + 1;
+        pat1->next = NULL;
+        pat1->codepoints[0] = first_cp;
+        pat1->codepoints[1] = second_cp;
+      }
+
+      // Add to list
+      if( ret == NULL ) {
+        ret = last = pat1;
+      } else {
+        last->next = pat1;
+        last = pat1;
+      }
+    } else {
+      // In-order pattern - collect consecutive non-range characters
+      // First, count how many codepoints until we hit a range or end
+      const char *scan = pattern;
+      int count = 1;  // we already have first_cp
+
+      while( scan < pattern_end ) {
+        const char *next = scan;
+        tr_utf8_decode(&next);
+        // Check if next char starts a range
+        if( next < pattern_end && *next == '-' && (next + 1) < pattern_end ) {
+          break;  // stop before this char, it's part of a range
+        }
+        tr_utf8_decode(&scan);
+        count++;
+      }
+
+      // Create in-order pattern
+      struct tr_pattern_utf8 *pat1 = mrbc_alloc(vm, sizeof(struct tr_pattern_utf8) + count * sizeof(int32_t));
+      if( pat1 != NULL ) {
+        pat1->type = 1;  // in-order
+        pat1->flag_reverse = flag_reverse;
+        pat1->n = count;
+        pat1->next = NULL;
+
+        // Fill in codepoints
+        const char *p = start;
+        for( int i = 0; i < count; i++ ) {
+          pat1->codepoints[i] = tr_utf8_decode(&p);
+        }
+        pattern = p;
+      }
+
+      // Add to list
+      if( ret == NULL ) {
+        ret = last = pat1;
+      } else {
+        last->next = pat1;
+        last = pat1;
+      }
+    }
+  }
+
+  return ret;
+}
+
+static int tr_find_codepoint(const struct tr_pattern_utf8 *pat, int32_t cp)
+{
+  int ret = -1;
+  int n_sum = 0;
+  int flag_reverse = pat ? pat->flag_reverse : 0;
+
+  while( pat != NULL ) {
+    if( pat->type == 1 ) {  // in-order
+      for( int i = 0; i < pat->n; i++ ) {
+        if( pat->codepoints[i] == cp ) ret = n_sum + i;
+      }
+    } else {  // range
+      if( pat->codepoints[0] <= cp && cp <= pat->codepoints[1] ) {
+        ret = n_sum + (cp - pat->codepoints[0]);
+      }
+    }
+    n_sum += pat->n;
+    pat = pat->next;
+  }
+
+  if( flag_reverse ) {
+    return (ret < 0) ? INT_MAX : -1;
+  }
+  return ret;
+}
+
+static int32_t tr_get_codepoint(const struct tr_pattern_utf8 *pat, int n_th)
+{
+  int n_sum = 0;
+  while( pat != NULL ) {
+    if( n_th < (n_sum + pat->n) ) {
+      int i = n_th - n_sum;
+      return (pat->type == 1) ? pat->codepoints[i] : pat->codepoints[0] + i;
+    }
+    if( pat->next == NULL ) {
+      // Use last character for overflow
+      return (pat->type == 1) ? pat->codepoints[pat->n - 1] : pat->codepoints[1];
+    }
+    n_sum += pat->n;
+    pat = pat->next;
+  }
+  return -1;
+}
+
+static int tr_main_utf8(struct VM *vm, mrbc_value v[], int argc)
+{
+  if( !(argc == 2 && mrbc_type(v[1]) == MRBC_TT_STRING &&
+                     mrbc_type(v[2]) == MRBC_TT_STRING) ) {
+    mrbc_raise(vm, MRBC_CLASS(ArgumentError), 0);
+    return -1;
+  }
+
+  struct tr_pattern_utf8 *pat = tr_parse_pattern_utf8(vm, &v[1], 1);
+  if( pat == NULL ) return 0;
+
+  struct tr_pattern_utf8 *rep = tr_parse_pattern_utf8(vm, &v[2], 0);
+
+  // Build result string using chars approach
+  mrbc_value result = mrbc_string_new(vm, NULL, 0);
+  if( result.string == NULL ) {
+    tr_free_pattern_utf8(pat);
+    tr_free_pattern_utf8(rep);
+    return -1;
+  }
+
+  int flag_changed = 0;
+  const char *s = mrbc_string_cstr(&v[0]);
+  const char *end = s + mrbc_string_size(&v[0]);
+
+  while( s < end ) {
+    const char *char_start = s;
+    int32_t cp = tr_utf8_decode(&s);
+    int char_len = s - char_start;
+
+    int n = tr_find_codepoint(pat, cp);
+    if( n < 0 ) {
+      // No match, copy original character
+      mrbc_string_append_cbuf(&result, char_start, char_len);
+    } else {
+      flag_changed = 1;
+      if( rep == NULL ) {
+        // Delete character (don't append anything)
+      } else {
+        // Replace with corresponding character from rep
+        int32_t new_cp = tr_get_codepoint(rep, n);
+        char buf[4];
+        int new_len = mrbc_utf8_encode(new_cp, buf);
+        mrbc_string_append_cbuf(&result, buf, new_len);
+      }
+    }
+  }
+
+  tr_free_pattern_utf8(pat);
+  tr_free_pattern_utf8(rep);
+
+  // Replace original string content with result
+  mrbc_string *orig = v[0].string;
+  mrbc_string *res = result.string;
+
+  // Swap the data
+  if( mrbc_string_size(&v[0]) != mrbc_string_size(&result) ) {
+    // Need to reallocate
+    uint8_t *new_data = mrbc_realloc(vm, orig->data, res->size + 1);
+    if( new_data == NULL ) {
+      mrbc_decref(&result);
+      return -1;
+    }
+    orig->data = new_data;
+  }
+  memcpy(orig->data, res->data, res->size + 1);
+  orig->size = res->size;
+
+  mrbc_decref(&result);
+  return flag_changed;
+}
+#endif  // MRBC_USE_STRING_UTF8
+
+#if !MRBC_USE_STRING_UTF8
+//================================================================
+// Byte-based version of tr (original implementation, used when UTF-8 disabled)
+//================================================================
 struct tr_pattern {
   uint8_t type;		// 1:in-order, 2:range
   uint8_t flag_reverse;
@@ -1558,12 +1821,17 @@ static int tr_main( struct VM *vm, mrbc_value v[], int argc )
 
   return flag_changed;
 }
+#endif  // !MRBC_USE_STRING_UTF8
 
 static void c_string_tr(struct VM *vm, mrbc_value v[], int argc)
 {
   mrbc_value ret = mrbc_string_dup( vm, &v[0] );
   SET_RETURN( ret );
+#if MRBC_USE_STRING_UTF8
+  tr_main_utf8(vm, v, argc);
+#else
   tr_main(vm, v, argc);
+#endif
 }
 
 
@@ -1572,7 +1840,11 @@ static void c_string_tr(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_string_tr_self(struct VM *vm, mrbc_value v[], int argc)
 {
+#if MRBC_USE_STRING_UTF8
+  int flag_changed = tr_main_utf8(vm, v, argc);
+#else
   int flag_changed = tr_main(vm, v, argc);
+#endif
 
   if( !flag_changed ) {
     SET_NIL_RETURN();
