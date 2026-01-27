@@ -622,6 +622,30 @@ static void c_string_to_s(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_string_append(struct VM *vm, mrbc_value v[], int argc)
 {
+#if MRBC_USE_STRING_UTF8
+  // In UTF-8 mode, << accepts an integer codepoint
+  if( mrbc_type(v[1]) == MRBC_TT_INTEGER ) {
+    mrbc_int_t codepoint = mrbc_integer(v[1]);
+    char buf[5];
+    int len;
+
+    if( codepoint < 0 || codepoint > 0x10FFFF ) {
+      mrbc_raise(vm, MRBC_CLASS(RangeError), "out of char range");
+      return;
+    }
+    if( codepoint >= 0xD800 && codepoint <= 0xDFFF ) {
+      mrbc_raise(vm, MRBC_CLASS(RangeError), "invalid codepoint in UTF-8");
+      return;
+    }
+
+    len = mrbc_utf8_encode(codepoint, buf);
+    if( !mrbc_string_append_cbuf(&v[0], buf, len) ) {
+      // raise ? ENOMEM
+    }
+    return;
+  }
+#endif
+
   if( !mrbc_string_append( &v[0], &v[1] ) ) {
     // raise ? ENOMEM
   }
@@ -1031,7 +1055,14 @@ static void c_string_inspect(struct VM *vm, mrbc_value v[], int argc)
   const unsigned char *s = (const unsigned char *)mrbc_string_cstr(v);
 
   for( int i = 0; i < mrbc_string_size(v); i++ ) {
-    if( s[i] < ' ' || 0x7f == s[i] ) {	// tiny isprint()
+#if MRBC_USE_STRING_UTF8
+    // In UTF-8 mode, only escape control characters (< 0x20) and DEL (0x7F)
+    // High bytes (0x80+) are valid UTF-8 and should not be escaped
+    if( s[i] < ' ' || s[i] == 0x7f ) {
+#else
+    // In ASCII mode, escape control characters and all high bytes
+    if( s[i] < ' ' || s[i] >= 0x7f ) {
+#endif
       buf[2] = "0123456789ABCDEF"[s[i] >> 4];
       buf[3] = "0123456789ABCDEF"[s[i] & 0x0f];
       mrbc_string_append_cstr(&ret, buf);
