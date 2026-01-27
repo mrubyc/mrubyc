@@ -863,6 +863,14 @@ static void c_string_size(struct VM *vm, mrbc_value v[], int argc)
 }
 
 
+//================================================================
+/*! (method) bytesize
+*/
+static void c_string_bytesize(struct VM *vm, mrbc_value v[], int argc)
+{
+  SET_INT_RETURN( mrbc_string_size(&v[0]) );
+}
+
 
 //================================================================
 /*! (method) to_i
@@ -2349,6 +2357,7 @@ static void c_string_chars(struct VM *vm, mrbc_value v[], int argc)
   METHOD( "*",		c_string_mul )
   METHOD( "size",	c_string_size )
   METHOD( "length",	c_string_size )
+  METHOD( "bytesize",	c_string_bytesize )
   METHOD( "to_i",	c_string_to_i )
   METHOD( "to_s",	c_string_to_s )
   METHOD( "<<",		c_string_append )
