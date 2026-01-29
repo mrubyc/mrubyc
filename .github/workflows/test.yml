@@ -66,7 +66,7 @@ jobs:
             docker run \
               -e CC=gcc \
               -e PICORUBY_DEBUG=1 \
-              -e MRUBY_CONFIG=default \
+              -e MRUBY_CONFIG=picoruby-test \
               -e RUBY="bin/picoruby" \
               --rm -v ${{ github.workspace }}:/work/mrubyc mrubyc-test \
               bash -c "rake clean && rake && ruby /work/mrubyc/test/0_runner.rb"
@@ -75,7 +75,7 @@ jobs:
             docker run \
               -e CC=gcc \
               -e PICORUBY_DEBUG=1 \
-              -e MRUBY_CONFIG=default \
+              -e MRUBY_CONFIG=picoruby-test \
               -e RUBY="bin/picoruby" \
               -e PICORUBY_NO_LIBC_ALLOC=1 \
               --rm -v ${{ github.workspace }}:/work/mrubyc mrubyc-test \
@@ -85,7 +85,7 @@ jobs:
             docker run \
               -e CC=clang \
               -e PICORUBY_DEBUG=1 \
-              -e MRUBY_CONFIG=default \
+              -e MRUBY_CONFIG=picoruby-test \
               -e RUBY="bin/picoruby" \
               --rm -v ${{ github.workspace }}:/work/mrubyc mrubyc-test \
               bash -c "rake clean && rake && ruby /work/mrubyc/test/0_runner.rb"
@@ -94,7 +94,7 @@ jobs:
             docker run \
               -e CC=clang \
               -e PICORUBY_DEBUG=1 \
-              -e MRUBY_CONFIG=default \
+              -e MRUBY_CONFIG=picoruby-test \
               -e RUBY="bin/picoruby" \
               -e PICORUBY_NO_LIBC_ALLOC=1 \
               --rm -v ${{ github.workspace }}:/work/mrubyc mrubyc-test \
