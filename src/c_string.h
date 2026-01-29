@@ -70,6 +70,12 @@ int mrbc_string_strip(mrbc_value *src, int mode);
 int mrbc_string_chomp(mrbc_value *src);
 int mrbc_string_upcase(mrbc_value *str);
 int mrbc_string_downcase(mrbc_value *str);
+#if MRBC_USE_STRING_UTF8
+int mrbc_string_utf8_size(const char *str);
+int mrbc_string_char_size(const char *str, int len);
+int mrbc_string_chars2bytes(mrbc_value *src, int off, int idx);
+int mrbc_string_bytes2chars(const mrbc_value *src, int byte_index);
+#endif
 //@endcond
 
 
