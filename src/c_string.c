@@ -2321,6 +2321,25 @@ static void c_string_valid_encoding(struct VM *vm, mrbc_value v[], int argc)
 
 
 //================================================================
+/*! (method) ascii_only?
+*/
+static void c_string_ascii_only(struct VM *vm, mrbc_value v[], int argc)
+{
+  const uint8_t *s = (const uint8_t *)mrbc_string_cstr(&v[0]);
+  int len = mrbc_string_size(&v[0]);
+
+  for( int i = 0; i < len; i++ ) {
+    if( s[i] > 0x7F ) {
+      SET_BOOL_RETURN(0);
+      return;
+    }
+  }
+
+  SET_BOOL_RETURN(1);
+}
+
+
+//================================================================
 /*! (method) chars
 */
 static void c_string_chars(struct VM *vm, mrbc_value v[], int argc)
@@ -2495,6 +2514,7 @@ static void c_string_reverse_self(struct VM *vm, mrbc_value v[], int argc)
 #if MRBC_USE_STRING_UTF8
   METHOD( "encoding",	c_string_encoding )
   METHOD( "valid_encoding?", c_string_valid_encoding )
+  METHOD( "ascii_only?", c_string_ascii_only )
   METHOD( "chars",	c_string_chars )
   METHOD( "reverse",	c_string_reverse )
   METHOD( "reverse!",	c_string_reverse_self )

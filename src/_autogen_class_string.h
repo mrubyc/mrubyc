@@ -8,6 +8,9 @@ static const mrbc_sym method_symbols_String[] = {
   MRBC_SYM(LT_LT),
   MRBC_SYM(BL_BR),
   MRBC_SYM(BL_BR_EQ),
+#if MRBC_USE_STRING_UTF8
+  MRBC_SYM(ascii_only_Q),
+#endif
   MRBC_SYM(b),
   MRBC_SYM(bytes),
   MRBC_SYM(bytesize),
@@ -72,6 +75,9 @@ static const mrbc_func_t method_functions_String[] = {
   c_string_append,
   c_string_slice,
   c_string_insert,
+#if MRBC_USE_STRING_UTF8
+  c_string_ascii_only,
+#endif
   c_ineffect,
   c_string_bytes,
   c_string_bytesize,

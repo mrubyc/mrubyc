@@ -613,4 +613,25 @@ class StringUtf8Test < Picotest::Test
     assert_equal "abcあいう", "ABCあいう".downcase
   end
 
+  #
+  # String#ascii_only?
+  #
+  description "ascii_only? returns true for ASCII string"
+  def test_ascii_only_true
+    assert_equal true, "hello".ascii_only?
+    assert_equal true, "".ascii_only?
+    assert_equal true, "abc123!@#".ascii_only?
+    assert_equal true, "\t\n\r".ascii_only?
+    assert_equal true, "\x00\x7F".ascii_only?
+  end
+
+  description "ascii_only? returns false for multibyte string"
+  def test_ascii_only_false
+    assert_equal false, "あ".ascii_only?
+    assert_equal false, "hello世界".ascii_only?
+    assert_equal false, "café".ascii_only?
+    assert_equal false, "😀".ascii_only?
+    assert_equal false, "a𩸽b".ascii_only?
+  end
+
 end
