@@ -254,14 +254,73 @@ static void c_integer_to_f(struct VM *vm, mrbc_value v[], int argc)
 
 #if MRBC_USE_STRING
 //================================================================
+/*! (helper) encode codepoint to UTF-8 string
+    Returns the number of bytes written, or 0 on error.
+*/
+#if MRBC_USE_STRING_UTF8
+int mrbc_utf8_encode(mrbc_int_t codepoint, char *buf)
+{
+  if( codepoint < 0 || codepoint > 0x10FFFF ) {
+    return 0;  // out of range
+  }
+  if( codepoint >= 0xD800 && codepoint <= 0xDFFF ) {
+    return 0;  // surrogate pair - invalid in UTF-8
+  }
+
+  if( codepoint <= 0x7F ) {
+    buf[0] = (char)codepoint;
+    return 1;
+  } else if( codepoint <= 0x7FF ) {
+    buf[0] = (char)(0xC0 | (codepoint >> 6));
+    buf[1] = (char)(0x80 | (codepoint & 0x3F));
+    return 2;
+  } else if( codepoint <= 0xFFFF ) {
+    buf[0] = (char)(0xE0 | (codepoint >> 12));
+    buf[1] = (char)(0x80 | ((codepoint >> 6) & 0x3F));
+    buf[2] = (char)(0x80 | (codepoint & 0x3F));
+    return 3;
+  } else {
+    buf[0] = (char)(0xF0 | (codepoint >> 18));
+    buf[1] = (char)(0x80 | ((codepoint >> 12) & 0x3F));
+    buf[2] = (char)(0x80 | ((codepoint >> 6) & 0x3F));
+    buf[3] = (char)(0x80 | (codepoint & 0x3F));
+    return 4;
+  }
+}
+#endif
+
+//================================================================
 /*! (method) chr
 */
 static void c_integer_chr(struct VM *vm, mrbc_value v[], int argc)
 {
+#if MRBC_USE_STRING_UTF8
+  mrbc_int_t codepoint = mrbc_integer(v[0]);
+  char buf[5];
+  int len;
+
+  if( codepoint < 0 ) {
+    mrbc_raise(vm, MRBC_CLASS(RangeError), "out of char range");
+    return;
+  }
+  if( codepoint >= 0xD800 && codepoint <= 0xDFFF ) {
+    mrbc_raise(vm, MRBC_CLASS(RangeError), "invalid codepoint in UTF-8");
+    return;
+  }
+  if( codepoint > 0x10FFFF ) {
+    mrbc_raise(vm, MRBC_CLASS(RangeError), "out of char range");
+    return;
+  }
+
+  len = mrbc_utf8_encode(codepoint, buf);
+  mrbc_value value = mrbc_string_new(vm, buf, len);
+  SET_RETURN(value);
+#else
   char buf[2] = { mrbc_integer(v[0]) };
 
   mrbc_value value = mrbc_string_new(vm, buf, 1);
   SET_RETURN(value);
+#endif
 }
 
 
