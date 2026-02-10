@@ -730,6 +730,53 @@ static void c_array_get(struct VM *vm, mrbc_value v[], int argc)
   }
 
   /*
+    in case of self[Range] -> Array | nil
+  */
+  if (argc == 1 && mrbc_type(v[1]) == MRBC_TT_RANGE) {
+    int len = mrbc_array_size(&v[0]);
+    mrbc_value *range_ptr = &v[1];
+
+    // Get range start and end from range object
+    mrbc_value start_val = mrbc_range_first(range_ptr);
+    mrbc_value end_val = mrbc_range_last(range_ptr);
+    int flag_exclude = mrbc_range_exclude_end(range_ptr);
+
+    if (mrbc_type(start_val) != MRBC_TT_INTEGER || mrbc_type(end_val) != MRBC_TT_INTEGER) {
+      goto RETURN_NIL;
+    }
+
+    int start = mrbc_integer(start_val);
+    int end = mrbc_integer(end_val);
+
+    // Negative indices
+    if (start < 0) start += len;
+    if (end < 0) end += len;
+
+    if (start < 0 || start > len) goto RETURN_NIL;
+    if (end < 0) goto RETURN_NIL;
+
+    // Adjust end for exclusive range
+    if (!flag_exclude) end++;
+
+    // Calculate size
+    int size = end - start;
+    if (size < 0) size = 0;
+    if (start + size > len) size = len - start;
+
+    mrbc_value ret = mrbc_array_new(vm, size);
+    if (ret.array == NULL) return;  // ENOMEM
+
+    for (int i = 0; i < size; i++) {
+      mrbc_value val = mrbc_array_get(v, start + i);
+      mrbc_incref(&val);
+      mrbc_array_push(&ret, &val);
+    }
+
+    SET_RETURN(ret);
+    return;
+  }
+
+  /*
     in case of self[start, length] -> Array | nil
   */
   if( argc == 2 && mrbc_type(v[1]) == MRBC_TT_INTEGER && mrbc_type(v[2]) == MRBC_TT_INTEGER ) {
