@@ -741,12 +741,25 @@ static void c_array_get(struct VM *vm, mrbc_value v[], int argc)
     mrbc_value end_val = mrbc_range_last(range_ptr);
     int flag_exclude = mrbc_range_exclude_end(range_ptr);
 
-    if (mrbc_type(start_val) != MRBC_TT_INTEGER || mrbc_type(end_val) != MRBC_TT_INTEGER) {
+    // Handle beginless range (e.g., ..1, ...2)
+    int start;
+    if (mrbc_type(start_val) == MRBC_TT_NIL) {
+      start = 0;
+    } else if (mrbc_type(start_val) == MRBC_TT_INTEGER) {
+      start = mrbc_integer(start_val);
+    } else {
       goto RETURN_NIL;
     }
 
-    int start = mrbc_integer(start_val);
-    int end = mrbc_integer(end_val);
+    // Handle endless range (e.g., 0.., 1..)
+    int end;
+    if (mrbc_type(end_val) == MRBC_TT_NIL) {
+      end = len - 1;
+    } else if (mrbc_type(end_val) == MRBC_TT_INTEGER) {
+      end = mrbc_integer(end_val);
+    } else {
+      goto RETURN_NIL;
+    }
 
     // Negative indices
     if (start < 0) start += len;

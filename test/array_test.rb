@@ -434,6 +434,29 @@ class ArrayTest < Picotest::Test
     assert_equal [1], a[0..0]
   end
 
+  description "Array#[] with Range (beginless and endless)"
+  def test_array_get_range_beginless_endless
+    a = [0, 1, 2, 3, 4]
+    # Beginless range (inclusive)
+    assert_equal [0, 1], a[..1]
+    assert_equal [0, 1, 2, 3, 4], a[..4]
+    assert_equal [0, 1, 2, 3, 4], a[..-1]
+    assert_equal [0, 1, 2, 3], a[..-2]
+    # Beginless range (exclusive)
+    assert_equal [0, 1], a[...2]
+    assert_equal [0], a[...1]
+    assert_equal [0, 1, 2, 3], a[...-1]
+    # Endless range
+    assert_equal [0, 1, 2, 3, 4], a[0..]
+    assert_equal [1, 2, 3, 4], a[1..]
+    assert_equal [3, 4], a[3..]
+    assert_equal [4], a[4..]
+    assert_equal [], a[5..]
+    # Endless range with negative index
+    assert_equal [3, 4], a[-2..]
+    assert_equal [4], a[-1..]
+  end
+
   description "Array#deconstruct"
   def test_deconstruct
     a = [1, 2, 3]
