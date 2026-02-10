@@ -183,17 +183,30 @@ class HashTest < Picotest::Test
 
   description "Hash#deconstruct_keys with array of keys"
   def test_deconstruct_keys_array
-    h = {a: 1, b: 2, c: 3}
-    # In simple implementation, returns self regardless of keys
-    result = h.deconstruct_keys([:a, :b])
-    assert_equal({a: 1, b: 2, c: 3}, result)
+    h = {a: 1, b: 2, c: 3, d: 4}
+    result = h.deconstruct_keys([:a, :c])
+    assert_equal({a: 1, c: 3}, result)
   end
 
   description "Hash#deconstruct_keys with empty array"
   def test_deconstruct_keys_empty_array
     h = {a: 1, b: 2}
     result = h.deconstruct_keys([])
-    assert_equal({a: 1, b: 2}, result)
+    assert_equal({}, result)
+  end
+
+  description "Hash#deconstruct_keys with non-existent keys"
+  def test_deconstruct_keys_missing
+    h = {a: 1, b: 2}
+    result = h.deconstruct_keys([:a, :x, :y])
+    assert_equal({a: 1}, result)
+  end
+
+  description "Hash#deconstruct_keys with all non-existent keys"
+  def test_deconstruct_keys_all_missing
+    h = {a: 1, b: 2}
+    result = h.deconstruct_keys([:x, :y, :z])
+    assert_equal({}, result)
   end
 
   description "Hash#deconstruct_keys with empty hash"
