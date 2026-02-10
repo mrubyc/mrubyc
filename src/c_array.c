@@ -748,7 +748,7 @@ static void c_array_get(struct VM *vm, mrbc_value v[], int argc)
     } else if (mrbc_type(start_val) == MRBC_TT_INTEGER) {
       start = mrbc_integer(start_val);
     } else {
-      goto RETURN_NIL;
+      goto TYPE_ERROR;
     }
 
     // Handle endless range (e.g., 0.., 1..., 0..., 1...)
@@ -758,7 +758,7 @@ static void c_array_get(struct VM *vm, mrbc_value v[], int argc)
     } else if (mrbc_type(end_val) == MRBC_TT_INTEGER) {
       end = mrbc_integer(end_val);
     } else {
-      goto RETURN_NIL;
+      goto TYPE_ERROR;
     }
 
     // Negative indices
@@ -766,7 +766,8 @@ static void c_array_get(struct VM *vm, mrbc_value v[], int argc)
     if (end < 0) end += len;
 
     if (start < 0 || start > len) goto RETURN_NIL;
-    if (end < 0) goto RETURN_NIL;
+    // Allow end < 0 only for empty arrays with endless ranges
+    if (end < 0 && len > 0) goto RETURN_NIL;
 
     // Adjust end for exclusive range
     if (!flag_exclude) end++;
@@ -819,6 +820,10 @@ static void c_array_get(struct VM *vm, mrbc_value v[], int argc)
     other case
   */
   mrbc_raise( vm, MRBC_CLASS(ArgumentError), 0 );
+  return;
+
+ TYPE_ERROR:
+  mrbc_raise( vm, MRBC_CLASS(TypeError), 0 );
   return;
 
  RETURN_NIL:
@@ -1299,6 +1304,20 @@ static void c_array_reverse_self(struct VM *vm, mrbc_value v[], int argc)
   }
 }
 
+//================================================================
+/*! (method) deconstruct
+*/
+static void c_array_deconstruct(struct VM *vm, mrbc_value v[], int argc)
+{
+  // Check argument count (must have no arguments)
+  if (argc != 0) {
+    mrbc_raise(vm, MRBC_CLASS(ArgumentError), "wrong number of arguments");
+    return;
+  }
+  // For pattern matching - return self (not a copy)
+  // (already an array, no conversion needed)
+}
+
 
 #if MRBC_USE_STRING
 //================================================================
@@ -1391,6 +1410,7 @@ static void c_array_join(struct VM *vm, mrbc_value v[], int argc)
   METHOD( "<<",		c_array_push )
   METHOD( "clear",	c_array_clear )
   METHOD( "difference", c_array_difference )
+  METHOD( "deconstruct", c_array_deconstruct )
   METHOD( "delete_at",	c_array_delete_at )
   METHOD( "empty?",	c_array_empty )
   METHOD( "size",	c_array_size )

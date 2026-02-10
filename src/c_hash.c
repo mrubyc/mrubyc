@@ -573,6 +573,21 @@ static void c_hash_values(struct VM *vm, mrbc_value v[], int argc)
 }
 
 
+//================================================================
+/*! (method) deconstruct_keys
+*/
+static void c_hash_deconstruct_keys(struct VM *vm, mrbc_value v[], int argc)
+{
+  // The keys parameter (nil or Array) is ignored in this simple implementation
+  // Only check argument count (must have exactly 1 argument)
+  if (argc != 1) {
+    mrbc_raise(vm, MRBC_CLASS(ArgumentError), "wrong number of arguments");
+    return;
+  }
+  // For pattern matching - return self (not a copy)
+}
+
+
 #if MRBC_USE_STRING
 //================================================================
 /*! (method) inspect, to_s
@@ -632,6 +647,7 @@ static void c_hash_inspect(struct VM *vm, mrbc_value v[], int argc)
   METHOD( "[]",		c_hash_get )
   METHOD( "[]=",	c_hash_set )
   METHOD( "clear",	c_hash_clear )
+  METHOD( "deconstruct_keys", c_hash_deconstruct_keys )
   METHOD( "dup",	c_hash_dup )
   METHOD( "delete",	c_hash_delete )
   METHOD( "empty?",	c_hash_empty )
