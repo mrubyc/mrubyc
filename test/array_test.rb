@@ -455,6 +455,10 @@ class ArrayTest < Picotest::Test
     # Endless range with negative index
     assert_equal [3, 4], a[-2..]
     assert_equal [4], a[-1..]
+    # Empty array with beginless/endless ranges
+    e = []
+    assert_equal [], e[0..]
+    assert_equal [], e[..-1]
   end
 
   description "Array#deconstruct"
