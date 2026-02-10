@@ -579,7 +579,7 @@ static void c_hash_values(struct VM *vm, mrbc_value v[], int argc)
 static void c_hash_deconstruct_keys(struct VM *vm, mrbc_value v[], int argc)
 {
   // The keys parameter (nil or Array) is ignored in this simple implementation
-  // Onle check argument count (must have exactly 1 argument)
+  // Only check argument count (must have exactly 1 argument)
   if (argc != 1) {
     mrbc_raise(vm, MRBC_CLASS(ArgumentError), "wrong number of arguments");
     return;
