@@ -412,4 +412,100 @@ class ArrayTest < Picotest::Test
     }
     assert_equal "CBA", s
   end
+
+  description "Array#[] with Range (inclusive)"
+  def test_array_get_range_inclusive
+    a = [1, 2, 3, 4, 5]
+    assert_equal [2, 3, 4], a[1..3]
+    assert_equal [1, 2, 3, 4, 5], a[0..4]
+    assert_equal [3, 4, 5], a[2..10]
+    assert_equal [5], a[4..4]
+    assert_equal [], a[3..2]
+  end
+
+  description "Array#[] with Range (exclusive)"
+  def test_array_get_range_exclusive
+    a = [1, 2, 3, 4, 5]
+    assert_equal [2, 3], a[1...3]
+    assert_equal [1, 2, 3, 4], a[0...4]
+    assert_equal [3, 4, 5], a[2...10]
+    assert_equal [], a[4...4]
+    assert_equal [], a[3...2]
+  end
+
+  description "Array#[] with Range (negative indices)"
+  def test_array_get_range_negative
+    a = [1, 2, 3, 4, 5]
+    assert_equal [4, 5], a[-2..-1]
+    assert_equal [3, 4], a[-3...-1]
+    assert_equal [1, 2, 3, 4, 5], a[0..-1]
+    assert_equal [2, 3, 4], a[1...-1]
+    assert_equal [3, 4, 5], a[2..-1]
+  end
+
+  description "Array#[] with Range (edge cases)"
+  def test_array_get_range_edge_cases
+    a = [1, 2, 3]
+    assert_equal nil, a[5..10]
+    assert_equal [], a[3..5]
+    assert_equal [], a[0...0]
+    assert_equal [1], a[0..0]
+  end
+
+  description "Array#[] with Range (beginless and endless)"
+  def test_array_get_range_beginless_endless
+    a = [0, 1, 2, 3, 4]
+    # Beginless range (inclusive)
+    assert_equal [0, 1], a[..1]
+    assert_equal [0, 1, 2, 3, 4], a[..4]
+    assert_equal [0, 1, 2, 3, 4], a[..-1]
+    assert_equal [0, 1, 2, 3], a[..-2]
+    # Beginless range (exclusive)
+    assert_equal [0, 1], a[...2]
+    assert_equal [0], a[...1]
+    assert_equal [0, 1, 2, 3], a[...-1]
+    # Endless range (inclusive)
+    assert_equal [0, 1, 2, 3, 4], a[0..]
+    assert_equal [1, 2, 3, 4], a[1..]
+    assert_equal [3, 4], a[3..]
+    assert_equal [4], a[4..]
+    assert_equal [], a[5..]
+    # Endless range (exclusive)
+    assert_equal [0, 1, 2, 3, 4], a[0...]
+    assert_equal [1, 2, 3, 4], a[1...]
+    assert_equal [3, 4], a[3...]
+    assert_equal [4], a[4...]
+    assert_equal [], a[5...]
+    # Endless range with negative index
+    assert_equal [3, 4], a[-2..]
+    assert_equal [4], a[-1..]
+    assert_equal [3, 4], a[-2...]
+    assert_equal [4], a[-1...]
+    # Empty array with beginless/endless ranges
+    e = []
+    assert_equal [], e[0..]
+    assert_equal [], e[0...]
+    assert_equal [], e[..-1]
+  end
+
+  description "Array#deconstruct"
+  def test_deconstruct
+    a = [1, 2, 3]
+    assert_equal [1, 2, 3], a.deconstruct
+    assert_equal a, a.deconstruct
+
+    # Empty array
+    assert_equal [], [].deconstruct
+
+    # Nested array
+    nested = [[1, 2], [3, 4]]
+    assert_equal [[1, 2], [3, 4]], nested.deconstruct
+  end
+
+  description "Array#deconstruct raises ArgumentError with arguments"
+  def test_deconstruct_with_args
+    a = [1, 2, 3]
+    assert_raise(ArgumentError) { a.deconstruct(nil) }
+    assert_raise(ArgumentError) { a.deconstruct(1) }
+  end
 end
