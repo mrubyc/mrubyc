@@ -748,7 +748,7 @@ static void c_array_get(struct VM *vm, mrbc_value v[], int argc)
     } else if (mrbc_type(start_val) == MRBC_TT_INTEGER) {
       start = mrbc_integer(start_val);
     } else {
-      goto RETURN_NIL;
+      goto TYPE_ERROR;
     }
 
     // Handle endless range (e.g., 0.., 1..)
@@ -758,7 +758,7 @@ static void c_array_get(struct VM *vm, mrbc_value v[], int argc)
     } else if (mrbc_type(end_val) == MRBC_TT_INTEGER) {
       end = mrbc_integer(end_val);
     } else {
-      goto RETURN_NIL;
+      goto TYPE_ERROR;
     }
 
     // Negative indices
@@ -766,7 +766,8 @@ static void c_array_get(struct VM *vm, mrbc_value v[], int argc)
     if (end < 0) end += len;
 
     if (start < 0 || start > len) goto RETURN_NIL;
-    if (end < 0) goto RETURN_NIL;
+    // Allow end < 0 only for empty arrays with endless ranges
+    if (end < 0 && len > 0) goto RETURN_NIL;
 
     // Adjust end for exclusive range
     if (!flag_exclude) end++;
@@ -819,6 +820,10 @@ static void c_array_get(struct VM *vm, mrbc_value v[], int argc)
     other case
   */
   mrbc_raise( vm, MRBC_CLASS(ArgumentError), 0 );
+  return;
+
+ TYPE_ERROR:
+  mrbc_raise( vm, MRBC_CLASS(TypeError), 0 );
   return;
 
  RETURN_NIL:

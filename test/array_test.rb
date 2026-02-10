@@ -481,4 +481,19 @@ class ArrayTest < Picotest::Test
     assert_raise(ArgumentError) { a.deconstruct(nil) }
     assert_raise(ArgumentError) { a.deconstruct(1) }
   end
+
+  description "Array#[] with Range raises TypeError for unsupported endpoint types"
+  def test_array_get_range_type_error
+    a = [1, 2, 3, 4, 5]
+    # String as range start should raise TypeError
+    assert_raise(TypeError) { a["1"..3] }
+    # String as range end should raise TypeError
+    assert_raise(TypeError) { a[1.."3"] }
+    # Both endpoints as strings should raise TypeError
+    assert_raise(TypeError) { a["1".."3"] }
+    # Symbol as range start should raise TypeError
+    assert_raise(TypeError) { a[:start..3] }
+    # Symbol as range end should raise TypeError
+    assert_raise(TypeError) { a[1..:end] }
+  end
 end
