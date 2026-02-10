@@ -1202,6 +1202,21 @@ static void c_array_uniq_self(struct VM *vm, mrbc_value v[], int argc)
 }
 
 
+//================================================================
+/*! (method) deconstruct
+*/
+static void c_array_deconstruct(struct VM *vm, mrbc_value v[], int argc)
+{
+  // Check argument count (must have no arguments)
+  if (argc != 0) {
+    mrbc_raise(vm, MRBC_CLASS(ArgumentError), "wrong number of arguments");
+    return;
+  }
+  // For pattern matching - just return self
+  // (already an array, no conversion needed)
+}
+
+
 #if MRBC_USE_STRING
 //================================================================
 /*! (method) inspect, to_s
@@ -1293,6 +1308,7 @@ static void c_array_join(struct VM *vm, mrbc_value v[], int argc)
   METHOD( "<<",		c_array_push )
   METHOD( "clear",	c_array_clear )
   METHOD( "difference", c_array_difference )
+  METHOD( "deconstruct", c_array_deconstruct )
   METHOD( "delete_at",	c_array_delete_at )
   METHOD( "empty?",	c_array_empty )
   METHOD( "size",	c_array_size )

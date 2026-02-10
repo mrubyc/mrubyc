@@ -394,4 +394,25 @@ class ArrayTest < Picotest::Test
     assert_equal( true,  [nil,false].none? )
     assert_equal( false, [nil,false,true].none? )
   end
+
+  description "Array#deconstruct"
+  def test_deconstruct
+    a = [1, 2, 3]
+    assert_equal [1, 2, 3], a.deconstruct
+    assert_equal a, a.deconstruct
+
+    # Empty array
+    assert_equal [], [].deconstruct
+
+    # Nested array
+    nested = [[1, 2], [3, 4]]
+    assert_equal [[1, 2], [3, 4]], nested.deconstruct
+  end
+
+  description "Array#deconstruct raises ArgumentError with arguments"
+  def test_deconstruct_with_args
+    a = [1, 2, 3]
+    assert_raise(ArgumentError) { a.deconstruct(nil) }
+    assert_raise(ArgumentError) { a.deconstruct(1) }
+  end
 end

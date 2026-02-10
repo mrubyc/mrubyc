@@ -173,4 +173,53 @@ class HashTest < Picotest::Test
     assert_equal( {}, h.to_h )
   end
 
+  description "Hash#deconstruct_keys with nil"
+  def test_deconstruct_keys_nil
+    h = {a: 1, b: 2, c: 3}
+    result = h.deconstruct_keys(nil)
+    assert_equal({a: 1, b: 2, c: 3}, result)
+    assert_equal h, result
+  end
+
+  description "Hash#deconstruct_keys with array of keys"
+  def test_deconstruct_keys_array
+    h = {a: 1, b: 2, c: 3}
+    # In simple implementation, returns self regardless of keys
+    result = h.deconstruct_keys([:a, :b])
+    assert_equal({a: 1, b: 2, c: 3}, result)
+  end
+
+  description "Hash#deconstruct_keys with empty array"
+  def test_deconstruct_keys_empty_array
+    h = {a: 1, b: 2}
+    result = h.deconstruct_keys([])
+    assert_equal({a: 1, b: 2}, result)
+  end
+
+  description "Hash#deconstruct_keys with empty hash"
+  def test_deconstruct_keys_empty_hash
+    h = {}
+    result = h.deconstruct_keys(nil)
+    assert_equal({}, result)
+  end
+
+  description "Hash#deconstruct_keys with nested hash"
+  def test_deconstruct_keys_nested
+    h = {outer: {inner: 1}, b: 2}
+    result = h.deconstruct_keys(nil)
+    assert_equal({outer: {inner: 1}, b: 2}, result)
+  end
+
+  description "Hash#deconstruct_keys raises ArgumentError with no arguments"
+  def test_deconstruct_keys_no_args
+    h = {a: 1}
+    assert_raise(ArgumentError) { h.deconstruct_keys }
+  end
+
+  description "Hash#deconstruct_keys raises ArgumentError with too many arguments"
+  def test_deconstruct_keys_too_many_args
+    h = {a: 1}
+    assert_raise(ArgumentError) { h.deconstruct_keys(nil, nil) }
+  end
+
 end
