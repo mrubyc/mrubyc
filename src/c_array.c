@@ -1277,7 +1277,7 @@ static void c_array_deconstruct(struct VM *vm, mrbc_value v[], int argc)
     mrbc_raise(vm, MRBC_CLASS(ArgumentError), "wrong number of arguments");
     return;
   }
-  // For pattern matching - just return self
+  // For pattern matching - return self (not a copy)
   // (already an array, no conversion needed)
 }
 

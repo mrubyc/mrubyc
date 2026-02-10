@@ -475,13 +475,18 @@ class ArrayTest < Picotest::Test
     a = [1, 2, 3]
     assert_equal [1, 2, 3], a.deconstruct
     assert_equal a, a.deconstruct
+    # deconstruct should return self, not a copy
+    assert_equal a.object_id, a.deconstruct.object_id
 
     # Empty array
-    assert_equal [], [].deconstruct
+    e = []
+    assert_equal [], e.deconstruct
+    assert_equal e.object_id, e.deconstruct.object_id
 
     # Nested array
     nested = [[1, 2], [3, 4]]
     assert_equal [[1, 2], [3, 4]], nested.deconstruct
+    assert_equal nested.object_id, nested.deconstruct.object_id
   end
 
   description "Array#deconstruct raises ArgumentError with arguments"
