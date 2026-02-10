@@ -573,6 +573,51 @@ static void c_hash_values(struct VM *vm, mrbc_value v[], int argc)
 }
 
 
+//================================================================
+/*! (method) deconstruct_keys
+*/
+static void c_hash_deconstruct_keys(struct VM *vm, mrbc_value v[], int argc)
+{
+  if (argc != 1) {
+    mrbc_raise(vm, MRBC_CLASS(ArgumentError), "wrong number of arguments");
+    return;
+  }
+
+  mrbc_value keys = v[1];
+
+  /* If keys is nil, return self */
+  if (mrbc_type(keys) == MRBC_TT_NIL) {
+    return;
+  }
+
+  /* Keys must be an array */
+  if (mrbc_type(keys) != MRBC_TT_ARRAY) {
+    mrbc_raise(vm, MRBC_CLASS(TypeError), "wrong argument type (expected Array or nil)");
+    return;
+  }
+
+  /* Create result hash */
+  mrbc_value result = mrbc_hash_new(vm, 0);
+
+  /* Extract specified keys that exist in the hash */
+  int len = mrbc_array_size(&keys);
+  for (int i = 0; i < len; i++) {
+    mrbc_value key = mrbc_array_get(&keys, i);
+    mrbc_value *found_key = mrbc_hash_search(&v[0], &key);
+
+    /* Only add key if it exists in original hash */
+    if (found_key != NULL) {
+      mrbc_value *val = found_key + 1;  /* Value is next to key */
+      mrbc_hash_set(&result, &key, val);
+      mrbc_incref(&key);
+      mrbc_incref(val);
+    }
+  }
+
+  SET_RETURN(result);
+}
+
+
 #if MRBC_USE_STRING
 //================================================================
 /*! (method) inspect, to_s
@@ -632,6 +677,7 @@ static void c_hash_inspect(struct VM *vm, mrbc_value v[], int argc)
   METHOD( "[]",		c_hash_get )
   METHOD( "[]=",	c_hash_set )
   METHOD( "clear",	c_hash_clear )
+  METHOD( "deconstruct_keys", c_hash_deconstruct_keys )
   METHOD( "dup",	c_hash_dup )
   METHOD( "delete",	c_hash_delete )
   METHOD( "empty?",	c_hash_empty )
