@@ -446,18 +446,27 @@ class ArrayTest < Picotest::Test
     assert_equal [0, 1], a[...2]
     assert_equal [0], a[...1]
     assert_equal [0, 1, 2, 3], a[...-1]
-    # Endless range
+    # Endless range (inclusive)
     assert_equal [0, 1, 2, 3, 4], a[0..]
     assert_equal [1, 2, 3, 4], a[1..]
     assert_equal [3, 4], a[3..]
     assert_equal [4], a[4..]
     assert_equal [], a[5..]
+    # Endless range (exclusive)
+    assert_equal [0, 1, 2, 3, 4], a[0...]
+    assert_equal [1, 2, 3, 4], a[1...]
+    assert_equal [3, 4], a[3...]
+    assert_equal [4], a[4...]
+    assert_equal [], a[5...]
     # Endless range with negative index
     assert_equal [3, 4], a[-2..]
     assert_equal [4], a[-1..]
+    assert_equal [3, 4], a[-2...]
+    assert_equal [4], a[-1...]
     # Empty array with beginless/endless ranges
     e = []
     assert_equal [], e[0..]
+    assert_equal [], e[0...]
     assert_equal [], e[..-1]
   end
 

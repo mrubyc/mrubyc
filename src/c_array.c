@@ -751,10 +751,10 @@ static void c_array_get(struct VM *vm, mrbc_value v[], int argc)
       goto TYPE_ERROR;
     }
 
-    // Handle endless range (e.g., 0.., 1..)
+    // Handle endless range (e.g., 0.., 1..., 0..., 1...)
     int end;
     if (mrbc_type(end_val) == MRBC_TT_NIL) {
-      end = len - 1;
+      end = len;
     } else if (mrbc_type(end_val) == MRBC_TT_INTEGER) {
       end = mrbc_integer(end_val);
     } else {
