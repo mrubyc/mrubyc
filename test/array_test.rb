@@ -485,6 +485,9 @@ class ArrayTest < Picotest::Test
     e = []
     assert_equal [], e[0..]
     assert_equal [], e[0...]
+    # Empty array with beginless/endless ranges
+    e = []
+    assert_equal [], e[0..]
     assert_equal [], e[..-1]
   end
 
@@ -493,13 +496,18 @@ class ArrayTest < Picotest::Test
     a = [1, 2, 3]
     assert_equal [1, 2, 3], a.deconstruct
     assert_equal a, a.deconstruct
+    # deconstruct should return self, not a copy
+    assert_equal a.object_id, a.deconstruct.object_id
 
     # Empty array
-    assert_equal [], [].deconstruct
+    e = []
+    assert_equal [], e.deconstruct
+    assert_equal e.object_id, e.deconstruct.object_id
 
     # Nested array
     nested = [[1, 2], [3, 4]]
     assert_equal [[1, 2], [3, 4]], nested.deconstruct
+    assert_equal nested.object_id, nested.deconstruct.object_id
   end
 
   description "Array#deconstruct raises ArgumentError with arguments"
@@ -507,5 +515,20 @@ class ArrayTest < Picotest::Test
     a = [1, 2, 3]
     assert_raise(ArgumentError) { a.deconstruct(nil) }
     assert_raise(ArgumentError) { a.deconstruct(1) }
+  end
+
+  description "Array#[] with Range raises TypeError for unsupported endpoint types"
+  def test_array_get_range_type_error
+    a = [1, 2, 3, 4, 5]
+    # String as range start should raise TypeError
+    assert_raise(TypeError) { a["1"..3] }
+    # String as range end should raise TypeError
+    assert_raise(TypeError) { a[1.."3"] }
+    # Both endpoints as strings should raise TypeError
+    assert_raise(TypeError) { a["1".."3"] }
+    # Symbol as range start should raise TypeError
+    assert_raise(TypeError) { a[:start..3] }
+    # Symbol as range end should raise TypeError
+    assert_raise(TypeError) { a[1..:end] }
   end
 end
