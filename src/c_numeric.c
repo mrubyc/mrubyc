@@ -258,7 +258,7 @@ static void c_integer_to_f(struct VM *vm, mrbc_value v[], int argc)
     Returns the number of bytes written, or 0 on error.
 */
 #if MRBC_USE_STRING_UTF8
-int mrbc_utf8_encode(mrbc_int_t codepoint, char *buf)
+int mrbc_utf8_encode(int32_t codepoint, char *buf)
 {
   if( codepoint < 0 || codepoint > 0x10FFFF ) {
     return 0;  // out of range
