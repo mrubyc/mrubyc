@@ -23,6 +23,7 @@
 
 /***** Local headers ********************************************************/
 #include "mrubyc.h"
+#include "_autogen_unicode_case.h"
 
 /***** Constat values *******************************************************/
 /***** Macros ***************************************************************/
@@ -354,8 +355,9 @@ int mrbc_string_chomp(mrbc_value *src)
 }
 
 
+#if !MRBC_USE_STRING_UTF8 || !MRBC_USE_UNICODE_CASE
 //================================================================
-/*! upcase myself
+/*! upcase myself (ASCII-only version)
 
   @param    str     pointer to target value
   @return   count   number of upcased characters
@@ -377,7 +379,7 @@ int mrbc_string_upcase(mrbc_value *str)
 
 
 //================================================================
-/*! downcase myself
+/*! downcase myself (ASCII-only version)
 
   @param    str     pointer to target value
   @return   count   number of downcased characters
@@ -396,6 +398,383 @@ int mrbc_string_downcase(mrbc_value *str)
   }
   return count;
 }
+#endif /* !MRBC_USE_STRING_UTF8 || !MRBC_USE_UNICODE_CASE */
+
+
+#if MRBC_USE_STRING_UTF8
+//================================================================
+/*! Get byte length of a UTF-8 character
+
+  @param  str     pointer to UTF-8 character
+  @return         byte length (1-4), or 0 if invalid/continuation byte
+*/
+int mrbc_string_utf8_size(const char *str)
+{
+  unsigned char c = (unsigned char)*str;
+
+  if( (c & 0x80) == 0x00 ) return 1;       // ASCII: 0xxxxxxx
+  if( (c & 0xE0) == 0xC0 ) return 2;       // 2-byte: 110xxxxx
+  if( (c & 0xF0) == 0xE0 ) return 3;       // 3-byte: 1110xxxx
+  if( (c & 0xF8) == 0xF0 ) return 4;       // 4-byte: 11110xxx
+  return 0;                                 // continuation or invalid
+}
+
+
+//================================================================
+/*! Count UTF-8 characters in a byte string
+
+  @param  str     pointer to string
+  @param  len     byte length of string
+  @return         number of UTF-8 characters
+*/
+int mrbc_string_char_size(const char *str, int len)
+{
+  int count = 0;
+
+  for( int i = 0; i < len; i++ ) {
+    unsigned char c = (unsigned char)str[i];
+    // Count only leading bytes (not continuation bytes 10xxxxxx)
+    if( (c & 0xC0) != 0x80 ) count++;
+  }
+  return count;
+}
+
+
+//================================================================
+/*! Convert character index to byte offset
+
+  @param  src     pointer to string value
+  @param  off     byte offset to start from
+  @param  idx     character index (from offset)
+  @return         byte length for idx characters
+*/
+int mrbc_string_chars2bytes(mrbc_value *src, int off, int idx)
+{
+  const char *str = mrbc_string_cstr(src) + off;
+  const char *end = mrbc_string_cstr(src) + src->string->size;
+  int bytes = 0;
+
+  for( int i = 0; i < idx && str < end; i++ ) {
+    int char_len = mrbc_string_utf8_size(str);
+    if( char_len == 0 ) char_len = 1;  // skip invalid byte
+    bytes += char_len;
+    str += char_len;
+  }
+  return bytes;
+}
+
+
+//================================================================
+/*! Convert byte offset to character index
+
+  @param  src         pointer to string value
+  @param  byte_index  byte offset
+  @return             character index, or -1 if invalid
+*/
+int mrbc_string_bytes2chars(const mrbc_value *src, int byte_index)
+{
+  const char *str = mrbc_string_cstr(src);
+  const char *target = str + byte_index;
+  int count = 0;
+
+  while( str < target ) {
+    int char_len = mrbc_string_utf8_size(str);
+    if( char_len == 0 ) char_len = 1;
+    str += char_len;
+    count++;
+  }
+  return (str == target) ? count : -1;
+}
+
+
+#if MRBC_USE_UNICODE_CASE
+//================================================================
+/*! Decode a UTF-8 character to codepoint
+
+  @param  str     pointer to UTF-8 character
+  @param  len_out output: byte length consumed
+  @return         Unicode codepoint, or -1 if invalid
+*/
+static int32_t unicode_decode_utf8(const uint8_t *str, int *len_out)
+{
+  uint8_t c = str[0];
+  int32_t cp;
+  int len;
+
+  if( (c & 0x80) == 0 ) {
+    cp = c;
+    len = 1;
+  } else if( (c & 0xE0) == 0xC0 ) {
+    cp = (c & 0x1F) << 6 | (str[1] & 0x3F);
+    len = 2;
+  } else if( (c & 0xF0) == 0xE0 ) {
+    cp = (c & 0x0F) << 12 | (str[1] & 0x3F) << 6 | (str[2] & 0x3F);
+    len = 3;
+  } else if( (c & 0xF8) == 0xF0 ) {
+    cp = (c & 0x07) << 18 | (str[1] & 0x3F) << 12 | (str[2] & 0x3F) << 6 | (str[3] & 0x3F);
+    len = 4;
+  } else {
+    *len_out = 1;
+    return -1;
+  }
+  *len_out = len;
+  return cp;
+}
+
+
+//================================================================
+/*! Encode a codepoint to UTF-8
+
+  @param  cp      Unicode codepoint
+  @param  buf     output buffer (must have space for 4 bytes)
+  @return         number of bytes written
+*/
+static int unicode_encode_utf8(int32_t cp, uint8_t *buf)
+{
+  if( cp < 0x80 ) {
+    buf[0] = cp;
+    return 1;
+  } else if( cp < 0x800 ) {
+    buf[0] = 0xC0 | (cp >> 6);
+    buf[1] = 0x80 | (cp & 0x3F);
+    return 2;
+  } else if( cp < 0x10000 ) {
+    buf[0] = 0xE0 | (cp >> 12);
+    buf[1] = 0x80 | ((cp >> 6) & 0x3F);
+    buf[2] = 0x80 | (cp & 0x3F);
+    return 3;
+  } else {
+    buf[0] = 0xF0 | (cp >> 18);
+    buf[1] = 0x80 | ((cp >> 12) & 0x3F);
+    buf[2] = 0x80 | ((cp >> 6) & 0x3F);
+    buf[3] = 0x80 | (cp & 0x3F);
+    return 4;
+  }
+}
+
+
+//================================================================
+/*! Look up case conversion in range table
+
+  @param  cp      codepoint to convert
+  @param  ranges  range table
+  @param  count   number of ranges
+  @return         converted codepoint, or original if not found
+*/
+static int32_t unicode_case_lookup_range(int32_t cp, const case_range_t *ranges, int count)
+{
+  for( int i = 0; i < count; i++ ) {
+    if( cp >= ranges[i].start && cp <= ranges[i].end ) {
+      // Check if this character matches the XOR pattern
+      int32_t converted = cp ^ ranges[i].xor_val;
+      // Verify the conversion is in the expected direction
+      // For upcase: converted should be < cp (or same block)
+      // For downcase: converted should be > cp (or same block)
+      return converted;
+    }
+  }
+  return cp;  // Not found in ranges
+}
+
+
+//================================================================
+/*! Look up case conversion in exception table (binary search)
+
+  @param  cp          codepoint to convert
+  @param  exceptions  exception table (sorted by 'from')
+  @param  count       number of exceptions
+  @return             converted codepoint, or original if not found
+*/
+static int32_t unicode_case_lookup_exception(int32_t cp, const case_exception_t *exceptions, int count)
+{
+  int low = 0, high = count - 1;
+
+  while( low <= high ) {
+    int mid = (low + high) / 2;
+    if( exceptions[mid].from == cp ) {
+      return exceptions[mid].to;
+    } else if( exceptions[mid].from < cp ) {
+      low = mid + 1;
+    } else {
+      high = mid - 1;
+    }
+  }
+  return cp;  // Not found
+}
+
+
+//================================================================
+/*! Convert a codepoint to uppercase
+
+  @param  cp      codepoint
+  @return         uppercase codepoint
+*/
+static int32_t unicode_upcase_codepoint(int32_t cp)
+{
+  if( cp < 0 || cp > 0xFFFF ) return cp;  // BMP only
+
+  // Try ranges first (more common patterns)
+  int32_t result = unicode_case_lookup_range(cp, upcase_ranges, UPCASE_RANGES_COUNT);
+  if( result != cp ) return result;
+
+  // Fall back to exceptions
+  return unicode_case_lookup_exception(cp, upcase_exceptions, UPCASE_EXCEPTIONS_COUNT);
+}
+
+
+//================================================================
+/*! Convert a codepoint to lowercase
+
+  @param  cp      codepoint
+  @return         lowercase codepoint
+*/
+static int32_t unicode_downcase_codepoint(int32_t cp)
+{
+  if( cp < 0 || cp > 0xFFFF ) return cp;  // BMP only
+
+  // Try ranges first
+  int32_t result = unicode_case_lookup_range(cp, downcase_ranges, DOWNCASE_RANGES_COUNT);
+  if( result != cp ) return result;
+
+  // Fall back to exceptions
+  return unicode_case_lookup_exception(cp, downcase_exceptions, DOWNCASE_EXCEPTIONS_COUNT);
+}
+
+
+//================================================================
+/*! upcase myself (Unicode-aware version)
+
+  @param    str     pointer to target value
+  @return   count   number of upcased characters
+*/
+int mrbc_string_upcase(mrbc_value *str)
+{
+  int len = str->string->size;
+  uint8_t *data = str->string->data;
+  int count = 0;
+
+  // First pass: check if any conversion changes byte length
+  int new_len = 0;
+  int needs_realloc = 0;
+  for( int i = 0; i < len; ) {
+    int char_len;
+    int32_t cp = unicode_decode_utf8(data + i, &char_len);
+    int32_t upper_cp = unicode_upcase_codepoint(cp);
+
+    uint8_t buf[4];
+    int new_char_len = unicode_encode_utf8(upper_cp, buf);
+    new_len += new_char_len;
+    if( new_char_len != char_len ) needs_realloc = 1;
+    i += char_len;
+  }
+
+  if( needs_realloc ) {
+    // Need to allocate new buffer
+    uint8_t *new_data = mrbc_raw_alloc(new_len + 1);
+    if( !new_data ) return 0;
+
+    int j = 0;
+    for( int i = 0; i < len; ) {
+      int char_len;
+      int32_t cp = unicode_decode_utf8(data + i, &char_len);
+      int32_t upper_cp = unicode_upcase_codepoint(cp);
+
+      int new_char_len = unicode_encode_utf8(upper_cp, new_data + j);
+      if( upper_cp != cp ) count++;
+      j += new_char_len;
+      i += char_len;
+    }
+    new_data[new_len] = '\0';
+
+    mrbc_raw_free(data);
+    str->string->data = new_data;
+    str->string->size = new_len;
+  } else {
+    // In-place conversion
+    for( int i = 0; i < len; ) {
+      int char_len;
+      int32_t cp = unicode_decode_utf8(data + i, &char_len);
+      int32_t upper_cp = unicode_upcase_codepoint(cp);
+
+      if( upper_cp != cp ) {
+        unicode_encode_utf8(upper_cp, data + i);
+        count++;
+      }
+      i += char_len;
+    }
+  }
+
+  return count;
+}
+
+
+//================================================================
+/*! downcase myself (Unicode-aware version)
+
+  @param    str     pointer to target value
+  @return   count   number of downcased characters
+*/
+int mrbc_string_downcase(mrbc_value *str)
+{
+  int len = str->string->size;
+  uint8_t *data = str->string->data;
+  int count = 0;
+
+  // First pass: check if any conversion changes byte length
+  int new_len = 0;
+  int needs_realloc = 0;
+  for( int i = 0; i < len; ) {
+    int char_len;
+    int32_t cp = unicode_decode_utf8(data + i, &char_len);
+    int32_t lower_cp = unicode_downcase_codepoint(cp);
+
+    uint8_t buf[4];
+    int new_char_len = unicode_encode_utf8(lower_cp, buf);
+    new_len += new_char_len;
+    if( new_char_len != char_len ) needs_realloc = 1;
+    i += char_len;
+  }
+
+  if( needs_realloc ) {
+    // Need to allocate new buffer
+    uint8_t *new_data = mrbc_raw_alloc(new_len + 1);
+    if( !new_data ) return 0;
+
+    int j = 0;
+    for( int i = 0; i < len; ) {
+      int char_len;
+      int32_t cp = unicode_decode_utf8(data + i, &char_len);
+      int32_t lower_cp = unicode_downcase_codepoint(cp);
+
+      int new_char_len = unicode_encode_utf8(lower_cp, new_data + j);
+      if( lower_cp != cp ) count++;
+      j += new_char_len;
+      i += char_len;
+    }
+    new_data[new_len] = '\0';
+
+    mrbc_raw_free(data);
+    str->string->data = new_data;
+    str->string->size = new_len;
+  } else {
+    // In-place conversion
+    for( int i = 0; i < len; ) {
+      int char_len;
+      int32_t cp = unicode_decode_utf8(data + i, &char_len);
+      int32_t lower_cp = unicode_downcase_codepoint(cp);
+
+      if( lower_cp != cp ) {
+        unicode_encode_utf8(lower_cp, data + i);
+        count++;
+      }
+      i += char_len;
+    }
+  }
+
+  return count;
+}
+#endif /* MRBC_USE_UNICODE_CASE */
+#endif // MRBC_USE_STRING_UTF8
 
 
 //================================================================
@@ -474,11 +853,23 @@ static void c_string_mul(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_string_size(struct VM *vm, mrbc_value v[], int argc)
 {
+#if MRBC_USE_STRING_UTF8
+  mrbc_int_t size = mrbc_string_char_size(mrbc_string_cstr(&v[0]), v[0].string->size);
+#else
   mrbc_int_t size = mrbc_string_size(&v[0]);
+#endif
 
   SET_INT_RETURN( size );
 }
 
+
+//================================================================
+/*! (method) bytesize
+*/
+static void c_string_bytesize(struct VM *vm, mrbc_value v[], int argc)
+{
+  SET_INT_RETURN( mrbc_string_size(&v[0]) );
+}
 
 
 //================================================================
@@ -531,6 +922,30 @@ static void c_string_to_s(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_string_append(struct VM *vm, mrbc_value v[], int argc)
 {
+#if MRBC_USE_STRING_UTF8
+  // In UTF-8 mode, << accepts an integer codepoint
+  if( mrbc_type(v[1]) == MRBC_TT_INTEGER ) {
+    mrbc_int_t codepoint = mrbc_integer(v[1]);
+    char buf[5];
+    int len;
+
+    if( codepoint < 0 || codepoint > 0x10FFFF ) {
+      mrbc_raise(vm, MRBC_CLASS(RangeError), "out of char range");
+      return;
+    }
+    if( codepoint >= 0xD800 && codepoint <= 0xDFFF ) {
+      mrbc_raise(vm, MRBC_CLASS(RangeError), "invalid codepoint in UTF-8");
+      return;
+    }
+
+    len = mrbc_utf8_encode(codepoint, buf);
+    if( !mrbc_string_append_cbuf(&v[0], buf, len) ) {
+      // raise ? ENOMEM
+    }
+    return;
+  }
+#endif
+
   if( !mrbc_string_append( &v[0], &v[1] ) ) {
     // raise ? ENOMEM
   }
@@ -542,7 +957,11 @@ static void c_string_append(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_string_slice(struct VM *vm, mrbc_value v[], int argc)
 {
+#if MRBC_USE_STRING_UTF8
+  int target_len = mrbc_string_char_size(mrbc_string_cstr(&v[0]), v[0].string->size);
+#else
   int target_len = mrbc_string_size(v);
+#endif
   int pos, len;
 
   // in case of slice(nth) -> String | nil
@@ -611,7 +1030,14 @@ static void c_string_slice(struct VM *vm, mrbc_value v[], int argc)
     }
   }
 
+#if MRBC_USE_STRING_UTF8
+  // Convert character position/length to byte position/length
+  int byte_pos = mrbc_string_chars2bytes(&v[0], 0, pos);
+  int byte_len = mrbc_string_chars2bytes(&v[0], byte_pos, len);
+  mrbc_value ret = mrbc_string_new(vm, mrbc_string_cstr(v) + byte_pos, byte_len);
+#else
   mrbc_value ret = mrbc_string_new(vm, mrbc_string_cstr(v) + pos, len);
+#endif
   if( !ret.string ) goto RETURN_NIL;		// ENOMEM
 
   SET_RETURN(ret);
@@ -632,7 +1058,11 @@ static void c_string_slice(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_string_insert(struct VM *vm, mrbc_value v[], int argc)
 {
+#if MRBC_USE_STRING_UTF8
+  int target_len = mrbc_string_char_size(mrbc_string_cstr(&v[0]), v[0].string->size);
+#else
   int target_len = mrbc_string_size(v);
+#endif
   int pos, len;
   mrbc_value *val;
 
@@ -699,8 +1129,8 @@ static void c_string_insert(struct VM *vm, mrbc_value v[], int argc)
     return;
   }
 
-  int len1 = target_len;
-  int len2 = mrbc_string_size(val);
+  int len1 = target_len;  // character length
+  int len2 = mrbc_string_size(val);  // byte length of replacement
   if( pos < 0 ) pos = len1 + pos;		// adjust to positive number.
   if( len > len1 - pos ) len = len1 - pos;
   if( pos < 0 || pos > len1 || len < 0) {
@@ -708,6 +1138,29 @@ static void c_string_insert(struct VM *vm, mrbc_value v[], int argc)
     return;
   }
 
+#if MRBC_USE_STRING_UTF8
+  // Convert character position/length to byte position/length
+  int byte_pos = mrbc_string_chars2bytes(&v[0], 0, pos);
+  int byte_len = mrbc_string_chars2bytes(&v[0], byte_pos, len);
+  int byte_len1 = v[0].string->size;  // original byte length
+
+  int byte_len3 = byte_len1 + len2 - byte_len;  // final byte length
+  uint8_t *str = v->string->data;
+  if( byte_len1 < byte_len3 ) {
+    str = mrbc_realloc(vm, str, byte_len3+1);	// expand
+    if( !str ) return;
+  }
+
+  memmove( str + byte_pos + len2, str + byte_pos + byte_len, byte_len1 - byte_pos - byte_len + 1 );
+  memcpy( str + byte_pos, mrbc_string_cstr(val), len2 );
+
+  if( byte_len1 > byte_len3 ) {
+    str = mrbc_realloc(vm, str, byte_len3+1);	// shrink
+  }
+
+  v->string->size = byte_len3;
+  v->string->data = str;
+#else
   int len3 = len1 + len2 - len;			// final length.
   uint8_t *str = v->string->data;
   if( len1 < len3 ) {
@@ -724,6 +1177,7 @@ static void c_string_insert(struct VM *vm, mrbc_value v[], int argc)
 
   v->string->size = len1 + len2 - len;
   v->string->data = str;
+#endif
 
   // return val
   mrbc_decref(&v[0]);
@@ -853,8 +1307,16 @@ static void c_string_index(struct VM *vm, mrbc_value v[], int argc)
 
   } else if( argc == 2 && mrbc_type(v[2]) == MRBC_TT_INTEGER ) {
     offset = v[2].i;
+#if MRBC_USE_STRING_UTF8
+    int char_len = mrbc_string_char_size(mrbc_string_cstr(&v[0]), v[0].string->size);
+    if( offset < 0 ) offset += char_len;
+    if( offset < 0 ) goto NIL_RETURN;
+    // Convert character offset to byte offset
+    offset = mrbc_string_chars2bytes(&v[0], 0, offset);
+#else
     if( offset < 0 ) offset += mrbc_string_size(&v[0]);
     if( offset < 0 ) goto NIL_RETURN;
+#endif
 
   } else {
     mrbc_raise( vm, MRBC_CLASS(ArgumentError), 0 );
@@ -863,6 +1325,12 @@ static void c_string_index(struct VM *vm, mrbc_value v[], int argc)
 
   index = mrbc_string_index(&v[0], &v[1], offset);
   if( index < 0 ) goto NIL_RETURN;
+
+#if MRBC_USE_STRING_UTF8
+  // Convert byte index to character index
+  index = mrbc_string_bytes2chars(&v[0], index);
+  if( index < 0 ) goto NIL_RETURN;
+#endif
 
   SET_INT_RETURN(index);
   return;
@@ -887,7 +1355,14 @@ static void c_string_inspect(struct VM *vm, mrbc_value v[], int argc)
   const unsigned char *s = (const unsigned char *)mrbc_string_cstr(v);
 
   for( int i = 0; i < mrbc_string_size(v); i++ ) {
-    if( s[i] < ' ' || 0x7f == s[i] ) {	// tiny isprint()
+#if MRBC_USE_STRING_UTF8
+    // In UTF-8 mode, only escape control characters (< 0x20) and DEL (0x7F)
+    // High bytes (0x80+) are valid UTF-8 and should not be escaped
+    if( s[i] < ' ' || s[i] == 0x7f ) {
+#else
+    // In ASCII mode, escape control characters and all high bytes
+    if( s[i] < ' ' || s[i] >= 0x7f ) {
+#endif
       buf[2] = "0123456789ABCDEF"[s[i] >> 4];
       buf[3] = "0123456789ABCDEF"[s[i] & 0x0f];
       mrbc_string_append_cstr(&ret, buf);
@@ -912,9 +1387,30 @@ static void c_string_ord(struct VM *vm, mrbc_value v[], int argc)
     return;
   }
 
+#if MRBC_USE_STRING_UTF8
+  const uint8_t *s = (const uint8_t *)mrbc_string_cstr(v);
+  int char_len = mrbc_string_utf8_size((const char *)s);
+  mrbc_int_t codepoint;
+
+  if( char_len == 1 ) {
+    codepoint = s[0];
+  } else if( char_len == 2 ) {
+    codepoint = ((s[0] & 0x1F) << 6) | (s[1] & 0x3F);
+  } else if( char_len == 3 ) {
+    codepoint = ((s[0] & 0x0F) << 12) | ((s[1] & 0x3F) << 6) | (s[2] & 0x3F);
+  } else if( char_len == 4 ) {
+    codepoint = ((s[0] & 0x07) << 18) | ((s[1] & 0x3F) << 12) |
+                ((s[2] & 0x3F) << 6) | (s[3] & 0x3F);
+  } else {
+    codepoint = s[0];  // fallback for invalid UTF-8
+  }
+
+  SET_INT_RETURN( codepoint );
+#else
   int i = ((uint8_t *)mrbc_string_cstr(v))[0];
 
   SET_INT_RETURN( i );
+#endif
 }
 
 
@@ -923,7 +1419,11 @@ static void c_string_ord(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_string_slice_self(struct VM *vm, mrbc_value v[], int argc)
 {
+#if MRBC_USE_STRING_UTF8
+  int target_len = mrbc_string_char_size(mrbc_string_cstr(&v[0]), v[0].string->size);
+#else
   int target_len = mrbc_string_size(v);
+#endif
   int pos = mrbc_integer(v[1]);
   int len;
 
@@ -948,6 +1448,22 @@ static void c_string_slice_self(struct VM *vm, mrbc_value v[], int argc)
   if( len < 0 ) goto RETURN_NIL;
   if( argc == 1 && len <= 0 ) goto RETURN_NIL;
 
+#if MRBC_USE_STRING_UTF8
+  // Convert character position/length to byte position/length
+  int byte_pos = mrbc_string_chars2bytes(&v[0], 0, pos);
+  int byte_len = mrbc_string_chars2bytes(&v[0], byte_pos, len);
+  int byte_size = v[0].string->size;
+
+  mrbc_value ret = mrbc_string_new(vm, mrbc_string_cstr(v) + byte_pos, byte_len);
+  if( !ret.string ) goto RETURN_NIL;		// ENOMEM
+
+  if( byte_len > 0 ) {
+    memmove( mrbc_string_cstr(v) + byte_pos, mrbc_string_cstr(v) + byte_pos + byte_len,
+             byte_size - byte_pos - byte_len + 1 );
+    v->string->size = byte_size - byte_len;
+    mrbc_raw_realloc( mrbc_string_cstr(v), v->string->size + 1 );
+  }
+#else
   mrbc_value ret = mrbc_string_new(vm, mrbc_string_cstr(v) + pos, len);
   if( !ret.string ) goto RETURN_NIL;		// ENOMEM
 
@@ -957,6 +1473,7 @@ static void c_string_slice_self(struct VM *vm, mrbc_value v[], int argc)
     v->string->size = mrbc_string_size(v) - len;
     mrbc_raw_realloc( mrbc_string_cstr(v), mrbc_string_size(v)+1 );
   }
+#endif
 
   SET_RETURN(ret);
   return;		// normal return
@@ -1038,8 +1555,17 @@ static void c_string_split(struct VM *vm, mrbc_value v[], int argc)
 
     // split by each character.
     if( mrbc_string_size(&sep) == 0 ) {
+#if MRBC_USE_STRING_UTF8
+      // Get UTF-8 character length at current offset
+      int char_len = mrbc_string_utf8_size(mrbc_string_cstr(&v[0]) + offset);
+      if( char_len == 0 ) char_len = 1;  // skip invalid byte
+      pos = (offset + char_len < mrbc_string_size(&v[0])) ? offset : -1;
+      len = char_len;
+      sep_len = char_len;  // advance by character length
+#else
       pos = (offset < mrbc_string_size(&v[0])-1) ? offset : -1;
       len = 1;
+#endif
       goto SPLIT_ITEM;
     }
 
@@ -1174,6 +1700,269 @@ static void c_string_to_sym(struct VM *vm, mrbc_value v[], int argc)
   <in order> ::= (<ch>)+
   <range> ::= <ch> '-' <ch>
 */
+
+#if MRBC_USE_STRING_UTF8
+//================================================================
+// UTF-8 version of tr - uses codepoints instead of bytes
+//================================================================
+
+/*! Decode UTF-8 character to codepoint
+    Returns codepoint and advances *str by the number of bytes consumed
+*/
+static int32_t tr_utf8_decode(const char **str)
+{
+  const unsigned char *s = (const unsigned char *)*str;
+  int32_t codepoint;
+  int len;
+
+  if( s[0] < 0x80 ) {
+    codepoint = s[0];
+    len = 1;
+  } else if( (s[0] & 0xE0) == 0xC0 ) {
+    codepoint = ((s[0] & 0x1F) << 6) | (s[1] & 0x3F);
+    len = 2;
+  } else if( (s[0] & 0xF0) == 0xE0 ) {
+    codepoint = ((s[0] & 0x0F) << 12) | ((s[1] & 0x3F) << 6) | (s[2] & 0x3F);
+    len = 3;
+  } else if( (s[0] & 0xF8) == 0xF0 ) {
+    codepoint = ((s[0] & 0x07) << 18) | ((s[1] & 0x3F) << 12) | ((s[2] & 0x3F) << 6) | (s[3] & 0x3F);
+    len = 4;
+  } else {
+    // Invalid UTF-8, treat as single byte
+    codepoint = s[0];
+    len = 1;
+  }
+
+  *str += len;
+  return codepoint;
+}
+
+// UTF-8 pattern stores codepoints
+struct tr_pattern_utf8 {
+  uint8_t type;           // 1:in-order, 2:range
+  uint8_t flag_reverse;
+  int16_t n;              // number of codepoints
+  struct tr_pattern_utf8 *next;
+  int32_t codepoints[];   // flexible array of codepoints
+};
+
+static void tr_free_pattern_utf8(struct tr_pattern_utf8 *pat)
+{
+  while( pat ) {
+    struct tr_pattern_utf8 *p = pat->next;
+    mrbc_raw_free(pat);
+    pat = p;
+  }
+}
+
+static struct tr_pattern_utf8 *tr_parse_pattern_utf8(struct VM *vm, const mrbc_value *v_pattern, int flag_reverse_enable)
+{
+  const char *pattern = mrbc_string_cstr(v_pattern);
+  const char *pattern_end = pattern + mrbc_string_size(v_pattern);
+  int flag_reverse = 0;
+  struct tr_pattern_utf8 *ret = NULL;
+  struct tr_pattern_utf8 *last = NULL;
+
+  // Check for ^ at start
+  if( flag_reverse_enable && pattern < pattern_end && *pattern == '^' ) {
+    flag_reverse = 1;
+    pattern++;
+  }
+
+  while( pattern < pattern_end ) {
+    const char *start = pattern;
+    int32_t first_cp = tr_utf8_decode(&pattern);
+
+    // Check if this is a range pattern (cp1 - cp2)
+    if( pattern < pattern_end && *pattern == '-' && (pattern + 1) < pattern_end ) {
+      pattern++;  // skip '-'
+      int32_t second_cp = tr_utf8_decode(&pattern);
+
+      // Create range pattern
+      struct tr_pattern_utf8 *pat1 = mrbc_alloc(vm, sizeof(struct tr_pattern_utf8) + 2 * sizeof(int32_t));
+      if( pat1 != NULL ) {
+        pat1->type = 2;  // range
+        pat1->flag_reverse = flag_reverse;
+        pat1->n = second_cp - first_cp + 1;
+        pat1->next = NULL;
+        pat1->codepoints[0] = first_cp;
+        pat1->codepoints[1] = second_cp;
+      }
+
+      // Add to list
+      if( ret == NULL ) {
+        ret = last = pat1;
+      } else {
+        last->next = pat1;
+        last = pat1;
+      }
+    } else {
+      // In-order pattern - collect consecutive non-range characters
+      // First, count how many codepoints until we hit a range or end
+      const char *scan = pattern;
+      int count = 1;  // we already have first_cp
+
+      while( scan < pattern_end ) {
+        const char *next = scan;
+        tr_utf8_decode(&next);
+        // Check if next char starts a range
+        if( next < pattern_end && *next == '-' && (next + 1) < pattern_end ) {
+          break;  // stop before this char, it's part of a range
+        }
+        tr_utf8_decode(&scan);
+        count++;
+      }
+
+      // Create in-order pattern
+      struct tr_pattern_utf8 *pat1 = mrbc_alloc(vm, sizeof(struct tr_pattern_utf8) + count * sizeof(int32_t));
+      if( pat1 != NULL ) {
+        pat1->type = 1;  // in-order
+        pat1->flag_reverse = flag_reverse;
+        pat1->n = count;
+        pat1->next = NULL;
+
+        // Fill in codepoints
+        const char *p = start;
+        for( int i = 0; i < count; i++ ) {
+          pat1->codepoints[i] = tr_utf8_decode(&p);
+        }
+        pattern = p;
+      }
+
+      // Add to list
+      if( ret == NULL ) {
+        ret = last = pat1;
+      } else {
+        last->next = pat1;
+        last = pat1;
+      }
+    }
+  }
+
+  return ret;
+}
+
+static int tr_find_codepoint(const struct tr_pattern_utf8 *pat, int32_t cp)
+{
+  int ret = -1;
+  int n_sum = 0;
+  int flag_reverse = pat ? pat->flag_reverse : 0;
+
+  while( pat != NULL ) {
+    if( pat->type == 1 ) {  // in-order
+      for( int i = 0; i < pat->n; i++ ) {
+        if( pat->codepoints[i] == cp ) ret = n_sum + i;
+      }
+    } else {  // range
+      if( pat->codepoints[0] <= cp && cp <= pat->codepoints[1] ) {
+        ret = n_sum + (cp - pat->codepoints[0]);
+      }
+    }
+    n_sum += pat->n;
+    pat = pat->next;
+  }
+
+  if( flag_reverse ) {
+    return (ret < 0) ? INT_MAX : -1;
+  }
+  return ret;
+}
+
+static int32_t tr_get_codepoint(const struct tr_pattern_utf8 *pat, int n_th)
+{
+  int n_sum = 0;
+  while( pat != NULL ) {
+    if( n_th < (n_sum + pat->n) ) {
+      int i = n_th - n_sum;
+      return (pat->type == 1) ? pat->codepoints[i] : pat->codepoints[0] + i;
+    }
+    if( pat->next == NULL ) {
+      // Use last character for overflow
+      return (pat->type == 1) ? pat->codepoints[pat->n - 1] : pat->codepoints[1];
+    }
+    n_sum += pat->n;
+    pat = pat->next;
+  }
+  return -1;
+}
+
+static int tr_main_utf8(struct VM *vm, mrbc_value v[], int argc)
+{
+  if( !(argc == 2 && mrbc_type(v[1]) == MRBC_TT_STRING &&
+                     mrbc_type(v[2]) == MRBC_TT_STRING) ) {
+    mrbc_raise(vm, MRBC_CLASS(ArgumentError), 0);
+    return -1;
+  }
+
+  struct tr_pattern_utf8 *pat = tr_parse_pattern_utf8(vm, &v[1], 1);
+  if( pat == NULL ) return 0;
+
+  struct tr_pattern_utf8 *rep = tr_parse_pattern_utf8(vm, &v[2], 0);
+
+  // Build result string using chars approach
+  mrbc_value result = mrbc_string_new(vm, NULL, 0);
+  if( result.string == NULL ) {
+    tr_free_pattern_utf8(pat);
+    tr_free_pattern_utf8(rep);
+    return -1;
+  }
+
+  int flag_changed = 0;
+  const char *s = mrbc_string_cstr(&v[0]);
+  const char *end = s + mrbc_string_size(&v[0]);
+
+  while( s < end ) {
+    const char *char_start = s;
+    int32_t cp = tr_utf8_decode(&s);
+    int char_len = s - char_start;
+
+    int n = tr_find_codepoint(pat, cp);
+    if( n < 0 ) {
+      // No match, copy original character
+      mrbc_string_append_cbuf(&result, char_start, char_len);
+    } else {
+      flag_changed = 1;
+      if( rep == NULL ) {
+        // Delete character (don't append anything)
+      } else {
+        // Replace with corresponding character from rep
+        int32_t new_cp = tr_get_codepoint(rep, n);
+        char buf[4];
+        int new_len = mrbc_utf8_encode(new_cp, buf);
+        mrbc_string_append_cbuf(&result, buf, new_len);
+      }
+    }
+  }
+
+  tr_free_pattern_utf8(pat);
+  tr_free_pattern_utf8(rep);
+
+  // Replace original string content with result
+  mrbc_string *orig = v[0].string;
+  mrbc_string *res = result.string;
+
+  // Swap the data
+  if( mrbc_string_size(&v[0]) != mrbc_string_size(&result) ) {
+    // Need to reallocate
+    uint8_t *new_data = mrbc_realloc(vm, orig->data, res->size + 1);
+    if( new_data == NULL ) {
+      mrbc_decref(&result);
+      return -1;
+    }
+    orig->data = new_data;
+  }
+  memcpy(orig->data, res->data, res->size + 1);
+  orig->size = res->size;
+
+  mrbc_decref(&result);
+  return flag_changed;
+}
+#endif  // MRBC_USE_STRING_UTF8
+
+#if !MRBC_USE_STRING_UTF8
+//================================================================
+// Byte-based version of tr (original implementation, used when UTF-8 disabled)
+//================================================================
 struct tr_pattern {
   uint8_t type;		// 1:in-order, 2:range
   uint8_t flag_reverse;
@@ -1332,12 +2121,17 @@ static int tr_main( struct VM *vm, mrbc_value v[], int argc )
 
   return flag_changed;
 }
+#endif  // !MRBC_USE_STRING_UTF8
 
 static void c_string_tr(struct VM *vm, mrbc_value v[], int argc)
 {
   mrbc_value ret = mrbc_string_dup( vm, &v[0] );
   SET_RETURN( ret );
+#if MRBC_USE_STRING_UTF8
+  tr_main_utf8(vm, v, argc);
+#else
   tr_main(vm, v, argc);
+#endif
 }
 
 
@@ -1346,7 +2140,11 @@ static void c_string_tr(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_string_tr_self(struct VM *vm, mrbc_value v[], int argc)
 {
+#if MRBC_USE_STRING_UTF8
+  int flag_changed = tr_main_utf8(vm, v, argc);
+#else
   int flag_changed = tr_main(vm, v, argc);
+#endif
 
   if( !flag_changed ) {
     SET_NIL_RETURN();
@@ -1476,6 +2274,190 @@ static void c_string_downcase_self(struct VM *vm, mrbc_value v[], int argc)
 }
 
 
+#if MRBC_USE_STRING_UTF8
+//================================================================
+/*! (method) encoding
+*/
+static void c_string_encoding(struct VM *vm, mrbc_value v[], int argc)
+{
+  mrbc_value ret = mrbc_string_new_cstr(vm, "UTF-8");
+  SET_RETURN(ret);
+}
+
+
+//================================================================
+/*! (method) valid_encoding?
+*/
+static void c_string_valid_encoding(struct VM *vm, mrbc_value v[], int argc)
+{
+  const uint8_t *s = (const uint8_t *)mrbc_string_cstr(&v[0]);
+  int len = mrbc_string_size(&v[0]);
+  int i = 0;
+
+  while( i < len ) {
+    int char_len = mrbc_string_utf8_size((const char *)&s[i]);
+    if( char_len == 0 ) {
+      // Invalid leading byte or continuation byte at start
+      SET_BOOL_RETURN(0);
+      return;
+    }
+    if( i + char_len > len ) {
+      // Truncated sequence
+      SET_BOOL_RETURN(0);
+      return;
+    }
+    // Verify continuation bytes
+    for( int j = 1; j < char_len; j++ ) {
+      if( (s[i + j] & 0xC0) != 0x80 ) {
+        SET_BOOL_RETURN(0);
+        return;
+      }
+    }
+    i += char_len;
+  }
+
+  SET_BOOL_RETURN(1);
+}
+
+
+//================================================================
+/*! (method) ascii_only?
+*/
+static void c_string_ascii_only(struct VM *vm, mrbc_value v[], int argc)
+{
+  const uint8_t *s = (const uint8_t *)mrbc_string_cstr(&v[0]);
+  int len = mrbc_string_size(&v[0]);
+
+  for( int i = 0; i < len; i++ ) {
+    if( s[i] > 0x7F ) {
+      SET_BOOL_RETURN(0);
+      return;
+    }
+  }
+
+  SET_BOOL_RETURN(1);
+}
+
+
+//================================================================
+/*! (method) chars
+*/
+static void c_string_chars(struct VM *vm, mrbc_value v[], int argc)
+{
+  const uint8_t *s = (const uint8_t *)mrbc_string_cstr(&v[0]);
+  int len = mrbc_string_size(&v[0]);
+  int char_count = mrbc_string_char_size((const char *)s, len);
+  mrbc_value ret = mrbc_array_new(vm, char_count);
+
+  int i = 0;
+  int idx = 0;
+  while( i < len ) {
+    int char_len = mrbc_string_utf8_size((const char *)&s[i]);
+    if( char_len == 0 ) char_len = 1;  // skip invalid byte
+    if( i + char_len > len ) char_len = len - i;
+
+    mrbc_value ch = mrbc_string_new(vm, &s[i], char_len);
+    mrbc_array_set(&ret, idx++, &ch);
+    i += char_len;
+  }
+
+  SET_RETURN(ret);
+}
+
+
+//================================================================
+/*! (method) reverse
+*/
+static void c_string_reverse(struct VM *vm, mrbc_value v[], int argc)
+{
+  const uint8_t *s = (const uint8_t *)mrbc_string_cstr(&v[0]);
+  int len = mrbc_string_size(&v[0]);
+
+  // Allocate result buffer (same byte length as original)
+  mrbc_value ret = mrbc_string_new(vm, NULL, len);
+  if( ret.string == NULL ) return;
+  uint8_t *dst = ret.string->data;
+
+  // Find all character boundaries first
+  int char_count = mrbc_string_char_size((const char *)s, len);
+  int *offsets = mrbc_raw_alloc(sizeof(int) * (char_count + 1));
+  if( offsets == NULL ) {
+    mrbc_decref(&ret);
+    return;
+  }
+
+  int i = 0;
+  int idx = 0;
+  while( i < len ) {
+    offsets[idx++] = i;
+    int char_len = mrbc_string_utf8_size((const char *)&s[i]);
+    if( char_len == 0 ) char_len = 1;
+    i += char_len;
+  }
+  offsets[idx] = len;
+
+  // Copy characters in reverse order
+  int dst_pos = 0;
+  for( i = char_count - 1; i >= 0; i-- ) {
+    int char_start = offsets[i];
+    int char_len = offsets[i + 1] - char_start;
+    memcpy(dst + dst_pos, s + char_start, char_len);
+    dst_pos += char_len;
+  }
+  dst[len] = '\0';
+
+  mrbc_raw_free(offsets);
+  SET_RETURN(ret);
+}
+
+
+//================================================================
+/*! (method) reverse!
+*/
+static void c_string_reverse_self(struct VM *vm, mrbc_value v[], int argc)
+{
+  const uint8_t *s = (const uint8_t *)mrbc_string_cstr(&v[0]);
+  int len = mrbc_string_size(&v[0]);
+
+  // Find all character boundaries
+  int char_count = mrbc_string_char_size((const char *)s, len);
+  int *offsets = mrbc_raw_alloc(sizeof(int) * (char_count + 1));
+  if( offsets == NULL ) return;
+
+  int i = 0;
+  int idx = 0;
+  while( i < len ) {
+    offsets[idx++] = i;
+    int char_len = mrbc_string_utf8_size((const char *)&s[i]);
+    if( char_len == 0 ) char_len = 1;
+    i += char_len;
+  }
+  offsets[idx] = len;
+
+  // Create temp buffer and copy reversed
+  uint8_t *tmp = mrbc_raw_alloc(len);
+  if( tmp == NULL ) {
+    mrbc_raw_free(offsets);
+    return;
+  }
+
+  int dst_pos = 0;
+  for( i = char_count - 1; i >= 0; i-- ) {
+    int char_start = offsets[i];
+    int char_len = offsets[i + 1] - char_start;
+    memcpy(tmp + dst_pos, s + char_start, char_len);
+    dst_pos += char_len;
+  }
+
+  // Copy back to original
+  memcpy(v[0].string->data, tmp, len);
+
+  mrbc_raw_free(tmp);
+  mrbc_raw_free(offsets);
+}
+#endif // MRBC_USE_STRING_UTF8
+
+
 /* MRBC_AUTOGEN_METHOD_TABLE
 
   CLASS("String")
@@ -1486,6 +2468,7 @@ static void c_string_downcase_self(struct VM *vm, mrbc_value v[], int argc)
   METHOD( "*",		c_string_mul )
   METHOD( "size",	c_string_size )
   METHOD( "length",	c_string_size )
+  METHOD( "bytesize",	c_string_bytesize )
   METHOD( "to_i",	c_string_to_i )
   METHOD( "to_s",	c_string_to_s )
   METHOD( "<<",		c_string_append )
@@ -1526,6 +2509,15 @@ static void c_string_downcase_self(struct VM *vm, mrbc_value v[], int argc)
 
 #if MRBC_USE_FLOAT
   METHOD( "to_f",	c_string_to_f )
+#endif
+
+#if MRBC_USE_STRING_UTF8
+  METHOD( "encoding",	c_string_encoding )
+  METHOD( "valid_encoding?", c_string_valid_encoding )
+  METHOD( "ascii_only?", c_string_ascii_only )
+  METHOD( "chars",	c_string_chars )
+  METHOD( "reverse",	c_string_reverse )
+  METHOD( "reverse!",	c_string_reverse_self )
 #endif
 */
 #include "_autogen_class_string.h"

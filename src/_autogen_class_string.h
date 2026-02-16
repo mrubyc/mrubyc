@@ -8,8 +8,15 @@ static const mrbc_sym method_symbols_String[] = {
   MRBC_SYM(LT_LT),
   MRBC_SYM(BL_BR),
   MRBC_SYM(BL_BR_EQ),
+#if MRBC_USE_STRING_UTF8
+  MRBC_SYM(ascii_only_Q),
+#endif
   MRBC_SYM(b),
   MRBC_SYM(bytes),
+  MRBC_SYM(bytesize),
+#if MRBC_USE_STRING_UTF8
+  MRBC_SYM(chars),
+#endif
   MRBC_SYM(chomp),
   MRBC_SYM(chomp_E),
   MRBC_SYM(clear),
@@ -17,6 +24,9 @@ static const mrbc_sym method_symbols_String[] = {
   MRBC_SYM(downcase_E),
   MRBC_SYM(dup),
   MRBC_SYM(empty_Q),
+#if MRBC_USE_STRING_UTF8
+  MRBC_SYM(encoding),
+#endif
   MRBC_SYM(end_with_Q),
   MRBC_SYM(getbyte),
   MRBC_SYM(include_Q),
@@ -28,6 +38,12 @@ static const mrbc_sym method_symbols_String[] = {
   MRBC_SYM(lstrip_E),
   MRBC_SYM(new),
   MRBC_SYM(ord),
+#if MRBC_USE_STRING_UTF8
+  MRBC_SYM(reverse),
+#endif
+#if MRBC_USE_STRING_UTF8
+  MRBC_SYM(reverse_E),
+#endif
   MRBC_SYM(rstrip),
   MRBC_SYM(rstrip_E),
   MRBC_SYM(setbyte),
@@ -48,6 +64,9 @@ static const mrbc_sym method_symbols_String[] = {
   MRBC_SYM(tr_E),
   MRBC_SYM(upcase),
   MRBC_SYM(upcase_E),
+#if MRBC_USE_STRING_UTF8
+  MRBC_SYM(valid_encoding_Q),
+#endif
 };
 
 static const mrbc_func_t method_functions_String[] = {
@@ -56,8 +75,15 @@ static const mrbc_func_t method_functions_String[] = {
   c_string_append,
   c_string_slice,
   c_string_insert,
+#if MRBC_USE_STRING_UTF8
+  c_string_ascii_only,
+#endif
   c_ineffect,
   c_string_bytes,
+  c_string_bytesize,
+#if MRBC_USE_STRING_UTF8
+  c_string_chars,
+#endif
   c_string_chomp,
   c_string_chomp_self,
   c_string_clear,
@@ -65,6 +91,9 @@ static const mrbc_func_t method_functions_String[] = {
   c_string_downcase_self,
   c_string_dup,
   c_string_empty,
+#if MRBC_USE_STRING_UTF8
+  c_string_encoding,
+#endif
   c_string_end_with,
   c_string_getbyte,
   c_string_include,
@@ -76,6 +105,12 @@ static const mrbc_func_t method_functions_String[] = {
   c_string_lstrip_self,
   c_string_new,
   c_string_ord,
+#if MRBC_USE_STRING_UTF8
+  c_string_reverse,
+#endif
+#if MRBC_USE_STRING_UTF8
+  c_string_reverse_self,
+#endif
   c_string_rstrip,
   c_string_rstrip_self,
   c_string_setbyte,
@@ -96,6 +131,9 @@ static const mrbc_func_t method_functions_String[] = {
   c_string_tr_self,
   c_string_upcase,
   c_string_upcase_self,
+#if MRBC_USE_STRING_UTF8
+  c_string_valid_encoding,
+#endif
 };
 
 struct RBuiltinClass mrbc_class_String = {
