@@ -32,6 +32,8 @@ static const mrbc_sym method_symbols_Array[] = {
   MRBC_SYM(new),
   MRBC_SYM(pop),
   MRBC_SYM(push),
+  MRBC_SYM(reverse),
+  MRBC_SYM(reverse_E),
   MRBC_SYM(shift),
   MRBC_SYM(size),
 #if MRBC_USE_STRING
@@ -73,6 +75,8 @@ static const mrbc_func_t method_functions_Array[] = {
   c_array_new,
   c_array_pop,
   c_array_push,
+  c_array_reverse,
+  c_array_reverse_self,
   c_array_shift,
   c_array_size,
 #if MRBC_USE_STRING

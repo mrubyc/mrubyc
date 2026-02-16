@@ -1202,6 +1202,44 @@ static void c_array_uniq_self(struct VM *vm, mrbc_value v[], int argc)
 }
 
 
+//================================================================
+/*! (method) reverse
+*/
+static void c_array_reverse(struct VM *vm, mrbc_value v[], int argc)
+{
+  mrbc_value *self = &v[0];
+  int n = mrbc_array_size(self);
+  mrbc_value ret = mrbc_array_new(vm, n);
+
+  // Direct access for performance.
+  for( int i = 0; i < n; i++ ) {
+    mrbc_value *v1 = &self->array->data[n - i - 1];
+    mrbc_incref(v1);
+    ret.array->data[i] = *v1;
+  }
+  ret.array->n_stored = n;
+
+  SET_RETURN( ret );
+}
+
+
+//================================================================
+/*! (method) reverse!
+*/
+static void c_array_reverse_self(struct VM *vm, mrbc_value v[], int argc)
+{
+  mrbc_value *self = &v[0];
+  int n = mrbc_array_size(self);
+
+  // Direct access for performance.
+  for( int i = 0; i < n/2; i++ ) {
+    mrbc_value v1 = self->array->data[i];
+    self->array->data[i] = self->array->data[n - i - 1];
+    self->array->data[n - i - 1] = v1;
+  }
+}
+
+
 #if MRBC_USE_STRING
 //================================================================
 /*! (method) inspect, to_s
@@ -1313,6 +1351,9 @@ static void c_array_join(struct VM *vm, mrbc_value v[], int argc)
   METHOD( "minmax",	c_array_minmax )
   METHOD( "uniq",	c_array_uniq )
   METHOD( "uniq!",	c_array_uniq_self )
+  METHOD( "reverse",	c_array_reverse )
+  METHOD( "reverse!",	c_array_reverse_self )
+
 #if MRBC_USE_STRING
   METHOD( "inspect",	c_array_inspect )
   METHOD( "to_s",	c_array_inspect )

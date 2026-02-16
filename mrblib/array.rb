@@ -176,6 +176,18 @@ class Array
   end
 
   #
+  # reverse_each
+  #
+  def reverse_each()
+    i = length() - 1
+    while i >= 0
+      yield self[i]
+      i -= 1
+    end
+    return self
+  end
+
+  #
   # select
   #
   def select()

@@ -367,7 +367,7 @@ class ArrayTest < Picotest::Test
   end
 
   description "all? test"
-  def test_all_
+  def test_all
     assert_equal( true,  [5,  6, 7].all? {|v| v > 0 } )
     assert_equal( false, [5, -1, 7].all? {|v| v > 0 } )
     assert_equal( true,  [].all? {|v| v > 0 } )
@@ -376,7 +376,7 @@ class ArrayTest < Picotest::Test
   end
 
   description "any? test"
-  def test_any_
+  def test_any
     assert_equal( false, [1, 2, 3].any? {|v| v > 3 } )
     assert_equal( true,  [1, 2, 3].any? {|v| v > 1 } )
     assert_equal( false, [].any? {|v| v > 0 } )
@@ -385,13 +385,31 @@ class ArrayTest < Picotest::Test
     assert_equal( false, [].any? )
   end
 
-  description "any? test"
-  def test_none_
+  description "none? test"
+  def test_none
     assert_equal( true,  %w{ant bear cat}.none? {|word| word.length == 5} )
     assert_equal( false, %w{ant bear cat}.none? {|word| word.length >= 4} )
     assert_equal( true,  [].none? )
     assert_equal( true,  [nil].none? )
     assert_equal( true,  [nil,false].none? )
     assert_equal( false, [nil,false,true].none? )
+  end
+
+  description "reverse test"
+  def test_reverse
+    assert_equal [3,2,1], [1,2,3].reverse
+    assert_equal [2,1],   [1,2].reverse
+    assert_equal [1],     [1].reverse
+    assert_equal [],      [].reverse
+
+    a = %w(A B C)
+    assert_equal %w(C B A), a.reverse!
+    assert_equal %w(C B A), a
+
+    s = ""
+    %w(A B C).reverse_each {|item|
+      s << item
+    }
+    assert_equal "CBA", s
   end
 end
