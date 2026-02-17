@@ -412,11 +412,11 @@ int mrbc_string_utf8_size(const char *str)
 {
   unsigned char c = (unsigned char)*str;
 
-  if( (c & 0x80) == 0x00 ) return 1;       // ASCII: 0xxxxxxx
+  if( (c & 0x80) == 0x00 ) return 1;       // ASCII:  0xxxxxxx
   if( (c & 0xE0) == 0xC0 ) return 2;       // 2-byte: 110xxxxx
   if( (c & 0xF0) == 0xE0 ) return 3;       // 3-byte: 1110xxxx
   if( (c & 0xF8) == 0xF0 ) return 4;       // 4-byte: 11110xxx
-  return 0;                                 // continuation or invalid
+  return 0;                                // continuation or invalid
 }
 
 
@@ -854,7 +854,7 @@ static void c_string_mul(struct VM *vm, mrbc_value v[], int argc)
 static void c_string_size(struct VM *vm, mrbc_value v[], int argc)
 {
 #if MRBC_USE_STRING_UTF8
-  mrbc_int_t size = mrbc_string_char_size(mrbc_string_cstr(&v[0]), v[0].string->size);
+  mrbc_int_t size = mrbc_string_char_size(mrbc_string_cstr(&v[0]), mrbc_string_size(&v[0]));
 #else
   mrbc_int_t size = mrbc_string_size(&v[0]);
 #endif
@@ -958,7 +958,7 @@ static void c_string_append(struct VM *vm, mrbc_value v[], int argc)
 static void c_string_slice(struct VM *vm, mrbc_value v[], int argc)
 {
 #if MRBC_USE_STRING_UTF8
-  int target_len = mrbc_string_char_size(mrbc_string_cstr(&v[0]), v[0].string->size);
+  int target_len = mrbc_string_char_size(mrbc_string_cstr(&v[0]), mrbc_string_size(&v[0]));
 #else
   int target_len = mrbc_string_size(v);
 #endif
@@ -1059,7 +1059,7 @@ static void c_string_slice(struct VM *vm, mrbc_value v[], int argc)
 static void c_string_insert(struct VM *vm, mrbc_value v[], int argc)
 {
 #if MRBC_USE_STRING_UTF8
-  int target_len = mrbc_string_char_size(mrbc_string_cstr(&v[0]), v[0].string->size);
+  int target_len = mrbc_string_char_size(mrbc_string_cstr(&v[0]), mrbc_string_size(&v[0]));
 #else
   int target_len = mrbc_string_size(v);
 #endif
@@ -1142,7 +1142,7 @@ static void c_string_insert(struct VM *vm, mrbc_value v[], int argc)
   // Convert character position/length to byte position/length
   int byte_pos = mrbc_string_chars2bytes(&v[0], 0, pos);
   int byte_len = mrbc_string_chars2bytes(&v[0], byte_pos, len);
-  int byte_len1 = v[0].string->size;  // original byte length
+  int byte_len1 = mrbc_string_size(&v[0]);  // original byte length
 
   int byte_len3 = byte_len1 + len2 - byte_len;  // final byte length
   uint8_t *str = v->string->data;
@@ -1308,7 +1308,7 @@ static void c_string_index(struct VM *vm, mrbc_value v[], int argc)
   } else if( argc == 2 && mrbc_type(v[2]) == MRBC_TT_INTEGER ) {
     offset = v[2].i;
 #if MRBC_USE_STRING_UTF8
-    int char_len = mrbc_string_char_size(mrbc_string_cstr(&v[0]), v[0].string->size);
+    int char_len = mrbc_string_char_size(mrbc_string_cstr(&v[0]), mrbc_string_size(&v[0]));
     if( offset < 0 ) offset += char_len;
     if( offset < 0 ) goto NIL_RETURN;
     // Convert character offset to byte offset
@@ -1420,7 +1420,7 @@ static void c_string_ord(struct VM *vm, mrbc_value v[], int argc)
 static void c_string_slice_self(struct VM *vm, mrbc_value v[], int argc)
 {
 #if MRBC_USE_STRING_UTF8
-  int target_len = mrbc_string_char_size(mrbc_string_cstr(&v[0]), v[0].string->size);
+  int target_len = mrbc_string_char_size(mrbc_string_cstr(&v[0]), mrbc_string_size(&v[0]));
 #else
   int target_len = mrbc_string_size(v);
 #endif
@@ -1452,7 +1452,7 @@ static void c_string_slice_self(struct VM *vm, mrbc_value v[], int argc)
   // Convert character position/length to byte position/length
   int byte_pos = mrbc_string_chars2bytes(&v[0], 0, pos);
   int byte_len = mrbc_string_chars2bytes(&v[0], byte_pos, len);
-  int byte_size = v[0].string->size;
+  int byte_size = mrbc_string_size(&v[0]);
 
   mrbc_value ret = mrbc_string_new(vm, mrbc_string_cstr(v) + byte_pos, byte_len);
   if( !ret.string ) goto RETURN_NIL;		// ENOMEM
