@@ -11,7 +11,7 @@
   Memory management for objects in mruby/c.
 
   STRATEGY
-   Using TLSF and FistFit algorithm.
+   Uses the TLSF and first-fit algorithms.
 
   MEMORY POOL USAGE (see struct MEMORY_POOL)
      | Memory pool header | Memory block pool to provide to application |
@@ -102,6 +102,17 @@
 /***** Macros ***************************************************************/
 #define FLI(x) ((x) >> MRBC_ALLOC_SLI_BIT_WIDTH)
 #define SLI(x) ((x) & ((1 << MRBC_ALLOC_SLI_BIT_WIDTH) - 1))
+
+/*
+  Pull Request #251 made NULL check unnecessary.
+  Should you need libc-compatible behavior for any reason,
+  you should enable this macro.
+*/
+#if 1
+# define RETURN_IF_NULL(ptr) (void)0
+#else
+# define RETURN_IF_NULL(ptr) if((ptr) == NULL) return (ptr)
+#endif
 
 
 /***** Typedefs *************************************************************/
@@ -850,7 +861,7 @@ void * mrbc_raw_realloc(void *ptr, unsigned int size)
   // new alloc and copy
  ALLOC_AND_COPY: {
     void *new_ptr = mrbc_raw_alloc(size);
-    if( new_ptr == NULL ) return NULL;  // ENOMEM
+    RETURN_IF_NULL( new_ptr );		// ENOMEM
 
     memcpy(new_ptr, ptr, BLOCK_SIZE(target) - sizeof(USED_BLOCK));
     mrbc_set_vm_id(new_ptr, target->vm_id);
@@ -887,7 +898,7 @@ unsigned int mrbc_alloc_usable_size(void *ptr)
 void * mrbc_alloc(const struct VM *vm, unsigned int size)
 {
   void *ptr = mrbc_raw_alloc(size);
-  if( ptr == NULL ) return NULL;	// ENOMEM
+  RETURN_IF_NULL( ptr );		// ENOMEM
 
   if( vm ) mrbc_set_vm_id(ptr, vm->vm_id);
 
@@ -907,7 +918,7 @@ void * mrbc_alloc(const struct VM *vm, unsigned int size)
 void * mrbc_calloc(const struct VM *vm, unsigned int nmemb, unsigned int size)
 {
   void *ptr = mrbc_raw_calloc(nmemb, size);
-  if( ptr == NULL ) return NULL;	// ENOMEM
+  RETURN_IF_NULL( ptr );		// ENOMEM
 
   if( vm ) mrbc_set_vm_id(ptr, vm->vm_id);
 

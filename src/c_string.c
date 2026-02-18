@@ -64,17 +64,9 @@ mrbc_value mrbc_string_new(struct VM *vm, const void *src, int len)
 {
   mrbc_value value = mrbc_immediate_value(MRBC_TT_STRING);
 
-  /*
-    Allocate handle and string buffer.
-  */
+  // Allocate handle and string buffer.
   mrbc_string *h = mrbc_alloc(vm, sizeof(mrbc_string));
-  if( !h ) return value;		// ENOMEM
-
   uint8_t *str = mrbc_alloc(vm, len+1);
-  if( !str ) {				// ENOMEM
-    mrbc_raw_free( h );
-    return value;
-  }
 
   MRBC_INIT_OBJECT_HEADER( h, "ST" );
   h->size = len;
@@ -106,12 +98,7 @@ mrbc_value mrbc_string_new(struct VM *vm, const void *src, int len)
 mrbc_value mrbc_string_new_alloc(struct VM *vm, void *buf, int len)
 {
   mrbc_value value = mrbc_immediate_value(MRBC_TT_STRING);
-
-  /*
-    Allocate handle
-  */
   mrbc_string *h = mrbc_alloc(vm, sizeof(mrbc_string));
-  if( !h ) return value;		// ENOMEM
 
   MRBC_INIT_OBJECT_HEADER( h, "ST" );
   h->size = len;
@@ -168,9 +155,7 @@ void mrbc_string_clear_vm_id(mrbc_value *str)
 mrbc_value mrbc_string_dup(struct VM *vm, mrbc_value *s1)
 {
   mrbc_string *h1 = s1->string;
-
   mrbc_value value = mrbc_string_new(vm, NULL, h1->size);
-  if( value.string == NULL ) return value;		// ENOMEM
 
   memcpy( value.string->data, h1->data, h1->size + 1 );
 
@@ -190,9 +175,7 @@ mrbc_value mrbc_string_add(struct VM *vm, const mrbc_value *s1, const mrbc_value
 {
   mrbc_string *h1 = s1->string;
   mrbc_string *h2 = s2->string;
-
   mrbc_value value = mrbc_string_new(vm, NULL, h1->size + h2->size);
-  if( value.string == NULL ) return value;		// ENOMEM
 
   memcpy( value.string->data,            h1->data, h1->size );
   memcpy( value.string->data + h1->size, h2->data, h2->size + 1 );
@@ -212,9 +195,7 @@ int mrbc_string_append(mrbc_value *s1, const mrbc_value *s2)
 {
   int len1 = s1->string->size;
   int len2 = (mrbc_type(*s2) == MRBC_TT_STRING) ? s2->string->size : 1;
-
   uint8_t *str = mrbc_raw_realloc(s1->string->data, len1+len2+1);
-  if( !str ) return E_NOMEMORY_ERROR;
 
   if( mrbc_type(*s2) == MRBC_TT_STRING ) {
     memcpy(str + len1, s2->string->data, len2 + 1);
@@ -241,9 +222,7 @@ int mrbc_string_append(mrbc_value *s1, const mrbc_value *s2)
 int mrbc_string_append_cbuf(mrbc_value *s1, const void *s2, int len2)
 {
   int len1 = s1->string->size;
-
   uint8_t *str = mrbc_raw_realloc(s1->string->data, len1+len2+1);
-  if( !str ) return E_NOMEMORY_ERROR;
 
   if( s2 ) {
     memcpy(str + len1, s2, len2);
@@ -564,7 +543,7 @@ static int unicode_encode_utf8(int32_t cp, uint8_t *buf)
 static int32_t unicode_case_lookup_range(int32_t cp, const case_range_t *ranges, int count)
 {
   for( int i = 0; i < count; i++ ) {
-    if( cp >= ranges[i].start && cp <= ranges[i].end ) {
+    if( ranges[i].start <= cp && cp <= ranges[i].end ) {
       // Check if this character matches the XOR pattern
       int32_t converted = cp ^ ranges[i].xor_val;
       // Verify the conversion is in the expected direction
@@ -834,8 +813,6 @@ static void c_string_mul(struct VM *vm, mrbc_value v[], int argc)
 
   mrbc_value value = mrbc_string_new(vm, NULL,
                         mrbc_string_size(&v[0]) * mrbc_integer(v[1]));
-  if( value.string == NULL ) return;		// ENOMEM
-
   uint8_t *p = value.string->data;
   for( int i = 0; i < v[1].i; i++ ) {
     memcpy( p, mrbc_string_cstr(&v[0]), mrbc_string_size(&v[0]) );
@@ -939,16 +916,12 @@ static void c_string_append(struct VM *vm, mrbc_value v[], int argc)
     }
 
     len = mrbc_utf8_encode(codepoint, buf);
-    if( !mrbc_string_append_cbuf(&v[0], buf, len) ) {
-      // raise ? ENOMEM
-    }
+    mrbc_string_append_cbuf(&v[0], buf, len);
     return;
   }
 #endif
 
-  if( !mrbc_string_append( &v[0], &v[1] ) ) {
-    // raise ? ENOMEM
-  }
+  mrbc_string_append( &v[0], &v[1] );
 }
 
 
@@ -1038,7 +1011,6 @@ static void c_string_slice(struct VM *vm, mrbc_value v[], int argc)
 #else
   mrbc_value ret = mrbc_string_new(vm, mrbc_string_cstr(v) + pos, len);
 #endif
-  if( !ret.string ) goto RETURN_NIL;		// ENOMEM
 
   SET_RETURN(ret);
   return;		// normal return
@@ -1148,7 +1120,6 @@ static void c_string_insert(struct VM *vm, mrbc_value v[], int argc)
   uint8_t *str = v->string->data;
   if( byte_len1 < byte_len3 ) {
     str = mrbc_realloc(vm, str, byte_len3+1);	// expand
-    if( !str ) return;
   }
 
   memmove( str + byte_pos + len2, str + byte_pos + byte_len, byte_len1 - byte_pos - byte_len + 1 );
@@ -1165,7 +1136,6 @@ static void c_string_insert(struct VM *vm, mrbc_value v[], int argc)
   uint8_t *str = v->string->data;
   if( len1 < len3 ) {
     str = mrbc_realloc(vm, str, len3+1);	// expand
-    if( !str ) return;
   }
 
   memmove( str + pos + len2, str + pos + len, len1 - pos - len + 1 );
@@ -1455,7 +1425,6 @@ static void c_string_slice_self(struct VM *vm, mrbc_value v[], int argc)
   int byte_size = mrbc_string_size(&v[0]);
 
   mrbc_value ret = mrbc_string_new(vm, mrbc_string_cstr(v) + byte_pos, byte_len);
-  if( !ret.string ) goto RETURN_NIL;		// ENOMEM
 
   if( byte_len > 0 ) {
     memmove( mrbc_string_cstr(v) + byte_pos, mrbc_string_cstr(v) + byte_pos + byte_len,
@@ -1465,7 +1434,6 @@ static void c_string_slice_self(struct VM *vm, mrbc_value v[], int argc)
   }
 #else
   mrbc_value ret = mrbc_string_new(vm, mrbc_string_cstr(v) + pos, len);
-  if( !ret.string ) goto RETURN_NIL;		// ENOMEM
 
   if( len > 0 ) {
     memmove( mrbc_string_cstr(v) + pos, mrbc_string_cstr(v) + pos + len,
@@ -1780,14 +1748,13 @@ static struct tr_pattern_utf8 *tr_parse_pattern_utf8(struct VM *vm, const mrbc_v
 
       // Create range pattern
       struct tr_pattern_utf8 *pat1 = mrbc_alloc(vm, sizeof(struct tr_pattern_utf8) + 2 * sizeof(int32_t));
-      if( pat1 != NULL ) {
-        pat1->type = 2;  // range
-        pat1->flag_reverse = flag_reverse;
-        pat1->n = second_cp - first_cp + 1;
-        pat1->next = NULL;
-        pat1->codepoints[0] = first_cp;
-        pat1->codepoints[1] = second_cp;
-      }
+
+      pat1->type = 2;  // range
+      pat1->flag_reverse = flag_reverse;
+      pat1->n = second_cp - first_cp + 1;
+      pat1->next = NULL;
+      pat1->codepoints[0] = first_cp;
+      pat1->codepoints[1] = second_cp;
 
       // Add to list
       if( ret == NULL ) {
@@ -1815,19 +1782,18 @@ static struct tr_pattern_utf8 *tr_parse_pattern_utf8(struct VM *vm, const mrbc_v
 
       // Create in-order pattern
       struct tr_pattern_utf8 *pat1 = mrbc_alloc(vm, sizeof(struct tr_pattern_utf8) + count * sizeof(int32_t));
-      if( pat1 != NULL ) {
-        pat1->type = 1;  // in-order
-        pat1->flag_reverse = flag_reverse;
-        pat1->n = count;
-        pat1->next = NULL;
 
-        // Fill in codepoints
-        const char *p = start;
-        for( int i = 0; i < count; i++ ) {
-          pat1->codepoints[i] = tr_utf8_decode(&p);
-        }
-        pattern = p;
+      pat1->type = 1;  // in-order
+      pat1->flag_reverse = flag_reverse;
+      pat1->n = count;
+      pat1->next = NULL;
+
+      // Fill in codepoints
+      const char *p = start;
+      for( int i = 0; i < count; i++ ) {
+	pat1->codepoints[i] = tr_utf8_decode(&p);
       }
+      pattern = p;
 
       // Add to list
       if( ret == NULL ) {
@@ -1998,14 +1964,12 @@ static struct tr_pattern * tr_parse_pattern( struct VM *vm, const mrbc_value *v_
     // is range pattern ?
     if( (i+2) < pattern_length && pattern[i+1] == '-' ) {
       pat1 = mrbc_alloc( vm, sizeof(struct tr_pattern) + 2 );
-      if( pat1 != NULL ) {
-        pat1->type = 2;
-        pat1->flag_reverse = flag_reverse;
-        pat1->n = pattern[i+2] - pattern[i] + 1;
-        pat1->next = NULL;
-        pat1->ch[0] = pattern[i];
-        pat1->ch[1] = pattern[i+2];
-      }
+      pat1->type = 2;
+      pat1->flag_reverse = flag_reverse;
+      pat1->n = pattern[i+2] - pattern[i] + 1;
+      pat1->next = NULL;
+      pat1->ch[0] = pattern[i];
+      pat1->ch[1] = pattern[i+2];
       i += 3;
 
     } else {
@@ -2018,13 +1982,11 @@ static struct tr_pattern * tr_parse_pattern( struct VM *vm, const mrbc_value *v_
 
       int len = i - start_pos;
       pat1 = mrbc_alloc( vm, sizeof(struct tr_pattern) + len );
-      if( pat1 != NULL ) {
-        pat1->type = 1;
-        pat1->flag_reverse = flag_reverse;
-        pat1->n = len;
-        pat1->next = NULL;
-        memcpy( pat1->ch, &pattern[start_pos], len );
-      }
+      pat1->type = 1;
+      pat1->flag_reverse = flag_reverse;
+      pat1->n = len;
+      pat1->next = NULL;
+      memcpy( pat1->ch, &pattern[start_pos], len );
     }
 
     // connect linked list.
