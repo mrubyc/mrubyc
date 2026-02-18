@@ -44,14 +44,8 @@ clean_all: clean
 	@rm -f $(AUTOGEN_SYMBOL_TABLE) $(AUTOGEN_CLASS_TABLE) $(AUTOGEN_METHOD_TABLE) $(AUTOGEN_UNICODE_CASE)
 
 autogen:
-	@rm -f $(AUTOGEN_SYMBOL_TABLE) $(AUTOGEN_CLASS_TABLE) $(AUTOGEN_METHOD_TABLE)
-	$(MAKE) $(AUTOGEN_SYMBOL_TABLE)
-	@if [ -f "$(UNICODE_DATA)" ]; then \
-	  ruby $(GENERATE_UNICODE_CASE) $(UNICODE_DATA); \
-	else \
-	  echo "Skipping $(AUTOGEN_UNICODE_CASE): $(UNICODE_DATA) not found."; \
-	  echo "  Place UnicodeData.txt in src/ or pass: make autogen UNICODE_DATA=/path/to/UnicodeData.txt"; \
-	fi
+	@rm -f $(AUTOGEN_SYMBOL_TABLE) $(AUTOGEN_CLASS_TABLE) $(AUTOGEN_METHOD_TABLE) $(AUTOGEN_UNICODE_CASE)
+	$(MAKE) $(AUTOGEN_SYMBOL_TABLE) $(AUTOGEN_UNICODE_CASE)
 
 check_depend:
 	@$(CC) $(CFLAGS) -MM `echo $(SRCS) | sed 's/hal.c//'` \
@@ -66,6 +60,7 @@ MAKE_CLASS_TABLE ?= ../support/make_class_table.rb
 MAKE_METHOD_TABLE ?= ../support/make_method_table.rb
 GENERATE_UNICODE_CASE ?= ../support/generate_unicode_case_tables.rb
 
+UNICODE_DATA_URL = https://www.unicode.org/Public/UCD/latest/ucd/UnicodeData.txt
 UNICODE_DATA ?= UnicodeData.txt
 AUTOGEN_UNICODE_CASE = _autogen_unicode_case.h
 
@@ -81,6 +76,16 @@ AUTOGEN_METHOD_TABLE = _autogen_class_array.h _autogen_class_exception.h \
 # un-comment below, if you need add and/or delete method in builtin class.
 #
 #AUTOGEN_METHOD_SRCS = c_object.c symbol.c c_numeric.c c_string.c c_proc.c c_range.c c_array.c c_hash.c error.c c_math.c rrt0.c
+
+$(AUTOGEN_UNICODE_CASE):
+	@if [ -f "$(UNICODE_DATA)" ]; then \
+	  ruby $(GENERATE_UNICODE_CASE) $(UNICODE_DATA); \
+	else \
+	  echo "Downloading UnicodeData.txt from Unicode Consortium..."; \
+	  curl -s -o /tmp/_unicode_data_$$$$.txt $(UNICODE_DATA_URL); \
+	  ruby $(GENERATE_UNICODE_CASE) /tmp/_unicode_data_$$$$.txt; \
+	  rm -f /tmp/_unicode_data_$$$$.txt; \
+	fi
 
 $(AUTOGEN_SYMBOL_TABLE): $(AUTOGEN_CLASS_TABLE)
 	$(MAKE_SYMBOL_TABLE) --path-c . --path-rb ../mrblib -o $(AUTOGEN_SYMBOL_TABLE)
@@ -132,7 +137,7 @@ $(BUILD_DIR)/c_numeric.o: c_numeric.c $(MRUBYC_H) _autogen_class_integer.h _auto
 $(BUILD_DIR)/c_object.o: c_object.c $(MRUBYC_H) _autogen_class_object.h
 $(BUILD_DIR)/c_proc.o: c_proc.c $(MRUBYC_H) _autogen_class_proc.h
 $(BUILD_DIR)/c_range.o: c_range.c $(MRUBYC_H) _autogen_class_range.h
-$(BUILD_DIR)/c_string.o: c_string.c $(MRUBYC_H) _autogen_class_string.h
+$(BUILD_DIR)/c_string.o: c_string.c $(MRUBYC_H) _autogen_class_string.h $(AUTOGEN_UNICODE_CASE)
 $(BUILD_DIR)/class.o: class.c $(MRUBYC_H)
 $(BUILD_DIR)/console.o: console.c $(MRUBYC_H) $(HAL_DIR)/hal.h
 $(BUILD_DIR)/error.o: error.c $(MRUBYC_H) _autogen_class_exception.h
