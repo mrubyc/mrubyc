@@ -23,6 +23,10 @@ mrubyc_bin: mrubyc_lib
 	cd sample_c ; $(MAKE) all
 
 
+.PHONY: autogen
+autogen:
+	cd src && $(MAKE) autogen
+
 .PHONY: clean clean_all
 clean:
 	cd src      ; $(MAKE) clean

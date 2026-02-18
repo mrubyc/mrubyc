@@ -1,0 +1,32 @@
+name: Update autogen files
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  autogen:
+    runs-on: ubuntu-22.04
+    # Skip when triggered by the bot's own commit to avoid infinite loop.
+    if: github.actor != 'github-actions[bot]'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download UnicodeData.txt
+      run: curl -o src/UnicodeData.txt https://www.unicode.org/Public/UCD/latest/ucd/UnicodeData.txt
+
+    - name: Generate autogen files
+      run: make autogen
+
+    - name: Commit and push updated autogen files
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add --force src/_autogen_*.h
+        git diff --staged --quiet && echo "No changes to commit." && exit 0
+        git commit -m "Update autogen files"
+        git push

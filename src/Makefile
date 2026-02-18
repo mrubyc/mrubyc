@@ -41,11 +41,17 @@ clean:
 	@rm -rf $(TARGET) $(OBJS) $(BUILD_DIR) *~
 
 clean_all: clean
-	@rm -f $(AUTOGEN_SYMBOL_TABLE) $(AUTOGEN_CLASS_TABLE) $(AUTOGEN_METHOD_TABLE)
+	@rm -f $(AUTOGEN_SYMBOL_TABLE) $(AUTOGEN_CLASS_TABLE) $(AUTOGEN_METHOD_TABLE) $(AUTOGEN_UNICODE_CASE)
 
 autogen:
 	@rm -f $(AUTOGEN_SYMBOL_TABLE) $(AUTOGEN_CLASS_TABLE) $(AUTOGEN_METHOD_TABLE)
 	$(MAKE) $(AUTOGEN_SYMBOL_TABLE)
+	@if [ -f "$(UNICODE_DATA)" ]; then \
+	  ruby $(GENERATE_UNICODE_CASE) $(UNICODE_DATA); \
+	else \
+	  echo "Skipping $(AUTOGEN_UNICODE_CASE): $(UNICODE_DATA) not found."; \
+	  echo "  Place UnicodeData.txt in src/ or pass: make autogen UNICODE_DATA=/path/to/UnicodeData.txt"; \
+	fi
 
 check_depend:
 	@$(CC) $(CFLAGS) -MM `echo $(SRCS) | sed 's/hal.c//'` \
@@ -58,6 +64,10 @@ check_depend:
 MAKE_SYMBOL_TABLE ?= ../support/make_symbol_table.rb
 MAKE_CLASS_TABLE ?= ../support/make_class_table.rb
 MAKE_METHOD_TABLE ?= ../support/make_method_table.rb
+GENERATE_UNICODE_CASE ?= ../support/generate_unicode_case_tables.rb
+
+UNICODE_DATA ?= UnicodeData.txt
+AUTOGEN_UNICODE_CASE = _autogen_unicode_case.h
 
 AUTOGEN_SYMBOL_TABLE = _autogen_builtin_symbol.h
 AUTOGEN_CLASS_TABLE = _autogen_builtin_class.h
