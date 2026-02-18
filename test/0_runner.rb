@@ -6,4 +6,8 @@ require File.expand_path('../../../picoruby/mrbgems/picoruby-picotest/mrblib/pic
 
 dir = File.expand_path(File.dirname(__FILE__))
 
-Picotest::Runner.new(dir).run
+if 0 < Picotest::Runner.new(dir).run
+  exit 1
+else
+  exit 0
+end
