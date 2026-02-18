@@ -1763,8 +1763,8 @@ static struct tr_pattern_utf8 *tr_parse_pattern_utf8(struct VM *vm, const mrbc_v
   struct tr_pattern_utf8 *ret = NULL;
   struct tr_pattern_utf8 *last = NULL;
 
-  // Check for ^ at start
-  if( flag_reverse_enable && pattern < pattern_end && *pattern == '^' ) {
+  // Check for ^ at start (only treat as negation if followed by at least one char)
+  if( flag_reverse_enable && pattern < pattern_end && *pattern == '^' && (pattern + 1) < pattern_end ) {
     flag_reverse = 1;
     pattern++;
   }
