@@ -82,6 +82,7 @@ void mrbc_snprintf(char *buf, int bufsiz, const char *fstr, ...);
 void mrbc_vprintf(const char *fstr, va_list ap);
 void mrbc_vasprintf(char **buf, int bufsiz, const char *fstr, va_list ap);
 void mrbc_p(const mrbc_value *v);
+void mrbc_char_to_s(char *buf, char ch);
 int mrbc_p_sub(const mrbc_value *v);
 int mrbc_puts_sub(const mrbc_value *v);
 int mrbc_print_sub(const mrbc_value *v);

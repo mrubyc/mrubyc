@@ -1320,27 +1320,15 @@ static void c_string_inspect(struct VM *vm, mrbc_value v[], int argc)
     return;
   }
 
-  char buf[10] = "\\x";
   mrbc_value ret = mrbc_string_new_cstr(vm, "\"");
-  const unsigned char *s = (const unsigned char *)mrbc_string_cstr(v);
+  const char *s = mrbc_string_cstr(v);
 
   for( int i = 0; i < mrbc_string_size(v); i++ ) {
-#if MRBC_USE_STRING_UTF8
-    // In UTF-8 mode, only escape control characters (< 0x20) and DEL (0x7F)
-    // High bytes (0x80+) are valid UTF-8 and should not be escaped
-    if( s[i] < ' ' || s[i] == 0x7f ) {
-#else
-    // In ASCII mode, escape control characters and all high bytes
-    if( s[i] < ' ' || s[i] >= 0x7f ) {
-#endif
-      buf[2] = "0123456789ABCDEF"[s[i] >> 4];
-      buf[3] = "0123456789ABCDEF"[s[i] & 0x0f];
-      mrbc_string_append_cstr(&ret, buf);
-    } else {
-      buf[3] = s[i];
-      mrbc_string_append_cstr(&ret, buf+3);
-    }
+    char buf[10];
+    mrbc_char_to_s( buf, s[i] );
+    mrbc_string_append_cstr(&ret, buf);
   }
+
   mrbc_string_append_cstr(&ret, "\"");
 
   SET_RETURN( ret );

@@ -346,6 +346,47 @@ void mrbc_p(const mrbc_value *v)
 
 
 //================================================================
+/*! convert char to string (escape sequence)
+
+  @param  buf		output buffer. (5bytes at least)
+  @param  ch		character.
+*/
+void mrbc_char_to_s( char *buf, char ch )
+{
+  unsigned char uch = ch;
+  char ch1;
+
+  if( uch == 0x7f ) goto hex;
+  if( uch < ' ' ) {
+    ch1 = "\0\0\0\0\0\0\0abtnvfr\0\0\0\0\0\0\0\0\0\0\0\0\0e\0\0\0"[ uch ];
+    if( ch1 == 0 ) goto hex;
+    goto esc;
+  }
+  if( uch == '"' || uch == '#' || uch == '\\' ) {
+    ch1 = uch;
+    goto esc;
+  }
+
+  buf[0] = uch;
+  buf[1] = 0;
+  return;
+
+ hex:
+  buf[0] = '\\';
+  buf[1] = 'x';
+  buf[2] = "0123456789ABCDEF"[uch >> 4];
+  buf[3] = "0123456789ABCDEF"[uch & 0x0f];
+  buf[4] = 0;
+  return;
+
+ esc:
+  buf[0] = '\\';
+  buf[1] = ch1;
+  buf[2] = 0;
+}
+
+
+//================================================================
 /*! p - sub function
 
   @param  v	pointer to target value.
@@ -370,19 +411,13 @@ int mrbc_p_sub(const mrbc_value *v)
 
 #if MRBC_USE_STRING
   case MRBC_TT_STRING:{
-    mrbc_putchar('"');
-    const unsigned char *s = (const unsigned char *)mrbc_string_cstr(v);
+    const char *s = mrbc_string_cstr(v);
 
+    mrbc_putchar('"');
     for( int i = 0; i < mrbc_string_size(v); i++ ) {
-      if( 0x07 <= s[i] && s[i] <= 0xd ) {
-	mrbc_printf("\\%c", "abtnvfr"[s[i] - 0x07]);
-      } else if( s[i] == 0x1b ) {
-	mrbc_printf("\\e");
-      } else if( s[i] < ' ' || 0x7f == s[i] ) {	// tiny isprint()
-        mrbc_printf("\\x%02X", s[i]);
-      } else {
-        mrbc_putchar(s[i]);
-      }
+      char buf[10];
+      mrbc_char_to_s( buf, s[i] );
+      mrbc_print( buf );
     }
     mrbc_putchar('"');
   } break;
