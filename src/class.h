@@ -87,6 +87,7 @@ typedef struct RClass {
   */
 #if defined(MRBC_DEBUG)
   uint8_t obj_mark_[2];		//!< set "CL" or "MO" for debug.
+  const char *name;
 #endif
 
   mrbc_sym sym_id;		 //!< class name's symbol ID
@@ -99,10 +100,8 @@ typedef struct RClass {
     struct RMethod *method_link; //!< pointer to method link.
     struct RClass *aliased;      //!< aliased class or module.
   };
-#if defined(MRBC_DEBUG)
-  const char *name;
-#endif
 
+  // --- Specific members ---
   void (*destructor)( mrbc_value * );	//!< specify a destructor if need.
 
 } mrbc_class;
@@ -120,6 +119,7 @@ typedef struct RClass mrb_class;
 struct RBuiltinClass {
 #if defined(MRBC_DEBUG)
   uint8_t obj_mark_[2];		//!< set "CL" or "MO" for debug.
+  const char *name;
 #endif
 
   mrbc_sym sym_id;		 //!< class name's symbol ID
@@ -132,10 +132,8 @@ struct RBuiltinClass {
     struct RMethod *method_link; //!< pointer to method link.
     struct RClass *aliased;      //!< aliased class or module.
   };
-#if defined(MRBC_DEBUG)
-  const char *name;
-#endif
 
+  // --- Specific members ---
   const mrbc_sym *method_symbols;	//!< built-in method sym-id table.
   const mrbc_func_t *method_functions;	//!< built-in method function table.
 };
@@ -149,6 +147,7 @@ struct RBuiltinClass {
 struct RBuiltinNoMethodClass {
 #if defined(MRBC_DEBUG)
   uint8_t obj_mark_[2];		//!< set "CL" or "MO" for debug.
+  const char *name;
 #endif
 
   mrbc_sym sym_id;		 //!< class name's symbol ID
@@ -157,13 +156,6 @@ struct RBuiltinNoMethodClass {
   unsigned int flag_alias : 1;   //!< is alias class?
   uint8_t num_builtin_method;	 //!< num of built-in method.
   struct RClass *super;		 //!< pointer to super class.
-  union {
-    struct RMethod *method_link; //!< pointer to method link.
-    struct RClass *aliased;      //!< aliased class or module.
-  };
-#if defined(MRBC_DEBUG)
-  const char *name;
-#endif
 };
 
 //================================================================
