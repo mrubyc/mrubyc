@@ -29,5 +29,5 @@ jobs:
         # Use --force because src/_autogen_*.h are ignored via .gitignore but are auto-generated and should be committed.
         git add --force src/_autogen_*.h
         git diff --staged --quiet && echo "No changes to commit." && exit 0
-        git commit -m "Update autogen files"
+        git commit -m "Update autogen headers (src/_autogen_*.h; triggered by commit $GITHUB_SHA)"
         git push
