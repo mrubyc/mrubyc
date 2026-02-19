@@ -52,6 +52,29 @@ make autogen UNICODE_DATA=/path/to/UnicodeData.txt
 Alternatively, place `UnicodeData.txt` in the `src/` directory before running
 `make autogen`.
 
+### Upgrading the Unicode version
+
+`_autogen_unicode_case.h` is generated from a pinned version of
+`UnicodeData.txt`. The pinned version and its SHA256 checksum are defined in
+`src/Makefile` as `UNICODE_VERSION` and `UNICODE_DATA_SHA256`.
+
+To upgrade to a new Unicode version:
+
+1. Find the new version number at https://www.unicode.org/versions/
+2. Download the new `UnicodeData.txt` and compute its SHA256:
+   ```
+   curl -fsSL https://www.unicode.org/Public/NEW_VERSION/ucd/UnicodeData.txt \
+     -o /tmp/UnicodeData.txt
+   sha256sum /tmp/UnicodeData.txt   # Linux
+   shasum -a 256 /tmp/UnicodeData.txt   # macOS
+   ```
+3. Update `UNICODE_VERSION` and `UNICODE_DATA_SHA256` in `src/Makefile`
+4. Regenerate the header:
+   ```
+   make autogen UNICODE_DATA=/tmp/UnicodeData.txt
+   ```
+5. Review the diff of `src/_autogen_unicode_case.h` and commit
+
 ### Clean including auto-generated files
 
 ```

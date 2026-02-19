@@ -64,7 +64,11 @@ MAKE_CLASS_TABLE ?= ../support/make_class_table.rb
 MAKE_METHOD_TABLE ?= ../support/make_method_table.rb
 GENERATE_UNICODE_CASE ?= ../support/generate_unicode_case_tables.rb
 
-UNICODE_DATA_URL = https://www.unicode.org/Public/UCD/latest/ucd/UnicodeData.txt
+# To upgrade Unicode, update UNICODE_VERSION and UNICODE_DATA_SHA256 together.
+# See doc/compile.md for the upgrade procedure.
+UNICODE_VERSION = 16.0.0
+UNICODE_DATA_URL = https://www.unicode.org/Public/$(UNICODE_VERSION)/ucd/UnicodeData.txt
+UNICODE_DATA_SHA256 = ff58e5823bd095166564a006e47d111130813dcf8bf234ef79fa51a870edb48f
 UNICODE_DATA ?= UnicodeData.txt
 AUTOGEN_UNICODE_CASE = _autogen_unicode_case.h
 
@@ -85,10 +89,19 @@ $(AUTOGEN_UNICODE_CASE):
 	@if [ -f "$(UNICODE_DATA)" ]; then \
 	  ruby $(GENERATE_UNICODE_CASE) $(UNICODE_DATA); \
 	else \
-	  echo "Downloading UnicodeData.txt from Unicode Consortium..."; \
-	  curl -sfL -o /tmp/_unicode_data_$$$$.txt $(UNICODE_DATA_URL) && \
-	    ruby $(GENERATE_UNICODE_CASE) /tmp/_unicode_data_$$$$.txt && \
-	    rm -f /tmp/_unicode_data_$$$$.txt || (rm -f /tmp/_unicode_data_$$$$.txt; exit 1); \
+	  echo "Downloading UnicodeData.txt (Unicode $(UNICODE_VERSION)) from Unicode Consortium..."; \
+	  _tmp=$$(mktemp); \
+	  curl -fsSL -o "$$_tmp" $(UNICODE_DATA_URL) \
+	    && _actual=$$(sha256sum "$$_tmp" 2>/dev/null | cut -d' ' -f1 \
+	                  || shasum -a 256 "$$_tmp" 2>/dev/null | cut -d' ' -f1) \
+	    && if [ "$$_actual" != "$(UNICODE_DATA_SHA256)" ]; then \
+	         echo "Error: SHA256 mismatch for downloaded UnicodeData.txt"; \
+	         echo "  expected: $(UNICODE_DATA_SHA256)"; \
+	         echo "  got:      $$_actual"; \
+	         rm -f "$$_tmp"; exit 1; \
+	       fi \
+	    && ruby $(GENERATE_UNICODE_CASE) "$$_tmp"; \
+	  _ret=$$?; rm -f "$$_tmp"; exit $$_ret; \
 	fi
 
 $(AUTOGEN_SYMBOL_TABLE): $(AUTOGEN_CLASS_TABLE)
