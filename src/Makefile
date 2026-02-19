@@ -82,9 +82,9 @@ $(AUTOGEN_UNICODE_CASE):
 	  ruby $(GENERATE_UNICODE_CASE) $(UNICODE_DATA); \
 	else \
 	  echo "Downloading UnicodeData.txt from Unicode Consortium..."; \
-	  curl -s -o /tmp/_unicode_data_$$$$.txt $(UNICODE_DATA_URL); \
-	  ruby $(GENERATE_UNICODE_CASE) /tmp/_unicode_data_$$$$.txt; \
-	  rm -f /tmp/_unicode_data_$$$$.txt; \
+	  curl -sf -o /tmp/_unicode_data_$$$$.txt $(UNICODE_DATA_URL) && \
+	    ruby $(GENERATE_UNICODE_CASE) /tmp/_unicode_data_$$$$.txt && \
+	    rm -f /tmp/_unicode_data_$$$$.txt || (rm -f /tmp/_unicode_data_$$$$.txt; exit 1); \
 	fi
 
 $(AUTOGEN_SYMBOL_TABLE): $(AUTOGEN_CLASS_TABLE)
