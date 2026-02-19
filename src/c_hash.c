@@ -82,13 +82,7 @@ mrbc_value mrbc_hash_new(struct VM *vm, int size)
     Allocate handle and data buffer.
   */
   mrbc_hash *h = mrbc_alloc(vm, sizeof(mrbc_hash));
-  if( !h ) return value;	// ENOMEM
-
   mrbc_value *data = mrbc_alloc(vm, sizeof(mrbc_value) * size * 2);
-  if( !data ) {			// ENOMEM
-    mrbc_raw_free( h );
-    return value;
-  }
 
   MRBC_INIT_OBJECT_HEADER( h, "HA" );
   h->data_size = size * 2;
@@ -313,9 +307,8 @@ int mrbc_hash_compare(const mrbc_value *v1, const mrbc_value *v2)
 mrbc_value mrbc_hash_dup( struct VM *vm, mrbc_value *src )
 {
   mrbc_value ret = mrbc_hash_new(vm, mrbc_hash_size(src));
-  if( ret.hash == NULL ) return ret;		// ENOMEM
-
   mrbc_hash *h = src->hash;
+
   memcpy( ret.hash->data, h->data, sizeof(mrbc_value) * h->n_stored );
   ret.hash->n_stored = h->n_stored;
 
@@ -585,8 +578,6 @@ static void c_hash_inspect(struct VM *vm, mrbc_value v[], int argc)
   }
 
   mrbc_value ret = mrbc_string_new_cstr(vm, "{");
-  if( !ret.string ) goto RETURN_NIL;		// ENOMEM
-
   mrbc_hash_iterator ite = mrbc_hash_iterator_new(v);
   int flag_first = 1;
 
@@ -616,9 +607,6 @@ static void c_hash_inspect(struct VM *vm, mrbc_value v[], int argc)
 
   SET_RETURN(ret);
   return;
-
- RETURN_NIL:
-  SET_NIL_RETURN();
 }
 #endif
 

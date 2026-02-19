@@ -42,7 +42,6 @@
 mrbc_value mrbc_proc_new(struct VM *vm, void *irep, uint8_t b_or_m)
 {
   mrbc_proc *proc = mrbc_alloc(vm, sizeof(mrbc_proc));
-  if( !proc ) goto RETURN;		// ENOMEM
 
   memset(proc, 0, sizeof(mrbc_proc));
   MRBC_INIT_OBJECT_HEADER( proc, "PR" );
@@ -60,7 +59,6 @@ mrbc_value mrbc_proc_new(struct VM *vm, void *irep, uint8_t b_or_m)
   proc->callinfo = vm->callinfo_tail;
   proc->irep = irep;
 
- RETURN:
   return mrbc_immediate_value(MRBC_TT_PROC, .proc = proc);
 }
 

@@ -263,21 +263,18 @@ static void c_object_p(struct VM *vm, mrbc_value v[], int argc)
 
   if (argc == 0) {
     SET_NIL_RETURN();
+
   } else if (argc == 1) {
     mrbc_incref( &v[1] );
     SET_RETURN(v[1]);
+
   } else {
     mrbc_value value = mrbc_array_new(vm, argc);
-    if( value.array == NULL ) {
-      SET_NIL_RETURN();  // ENOMEM
-    } else {
-      for ( int i = 1; i <= argc; i++ ) {
-        mrbc_incref( &v[i] );
-        value.array->data[i-1] = v[i];
-      }
-      value.array->n_stored = argc;
-      SET_RETURN(value);
+    for( int i = 1; i <= argc; i++ ) {
+      mrbc_incref( &v[i] );
+      mrbc_array_push( &value, &v[i] );
     }
+    SET_RETURN(value);
   }
 }
 #endif
@@ -516,7 +513,6 @@ static void c_object_setiv(struct VM *vm, mrbc_value v[], int argc)
 
   if( sizeof(namebuf_auto) < len ) {
     namebuf = mrbc_alloc(vm, len);
-    if( !namebuf ) return;	// ENOMEM
   } else {
     namebuf = namebuf_auto;
   }
@@ -569,7 +565,7 @@ static void c_object_attr_accessor(struct VM *vm, mrbc_value v[], int argc)
     // make string "....=" and define writer method.
     int len = strlen(name);
     char *namebuf = mrbc_alloc(vm, len+2);
-    if( !namebuf ) return;
+
     memcpy(namebuf, name, len);
     namebuf[len] = '=';
     namebuf[len+1] = 0;
@@ -603,7 +599,6 @@ static void c_object_include(struct VM *vm, mrbc_value v[], int argc)
     }
     mrbc_class *module = v[i].cls;
     mrbc_class *alias = mrbc_raw_alloc_no_free( sizeof(mrbc_class) );
-    if( !alias ) return;  // ENOMEM
 
     *alias = (mrbc_class){
       .sym_id = module->sym_id,
@@ -666,8 +661,6 @@ static void c_object_sprintf(struct VM *vm, mrbc_value v[], int argc)
 
   int buflen = BUF_INC_STEP;
   char *buf = mrbc_alloc(vm, buflen);
-  if( !buf ) { return; }	// ENOMEM raise?
-
   mrbc_printf_t pf;
   mrbc_printf_init( &pf, buf, buflen, mrbc_string_cstr(format) );
 
@@ -774,7 +767,6 @@ static void c_object_sprintf(struct VM *vm, mrbc_value v[], int argc)
   INCREASE_BUFFER:
     buflen += BUF_INC_STEP;
     buf = mrbc_realloc(vm, pf.buf, buflen);
-    if( !buf ) { return; }	// ENOMEM raise? TODO: leak memory.
     mrbc_printf_replace_buffer(&pf, buf, buflen);
   }
   mrbc_printf_end( &pf );

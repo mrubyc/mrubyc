@@ -83,17 +83,9 @@ mrbc_value mrbc_array_new(struct VM *vm, int size)
 {
   mrbc_value value = mrbc_immediate_value(MRBC_TT_ARRAY);
 
-  /*
-    Allocate handle and data buffer.
-  */
+  // Allocate handle and data buffer.
   mrbc_array *h = mrbc_alloc(vm, sizeof(mrbc_array));
-  if( !h ) return value;	// ENOMEM
-
   mrbc_value *data = mrbc_alloc(vm, sizeof(mrbc_value) * size);
-  if( !data ) {			// ENOMEM
-    mrbc_raw_free( h );
-    return value;
-  }
 
   MRBC_INIT_OBJECT_HEADER( h, "AR" );
   h->data_size = size;
@@ -158,7 +150,6 @@ int mrbc_array_resize(mrbc_value *ary, int size)
 
   mrbc_array *h = ary->array;
   mrbc_value *data = mrbc_raw_realloc(h->data, sizeof(mrbc_value) * size);
-  if( !data ) return E_NOMEMORY_ERROR;	// ENOMEM
 
   h->data = data;
   h->data_size = size;
@@ -185,8 +176,8 @@ int mrbc_array_set(mrbc_value *ary, int idx, mrbc_value *set_val)
   }
 
   // need resize?
-  if( idx >= h->data_size && mrbc_array_resize(ary, idx + 1) != 0 ) {
-    return E_NOMEMORY_ERROR;			// ENOMEM
+  if( idx >= h->data_size ) {
+    mrbc_array_resize(ary, idx + 1);
   }
 
   if( idx < h->n_stored ) {
@@ -254,8 +245,7 @@ int mrbc_array_push(mrbc_value *ary, mrbc_value *set_val)
   mrbc_array *h = ary->array;
 
   if( h->n_stored >= h->data_size ) {
-    int size = h->data_size + 6;
-    if( mrbc_array_resize(ary, size) != 0 ) return E_NOMEMORY_ERROR; // ENOMEM
+    mrbc_array_resize(ary, h->data_size + 6);
   }
 
   h->data[h->n_stored++] = *set_val;
@@ -278,8 +268,7 @@ int mrbc_array_push_m(mrbc_value *ary, mrbc_value *set_val)
   int new_size = ha_d->n_stored + ha_s->n_stored;
 
   if( new_size > ha_d->data_size ) {
-    if( mrbc_array_resize(ary, new_size) != 0 )
-      return E_NOMEMORY_ERROR;		// ENOMEM
+    mrbc_array_resize(ary, new_size);
   }
 
   memcpy( &ha_d->data[ha_d->n_stored], ha_s->data,
@@ -361,8 +350,8 @@ int mrbc_array_insert(mrbc_value *ary, int idx, mrbc_value *set_val)
   } else if( h->n_stored >= h->data_size ) {
     size = h->data_size + 1;
   }
-  if( size && mrbc_array_resize(ary, size) != 0 ) {
-    return E_NOMEMORY_ERROR;			// ENOMEM
+  if( size ) {
+    mrbc_array_resize(ary, size);
   }
 
   // move datas.
@@ -497,9 +486,7 @@ void mrbc_array_minmax(mrbc_value *ary, mrbc_value **pp_min_value, mrbc_value **
 mrbc_value mrbc_array_dup(struct VM *vm, const mrbc_value *ary)
 {
   mrbc_array *sh = ary->array;
-
   mrbc_value dv = mrbc_array_new(vm, sh->n_stored);
-  if( dv.array == NULL ) return dv;		// ENOMEM
 
   memcpy( dv.array->data, sh->data, sizeof(mrbc_value) * sh->n_stored );
   dv.array->n_stored = sh->n_stored;
@@ -533,9 +520,7 @@ mrbc_value mrbc_array_divide(struct VM *vm, mrbc_value *src, int pos)
   int new_size = ha_s->n_stored - pos;
   if( new_size < 0 ) new_size = 0;
   int remain_size = ha_s->n_stored - new_size;
-
   mrbc_value ret = mrbc_array_new(vm, new_size);
-  if( ret.array == NULL ) return ret;		// ENOMEM
   mrbc_array *ha_r = ret.array;
 
   memcpy( ha_r->data, ha_s->data + remain_size, sizeof(mrbc_value) * new_size );
@@ -620,7 +605,6 @@ static void c_array_new(struct VM *vm, mrbc_value v[], int argc)
   */
   if( argc == 0 ) {
     mrbc_value ret = mrbc_array_new(vm, 0);
-    if( ret.array == NULL ) return;		// ENOMEM
 
     SET_RETURN(ret);
     return;
@@ -632,7 +616,6 @@ static void c_array_new(struct VM *vm, mrbc_value v[], int argc)
   if( argc == 1 && mrbc_type(v[1]) == MRBC_TT_INTEGER && mrbc_integer(v[1]) >= 0 ) {
     int num = mrbc_integer(v[1]);
     mrbc_value ret = mrbc_array_new(vm, num);
-    if( ret.array == NULL ) return;		// ENOMEM
 
     if( num > 0 ) {
       mrbc_array_set(&ret, num - 1, &mrbc_nil_value());
@@ -647,7 +630,6 @@ static void c_array_new(struct VM *vm, mrbc_value v[], int argc)
   if( argc == 2 && mrbc_type(v[1]) == MRBC_TT_INTEGER && mrbc_integer(v[1]) >= 0 ) {
     int num = mrbc_integer(v[1]);
     mrbc_value ret = mrbc_array_new(vm, num);
-    if( ret.array == NULL ) return;		// ENOMEM
 
     for( int i = 0; i < num; i++ ) {
       mrbc_incref(&v[2]);
@@ -676,9 +658,7 @@ static void c_array_add(struct VM *vm, mrbc_value v[], int argc)
 
   mrbc_array *h1 = v[0].array;
   mrbc_array *h2 = v[1].array;
-
   mrbc_value value = mrbc_array_new(vm, h1->n_stored + h2->n_stored);
-  if( value.array == NULL ) return;		// ENOMEM
 
   memcpy( value.array->data,                h1->data,
           sizeof(mrbc_value) * h1->n_stored );
@@ -707,7 +687,6 @@ static void c_array_get(struct VM *vm, mrbc_value v[], int argc)
   */
   if( mrbc_type(v[0]) == MRBC_TT_CLASS ) {
     mrbc_value ret = mrbc_array_new(vm, argc);
-    if( ret.array == NULL ) return;	// ENOMEM
 
     memcpy( ret.array->data, &v[1], sizeof(mrbc_value) * argc );
     for( int i = 1; i <= argc; i++ ) {
@@ -743,7 +722,6 @@ static void c_array_get(struct VM *vm, mrbc_value v[], int argc)
     if( size < 0 ) goto RETURN_NIL;
 
     mrbc_value ret = mrbc_array_new(vm, size);
-    if( ret.array == NULL ) return;		// ENOMEM
 
     for( int i = 0; i < size; i++ ) {
       mrbc_value val = mrbc_array_get(v, mrbc_integer(v[1]) + i);
@@ -1252,7 +1230,6 @@ static void c_array_inspect(struct VM *vm, mrbc_value v[], int argc)
   }
 
   mrbc_value ret = mrbc_string_new_cstr(vm, "[");
-  if( !ret.string ) goto RETURN_NIL;		// ENOMEM
 
   for( int i = 0; i < mrbc_array_size(v); i++ ) {
     if( i != 0 ) mrbc_string_append_cstr( &ret, ", " );
@@ -1266,10 +1243,6 @@ static void c_array_inspect(struct VM *vm, mrbc_value v[], int argc)
   mrbc_string_append_cstr( &ret, "]" );
 
   SET_RETURN(ret);
-  return;
-
- RETURN_NIL:
-  SET_NIL_RETURN();
 }
 
 
@@ -1299,8 +1272,6 @@ static void c_array_join_1(struct VM *vm, mrbc_value v[], int argc,
 static void c_array_join(struct VM *vm, mrbc_value v[], int argc)
 {
   mrbc_value ret = mrbc_string_new(vm, NULL, 0);
-  if( !ret.string ) goto RETURN_NIL;		// ENOMEM
-
   mrbc_value separator = (argc == 0) ? mrbc_string_new_cstr(vm, "") :
     mrbc_send( vm, v, argc, &v[1], "to_s", 0 );
 
@@ -1308,10 +1279,6 @@ static void c_array_join(struct VM *vm, mrbc_value v[], int argc)
   mrbc_decref(&separator);
 
   SET_RETURN(ret);
-  return;
-
- RETURN_NIL:
-  SET_NIL_RETURN();
 }
 
 #endif

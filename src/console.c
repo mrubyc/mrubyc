@@ -319,7 +319,7 @@ void mrbc_vasprintf(char **buf, int bufsiz, const char *fstr, va_list ap)
   INCREASE_BUFFER:
     bufsiz += 64;
     void *newbuf = mrbc_raw_realloc( pf.buf, bufsiz );
-    if( !newbuf ) break;
+
     mrbc_printf_replace_buffer( &pf, newbuf, bufsiz );
     *buf = newbuf;
 
