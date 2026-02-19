@@ -41,8 +41,9 @@ make autogen
 ```
 
 This regenerates all `src/_autogen_*.h` files. If `src/UnicodeData.txt` is not
-present, `_autogen_unicode_case.h` is downloaded automatically from the Unicode
-Consortium. You can also supply the file explicitly:
+present, it is downloaded automatically from the Unicode Consortium and used
+(via `generate_unicode_case_tables.rb`) to generate `_autogen_unicode_case.h`.
+You can also supply the file explicitly:
 
 ```
 make autogen UNICODE_DATA=/path/to/UnicodeData.txt
