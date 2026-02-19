@@ -709,6 +709,67 @@ static void c_array_get(struct VM *vm, mrbc_value v[], int argc)
   }
 
   /*
+    in case of self[Range] -> Array | nil
+  */
+  if (argc == 1 && mrbc_type(v[1]) == MRBC_TT_RANGE) {
+    int len = mrbc_array_size(&v[0]);
+    mrbc_value *range_ptr = &v[1];
+
+    // Get range start and end from range object
+    mrbc_value start_val = mrbc_range_first(range_ptr);
+    mrbc_value end_val = mrbc_range_last(range_ptr);
+    int flag_exclude = mrbc_range_exclude_end(range_ptr);
+
+    // Handle beginless range (e.g., ..1, ...2)
+    int start;
+    if (mrbc_type(start_val) == MRBC_TT_NIL) {
+      start = 0;
+    } else if (mrbc_type(start_val) == MRBC_TT_INTEGER) {
+      start = mrbc_integer(start_val);
+    } else {
+      goto TYPE_ERROR;
+    }
+
+    // Handle endless range (e.g., 0.., 1..., 0..., 1...)
+    int end;
+    if (mrbc_type(end_val) == MRBC_TT_NIL) {
+      end = len;
+    } else if (mrbc_type(end_val) == MRBC_TT_INTEGER) {
+      end = mrbc_integer(end_val);
+    } else {
+      goto TYPE_ERROR;
+    }
+
+    // Negative indices
+    if (start < 0) start += len;
+    if (end < 0) end += len;
+
+    if (start < 0 || start > len) goto RETURN_NIL;
+    // Allow end < 0 only for empty arrays with endless ranges
+    if (end < 0 && len > 0) goto RETURN_NIL;
+
+    // Adjust end for exclusive range
+    if (!flag_exclude) end++;
+
+    // Calculate size
+    int size = end - start;
+    if (size < 0) size = 0;
+    if (start + size > len) size = len - start;
+
+    mrbc_value ret = mrbc_array_new(vm, size);
+    if (ret.array == NULL) return;  // ENOMEM
+
+    for (int i = 0; i < size; i++) {
+      mrbc_value val = mrbc_array_get(v, start + i);
+      mrbc_incref(&val);
+      mrbc_array_push(&ret, &val);
+    }
+
+    SET_RETURN(ret);
+    return;
+  }
+
+  /*
     in case of self[start, length] -> Array | nil
   */
   if( argc == 2 && mrbc_type(v[1]) == MRBC_TT_INTEGER && mrbc_type(v[2]) == MRBC_TT_INTEGER ) {
@@ -737,6 +798,10 @@ static void c_array_get(struct VM *vm, mrbc_value v[], int argc)
     other case
   */
   mrbc_raise( vm, MRBC_CLASS(ArgumentError), 0 );
+  return;
+
+ TYPE_ERROR:
+  mrbc_raise( vm, MRBC_CLASS(TypeError), 0 );
   return;
 
  RETURN_NIL:
@@ -1217,6 +1282,20 @@ static void c_array_reverse_self(struct VM *vm, mrbc_value v[], int argc)
   }
 }
 
+//================================================================
+/*! (method) deconstruct
+*/
+static void c_array_deconstruct(struct VM *vm, mrbc_value v[], int argc)
+{
+  // Check argument count (must have no arguments)
+  if (argc != 0) {
+    mrbc_raise(vm, MRBC_CLASS(ArgumentError), "wrong number of arguments");
+    return;
+  }
+  // For pattern matching - return self (not a copy)
+  // (already an array, no conversion needed)
+}
+
 
 #if MRBC_USE_STRING
 //================================================================
@@ -1298,6 +1377,7 @@ static void c_array_join(struct VM *vm, mrbc_value v[], int argc)
   METHOD( "<<",		c_array_push )
   METHOD( "clear",	c_array_clear )
   METHOD( "difference", c_array_difference )
+  METHOD( "deconstruct", c_array_deconstruct )
   METHOD( "delete_at",	c_array_delete_at )
   METHOD( "empty?",	c_array_empty )
   METHOD( "size",	c_array_size )
