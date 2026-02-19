@@ -9,6 +9,10 @@
 
 include hal_selector.mk
 
+# Delete the target file if its recipe exits with an error,
+# preventing stale or corrupt generated files from being reused.
+.DELETE_ON_ERROR:
+
 TARGET = $(BUILD_DIR)/libmrubyc.a
 CFLAGS += -Wall -g   #-std=c99 -pedantic -pedantic-errors
 
@@ -41,11 +45,11 @@ clean:
 	@rm -rf $(TARGET) $(OBJS) $(BUILD_DIR) *~
 
 clean_all: clean
-	@rm -f $(AUTOGEN_SYMBOL_TABLE) $(AUTOGEN_CLASS_TABLE) $(AUTOGEN_METHOD_TABLE)
+	@rm -f $(AUTOGEN_SYMBOL_TABLE) $(AUTOGEN_CLASS_TABLE) $(AUTOGEN_METHOD_TABLE) $(AUTOGEN_UNICODE_CASE) src/UnicodeData.txt
 
 autogen:
-	@rm -f $(AUTOGEN_SYMBOL_TABLE) $(AUTOGEN_CLASS_TABLE) $(AUTOGEN_METHOD_TABLE)
-	$(MAKE) $(AUTOGEN_SYMBOL_TABLE)
+	@rm -f $(AUTOGEN_SYMBOL_TABLE) $(AUTOGEN_CLASS_TABLE) $(AUTOGEN_METHOD_TABLE) $(AUTOGEN_UNICODE_CASE)
+	$(MAKE) $(AUTOGEN_SYMBOL_TABLE) $(AUTOGEN_UNICODE_CASE)
 
 check_depend:
 	@$(CC) $(CFLAGS) -MM `echo $(SRCS) | sed 's/hal.c//'` \
@@ -58,6 +62,15 @@ check_depend:
 MAKE_SYMBOL_TABLE ?= ../support/make_symbol_table.rb
 MAKE_CLASS_TABLE ?= ../support/make_class_table.rb
 MAKE_METHOD_TABLE ?= ../support/make_method_table.rb
+GENERATE_UNICODE_CASE ?= ../support/generate_unicode_case_tables.rb
+
+# To upgrade Unicode, update UNICODE_VERSION and UNICODE_DATA_SHA256 together.
+# See doc/compile.md for the upgrade procedure.
+UNICODE_VERSION = 16.0.0
+UNICODE_DATA_URL = https://www.unicode.org/Public/$(UNICODE_VERSION)/ucd/UnicodeData.txt
+UNICODE_DATA_SHA256 = ff58e5823bd095166564a006e47d111130813dcf8bf234ef79fa51a870edb48f
+UNICODE_DATA ?= UnicodeData.txt
+AUTOGEN_UNICODE_CASE = _autogen_unicode_case.h
 
 AUTOGEN_SYMBOL_TABLE = _autogen_builtin_symbol.h
 AUTOGEN_CLASS_TABLE = _autogen_builtin_class.h
@@ -71,6 +84,25 @@ AUTOGEN_METHOD_TABLE = _autogen_class_array.h _autogen_class_exception.h \
 # un-comment below, if you need add and/or delete method in builtin class.
 #
 #AUTOGEN_METHOD_SRCS = c_object.c symbol.c c_numeric.c c_string.c c_proc.c c_range.c c_array.c c_hash.c error.c c_math.c rrt0.c
+
+$(AUTOGEN_UNICODE_CASE):
+	@if [ -f "$(UNICODE_DATA)" ]; then \
+	  ruby $(GENERATE_UNICODE_CASE) $(UNICODE_DATA); \
+	else \
+	  echo "Downloading UnicodeData.txt (Unicode $(UNICODE_VERSION)) from Unicode Consortium..."; \
+	  _tmp=$$(mktemp); \
+	  curl -fsSL -o "$$_tmp" $(UNICODE_DATA_URL) \
+	    && _actual=$$(sha256sum "$$_tmp" 2>/dev/null | cut -d' ' -f1 \
+	                  || shasum -a 256 "$$_tmp" 2>/dev/null | cut -d' ' -f1) \
+	    && if [ "$$_actual" != "$(UNICODE_DATA_SHA256)" ]; then \
+	         echo "Error: SHA256 mismatch for downloaded UnicodeData.txt"; \
+	         echo "  expected: $(UNICODE_DATA_SHA256)"; \
+	         echo "  got:      $$_actual"; \
+	         rm -f "$$_tmp"; exit 1; \
+	       fi \
+	    && ruby $(GENERATE_UNICODE_CASE) "$$_tmp"; \
+	  _ret=$$?; rm -f "$$_tmp"; exit $$_ret; \
+	fi
 
 $(AUTOGEN_SYMBOL_TABLE): $(AUTOGEN_CLASS_TABLE)
 	$(MAKE_SYMBOL_TABLE) --path-c . --path-rb ../mrblib -o $(AUTOGEN_SYMBOL_TABLE)
@@ -122,7 +154,7 @@ $(BUILD_DIR)/c_numeric.o: c_numeric.c $(MRUBYC_H) _autogen_class_integer.h _auto
 $(BUILD_DIR)/c_object.o: c_object.c $(MRUBYC_H) _autogen_class_object.h
 $(BUILD_DIR)/c_proc.o: c_proc.c $(MRUBYC_H) _autogen_class_proc.h
 $(BUILD_DIR)/c_range.o: c_range.c $(MRUBYC_H) _autogen_class_range.h
-$(BUILD_DIR)/c_string.o: c_string.c $(MRUBYC_H) _autogen_class_string.h
+$(BUILD_DIR)/c_string.o: c_string.c $(MRUBYC_H) _autogen_class_string.h $(AUTOGEN_UNICODE_CASE)
 $(BUILD_DIR)/class.o: class.c $(MRUBYC_H)
 $(BUILD_DIR)/console.o: console.c $(MRUBYC_H) $(HAL_DIR)/hal.h
 $(BUILD_DIR)/error.o: error.c $(MRUBYC_H) _autogen_class_exception.h

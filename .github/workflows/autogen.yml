@@ -1,0 +1,30 @@
+name: Update autogen files
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  autogen:
+    runs-on: ubuntu-22.04
+    # Skip when triggered by the bot's own commit to avoid infinite loop.
+    if: github.actor != 'github-actions[bot]'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Generate autogen files
+      run: make autogen
+
+    - name: Commit and push updated autogen files
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        # Use --force because src/_autogen_*.h are ignored via .gitignore but are auto-generated and should be committed.
+        git add --force src/_autogen_*.h
+        git diff --staged --quiet && echo "No changes to commit." && exit 0
+        git commit -m "Update autogen headers (src/_autogen_*.h; triggered by commit $GITHUB_SHA)"
+        git push
