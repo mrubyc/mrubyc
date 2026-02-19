@@ -1056,6 +1056,97 @@ static void c_string_slice(struct VM *vm, mrbc_value v[], int argc)
 
 
 //================================================================
+/*! (method) byteslice
+*/
+static void c_string_byteslice(struct VM *vm, mrbc_value v[], int argc)
+{
+  int target_len = mrbc_string_size(&v[0]);  // always byte count
+  int pos, len;
+
+  // byteslice(nth) -> String | nil
+  if( argc == 1 && mrbc_type(v[1]) == MRBC_TT_INTEGER ) {
+    pos = mrbc_integer(v[1]);
+    if( pos < 0 ) pos += target_len;
+    if( pos >= target_len ) goto RETURN_NIL;
+    len = 1;
+  }
+
+  // byteslice(nth, len) -> String | nil
+  else if( argc == 2 && mrbc_type(v[1]) == MRBC_TT_INTEGER &&
+                        mrbc_type(v[2]) == MRBC_TT_INTEGER ) {
+    pos = mrbc_integer(v[1]);
+    if( pos < 0 ) pos += target_len;
+    len = mrbc_integer(v[2]);
+  }
+
+  // byteslice(Range) -> String | nil
+  else if( argc == 1 && mrbc_type(v[1]) == MRBC_TT_RANGE ) {
+    const mrbc_value *v1 = mrbc_range_first_p(&v[1]);
+
+    switch( mrbc_type(*v1) ) {
+    case MRBC_TT_INTEGER:
+      pos = mrbc_integer(*v1);
+      if( pos < 0 ) pos += target_len;
+      break;
+    case MRBC_TT_NIL:
+      pos = 0;
+      break;
+    default:
+      goto TYPE_ERROR;
+    }
+
+    const mrbc_value *v2 = mrbc_range_last_p(&v[1]);
+    int pos2;
+    switch( mrbc_type(*v2) ) {
+    case MRBC_TT_INTEGER:
+      pos2 = mrbc_integer(*v2);
+      if( pos2 < 0 ) pos2 += target_len;
+      break;
+    case MRBC_TT_NIL:
+      pos2 = target_len;
+      break;
+    default:
+      goto TYPE_ERROR;
+    }
+
+    len = pos2 - pos;
+    if( !mrbc_range_exclude_end(&v[1]) ) len++;
+  }
+
+  // other case
+  else {
+    mrbc_raise( vm, MRBC_CLASS(ArgumentError), 0 );
+    return;
+  }
+
+  if( pos < 0 || pos > target_len ) goto RETURN_NIL;
+  if( len > target_len - pos ) len = target_len - pos;
+  if( len < 0 ) {
+    if( mrbc_type(v[1]) == MRBC_TT_RANGE ) {
+      len = 0;
+    } else {
+      goto RETURN_NIL;
+    }
+  }
+
+  // Always byte-based: no UTF-8 character conversion
+  mrbc_value ret = mrbc_string_new(vm, mrbc_string_cstr(v) + pos, len);
+  if( !ret.string ) goto RETURN_NIL;
+
+  SET_RETURN(ret);
+  return;
+
+ RETURN_NIL:
+  SET_NIL_RETURN();
+  return;
+
+ TYPE_ERROR:
+  mrbc_raise( vm, MRBC_CLASS(TypeError), 0 );
+  return;
+}
+
+
+//================================================================
 /*! (method) []=
 */
 static void c_string_insert(struct VM *vm, mrbc_value v[], int argc)
@@ -2466,6 +2557,7 @@ static void c_string_reverse_self(struct VM *vm, mrbc_value v[], int argc)
   METHOD( "index",	c_string_index )
   METHOD( "inspect",	c_string_inspect )
   METHOD( "ord",	c_string_ord )
+  METHOD( "byteslice",	c_string_byteslice )
   METHOD( "slice",	c_string_slice )
   METHOD( "slice!",	c_string_slice_self )
   METHOD( "split",	c_string_split )

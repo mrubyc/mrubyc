@@ -664,4 +664,17 @@ class StringUtf8Test < Picotest::Test
     assert_equal 1, s[1].bytesize
   end
 
+  description "byteslice is always byte-based even in UTF-8 mode"
+  def test_byteslice_utf8
+    # "\xC2\xA5" is UTF-8 for the yen sign (2 bytes, 1 char), followed by "abc"
+    # Total: 5 bytes, 4 chars
+    s = "\xC2\xA5abc"
+    assert_equal 5, s.bytesize
+    assert_equal 4, s.size
+    assert_equal "\xC2", s.byteslice(0)
+    assert_equal "\xC2\xA5", s.byteslice(0, 2)
+    assert_equal "a", s.byteslice(2)
+    assert_equal "abc", s.byteslice(2, 3)
+  end
+
 end
