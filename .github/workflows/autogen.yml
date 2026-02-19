@@ -1,17 +1,16 @@
-name: Update autogen files
+name: Release
 
 on:
   push:
-    branches: [master]
+    tags:
+      - 'release*'
 
 permissions:
   contents: write
 
 jobs:
-  autogen:
+  release:
     runs-on: ubuntu-22.04
-    # Skip when triggered by the bot's own commit to avoid infinite loop.
-    if: github.actor != 'github-actions[bot]'
 
     steps:
     - uses: actions/checkout@v4
@@ -19,12 +18,16 @@ jobs:
     - name: Generate autogen files
       run: make autogen
 
-    - name: Commit and push updated autogen files
+    - name: Create release archive with autogen files
       run: |
-        git config user.name "github-actions[bot]"
-        git config user.email "github-actions[bot]@users.noreply.github.com"
-        # Use --force because src/_autogen_*.h are ignored via .gitignore but are auto-generated and should be committed.
-        git add --force src/_autogen_*.h
-        git diff --staged --quiet && echo "No changes to commit." && exit 0
-        git commit -m "Update autogen headers (src/_autogen_*.h; triggered by commit $GITHUB_SHA)"
-        git push
+        VERSION=${GITHUB_REF_NAME}
+        PREFIX="mrubyc-${VERSION}"
+        git archive --prefix="${PREFIX}/" HEAD | tar x
+        cp src/_autogen_*.h "${PREFIX}/src/"
+        tar czf "mrubyc-${VERSION}.tar.gz" "${PREFIX}/"
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: mrubyc-*.tar.gz
+        generate_release_notes: true
