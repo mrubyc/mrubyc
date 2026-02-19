@@ -16,9 +16,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Download UnicodeData.txt
-      run: curl -fsSL -o src/UnicodeData.txt https://www.unicode.org/Public/UCD/latest/ucd/UnicodeData.txt
-
     - name: Generate autogen files
       run: make autogen
 
