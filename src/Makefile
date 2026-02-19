@@ -9,6 +9,10 @@
 
 include hal_selector.mk
 
+# Delete the target file if its recipe exits with an error,
+# preventing stale or corrupt generated files from being reused.
+.DELETE_ON_ERROR:
+
 TARGET = $(BUILD_DIR)/libmrubyc.a
 CFLAGS += -Wall -g   #-std=c99 -pedantic -pedantic-errors
 
