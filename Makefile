@@ -55,7 +55,7 @@ delete_docker:
 
 .PHONY: test test_all test_host_gcc test_host_clang test_mips test_arm test_host_gcc_no_libc test_host_clang_no_libc test_mips_no_libc test_arm_no_libc
 
-test: # if platform includes darwin, test_clang, else, test_host_gcc
+test: autogen # if platform includes darwin, test_clang, else, test_host_gcc
 	@if [ `uname` = "Darwin" ]; then \
 		make test_host_clang_no_libc; \
 	else \

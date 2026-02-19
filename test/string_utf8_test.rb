@@ -634,4 +634,34 @@ class StringUtf8Test < Picotest::Test
     assert_equal false, "a𩸽b".ascii_only?
   end
 
+  #
+  # Invalid/incomplete UTF-8 sequences
+  #
+  description "size treats isolated leading byte as 1 character"
+  def test_size_incomplete_utf8
+    # 0xD1 alone is an incomplete 2-byte UTF-8 sequence (no continuation byte)
+    # Each invalid byte must be treated as a single character
+    assert_equal 1, "\xD1".size
+    assert_equal 4, "\x04\x08i\xD1".size
+  end
+
+  description "slice of incomplete UTF-8 sequence returns 1-byte string"
+  def test_slice_incomplete_utf8
+    # "\x04\x08i\xD1": the last byte 0xD1 has no valid continuation byte
+    # s[3] must return a 1-byte string, not read into the null terminator
+    s = "\x04\x08i\xD1"
+    c = s[3]
+    assert_equal 1, c.bytesize
+    assert_equal 209, c.ord  # 0xD1 = 209, not 0x440 = 1088
+  end
+
+  description "slice with isolated continuation byte returns 1-byte string"
+  def test_slice_isolated_continuation_byte
+    # 0x80 is a continuation byte with no leading byte - invalid UTF-8
+    s = "a\x80b"
+    assert_equal 3, s.size
+    assert_equal "\x80", s[1]
+    assert_equal 1, s[1].bytesize
+  end
+
 end

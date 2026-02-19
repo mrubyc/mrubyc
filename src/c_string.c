@@ -400,7 +400,37 @@ int mrbc_string_utf8_size(const char *str)
 
 
 //================================================================
+/*! Get validated byte length of a UTF-8 character within bounds
+
+  Returns the actual byte length of the character at str, treating any
+  incomplete or invalid sequence as a single byte. This ensures that
+  isolated leading bytes (no continuation bytes following) and isolated
+  continuation bytes are each counted as one character.
+
+  @param  str     pointer to current position
+  @param  end     pointer past the end of the string buffer
+  @return         validated byte length (always >= 1)
+*/
+static int utf8_validated_char_len(const char *str, const char *end)
+{
+  int char_len = mrbc_string_utf8_size(str);
+
+  if( char_len == 0 ) return 1;            // isolated continuation byte
+  if( str + char_len > end ) return 1;     // incomplete sequence at end
+
+  for( int j = 1; j < char_len; j++ ) {
+    if( ((unsigned char)str[j] & 0xC0) != 0x80 ) return 1; // invalid continuation
+  }
+  return char_len;
+}
+
+
+//================================================================
 /*! Count UTF-8 characters in a byte string
+
+  Each valid multi-byte sequence counts as one character. Any byte that
+  does not form a complete, valid UTF-8 sequence is counted as one
+  character (matching mruby behavior for invalid byte sequences).
 
   @param  str     pointer to string
   @param  len     byte length of string
@@ -409,11 +439,12 @@ int mrbc_string_utf8_size(const char *str)
 int mrbc_string_char_size(const char *str, int len)
 {
   int count = 0;
+  const char *end = str + len;
 
-  for( int i = 0; i < len; i++ ) {
-    unsigned char c = (unsigned char)str[i];
-    // Count only leading bytes (not continuation bytes 10xxxxxx)
-    if( (c & 0xC0) != 0x80 ) count++;
+  while( str < end ) {
+    int char_len = utf8_validated_char_len(str, end);
+    count++;
+    str += char_len;
   }
   return count;
 }
@@ -434,8 +465,7 @@ int mrbc_string_chars2bytes(mrbc_value *src, int off, int idx)
   int bytes = 0;
 
   for( int i = 0; i < idx && str < end; i++ ) {
-    int char_len = mrbc_string_utf8_size(str);
-    if( char_len == 0 ) char_len = 1;  // skip invalid byte
+    int char_len = utf8_validated_char_len(str, end);
     bytes += char_len;
     str += char_len;
   }
@@ -1347,7 +1377,8 @@ static void c_string_ord(struct VM *vm, mrbc_value v[], int argc)
 
 #if MRBC_USE_STRING_UTF8
   const uint8_t *s = (const uint8_t *)mrbc_string_cstr(v);
-  int char_len = mrbc_string_utf8_size((const char *)s);
+  const char *end = mrbc_string_cstr(v) + mrbc_string_size(v);
+  int char_len = utf8_validated_char_len((const char *)s, end);
   mrbc_int_t codepoint;
 
   if( char_len == 1 ) {
