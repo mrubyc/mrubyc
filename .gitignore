@@ -30,6 +30,6 @@ html/
 # PicoRuby for testing
 picoruby/
 
-# Auto-generated files (committed by CI via git add --force)
+# Auto-generated files (included in release archives via CI)
 src/_autogen_*
 src/UnicodeData.txt
