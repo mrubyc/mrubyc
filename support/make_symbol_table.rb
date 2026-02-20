@@ -187,6 +187,9 @@ def write_file( all_symbols )
   file.puts "#define MRBC_SRC_AUTOGEN_BUILTIN_SYMBOL_H_"
   file.puts
 
+  file.puts "#define MRBC_BUILTIN_SYMBOL_MAX #{all_symbols.size-1}"
+  file.puts
+
   file.puts "#if defined(MRBC_DEFINE_SYMBOL_TABLE)"
   file.puts "static const char *builtin_symbols[] = {"
   all_symbols.each_with_index {|s,i|
@@ -243,11 +246,6 @@ all_symbols.concat( APPEND_SYMBOL )
 all_symbols.sort!
 all_symbols.uniq!
 vp("Total number of built-in symbols: #{all_symbols.size}")
-
-if all_symbols.size > 256
-  STDERR.puts "Symbol table size must be less than 256"
-  exit 1
-end
 
 write_file( all_symbols )
 

@@ -39,6 +39,9 @@
 #endif
 
 #define OFFSET_BUILTIN_SYMBOL 256
+#if OFFSET_BUILTIN_SYMBOL <= MRBC_BUILTIN_SYMBOL_MAX
+# error OFFSET_BUILTIN_SYMBOL overflow. Please increase the value.
+#endif
 
 
 /***** Macros ***************************************************************/
