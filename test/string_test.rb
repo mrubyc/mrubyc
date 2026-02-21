@@ -722,6 +722,20 @@ class StringTest < Picotest::Test
     assert_equal 99, s.getbyte(-1)
   end
 
+  description "String#byteslice"
+  def test_string_byteslice
+    s = "hello"
+    assert_equal "h", s.byteslice(0)
+    assert_equal "o", s.byteslice(-1)
+    assert_equal nil, s.byteslice(5)
+    assert_equal nil, s.byteslice(-6)
+    assert_equal "el", s.byteslice(1, 2)
+    assert_equal "", s.byteslice(1, 0)
+    assert_equal nil, s.byteslice(1, -1)
+    assert_equal "ell", s.byteslice(1..3)
+    assert_equal "el", s.byteslice(1...3)
+  end
+
   description "String#setbyte"
   def test_string_setbyte
     s = "ABCDE"

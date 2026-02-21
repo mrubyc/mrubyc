@@ -956,47 +956,37 @@ static void c_string_append(struct VM *vm, mrbc_value v[], int argc)
 
 
 //================================================================
-/*! (method) [], slice
+/* Parse slice arguments (nth), (nth, len), or (Range) into *pos and *len.
+   Returns: 0=ok, 1=return nil, 2=error already raised.
 */
-static void c_string_slice(struct VM *vm, mrbc_value v[], int argc)
+static int string_slice_parse(struct VM *vm, mrbc_value v[], int argc,
+                              int target_len, int *pos, int *len)
 {
-#if MRBC_USE_STRING_UTF8
-  int target_len = mrbc_string_char_size(mrbc_string_cstr(&v[0]), mrbc_string_size(&v[0]));
-#else
-  int target_len = mrbc_string_size(v);
-#endif
-  int pos, len;
-
-  // in case of slice(nth) -> String | nil
-  if( argc == 1 && mrbc_type(v[1]) == MRBC_TT_INTEGER ) {
-    pos = mrbc_integer(v[1]);
-    if( pos < 0 ) pos += target_len;
-    if( pos >= target_len ) goto RETURN_NIL;
-    len = 1;
+  if (argc == 1 && mrbc_type(v[1]) == MRBC_TT_INTEGER) {
+    *pos = mrbc_integer(v[1]);
+    if (*pos < 0) *pos += target_len;
+    if (*pos >= target_len) return 1;
+    *len = 1;
   }
-
-  // in case of slice(nth, len) -> String | nil
   else if( argc == 2 && mrbc_type(v[1]) == MRBC_TT_INTEGER &&
                         mrbc_type(v[2]) == MRBC_TT_INTEGER ) {
-    pos = mrbc_integer(v[1]);
-    if( pos < 0 ) pos += target_len;
-    len = mrbc_integer(v[2]);
+    *pos = mrbc_integer(v[1]);
+    if( *pos < 0 ) *pos += target_len;
+    *len = mrbc_integer(v[2]);
   }
-
-  // in case of slice(Range) -> String | nil
   else if( argc == 1 && mrbc_type(v[1]) == MRBC_TT_RANGE ) {
     const mrbc_value *v1 = mrbc_range_first_p(&v[1]);
-
     switch( mrbc_type(*v1) ) {
     case MRBC_TT_INTEGER:
-      pos = mrbc_integer(*v1);
-      if( pos < 0 ) pos += target_len;
+      *pos = mrbc_integer(*v1);
+      if( *pos < 0 ) *pos += target_len;
       break;
     case MRBC_TT_NIL:
-      pos = 0;
+      *pos = 0;
       break;
     default:
-      goto TYPE_ERROR;
+      mrbc_raise(vm, MRBC_CLASS(TypeError), 0);
+      return 2;
     }
 
     const mrbc_value *v2 = mrbc_range_last_p(&v[1]);
@@ -1010,48 +1000,76 @@ static void c_string_slice(struct VM *vm, mrbc_value v[], int argc)
       pos2 = target_len;
       break;
     default:
-      goto TYPE_ERROR;
+      mrbc_raise(vm, MRBC_CLASS(TypeError), 0);
+      return 2;
     }
 
-    len = pos2 - pos;
-    if( !mrbc_range_exclude_end(&v[1]) ) len++;
+    *len = pos2 - *pos;
+    if( !mrbc_range_exclude_end(&v[1]) ) (*len)++;
   }
-
-  // other case
   else {
-    mrbc_raise( vm, MRBC_CLASS(ArgumentError), 0 );
-    return;
+    mrbc_raise(vm, MRBC_CLASS(ArgumentError), 0);
+    return 2;
   }
 
-  if( pos < 0 || pos > target_len ) goto RETURN_NIL;
-  if( len > target_len - pos ) len = target_len - pos;
-  if( len < 0 ) {
-    if( mrbc_type(v[1]) == MRBC_TT_RANGE ) {
-      len = 0;
+  if( *pos < 0 || *pos > target_len ) return 1;
+  if( *len > target_len - *pos ) *len = target_len - *pos;
+  if( *len < 0 ) {
+    if( mrbc_type(v[1]) == MRBC_TT_RANGE) {
+      *len = 0;
     } else {
-      goto RETURN_NIL;
+      return 1;
     }
+  }
+
+  return 0;
+}
+
+
+static void c_string_slice(struct VM *vm, mrbc_value v[], int argc)
+{
+#if MRBC_USE_STRING_UTF8
+  int target_len = mrbc_string_char_size(mrbc_string_cstr(&v[0]), mrbc_string_size(&v[0]));
+#else
+  int target_len = mrbc_string_size(v);
+#endif
+  int pos, len;
+
+  switch( string_slice_parse(vm, v, argc, target_len, &pos, &len) ) {
+  case 1: SET_NIL_RETURN(); return;
+  case 2: return;
   }
 
 #if MRBC_USE_STRING_UTF8
-  // Convert character position/length to byte position/length
   int byte_pos = mrbc_string_chars2bytes(&v[0], 0, pos);
   int byte_len = mrbc_string_chars2bytes(&v[0], byte_pos, len);
   mrbc_value ret = mrbc_string_new(vm, mrbc_string_cstr(v) + byte_pos, byte_len);
 #else
   mrbc_value ret = mrbc_string_new(vm, mrbc_string_cstr(v) + pos, len);
 #endif
+  if( !ret.string ) { SET_NIL_RETURN(); return; }    // ENOMEM
 
   SET_RETURN(ret);
-  return;		// normal return
+}
 
- RETURN_NIL:
-  SET_NIL_RETURN();
-  return;
 
- TYPE_ERROR:
-  mrbc_raise( vm, MRBC_CLASS(TypeError), 0 );
-  return;
+//================================================================
+/*! (method) byteslice
+*/
+static void c_string_byteslice(struct VM *vm, mrbc_value v[], int argc)
+{
+  int target_len = mrbc_string_size(&v[0]);  // always byte count
+  int pos, len;
+
+  switch (string_slice_parse(vm, v, argc, target_len, &pos, &len)) {
+  case 1: SET_NIL_RETURN(); return;
+  case 2: return;
+  }
+
+  mrbc_value ret = mrbc_string_new(vm, mrbc_string_cstr(v) + pos, len);
+  if (!ret.string) { SET_NIL_RETURN(); return; }    // ENOMEM
+
+  SET_RETURN(ret);
 }
 
 
@@ -2466,6 +2484,7 @@ static void c_string_reverse_self(struct VM *vm, mrbc_value v[], int argc)
   METHOD( "index",	c_string_index )
   METHOD( "inspect",	c_string_inspect )
   METHOD( "ord",	c_string_ord )
+  METHOD( "byteslice",	c_string_byteslice )
   METHOD( "slice",	c_string_slice )
   METHOD( "slice!",	c_string_slice_self )
   METHOD( "split",	c_string_split )
