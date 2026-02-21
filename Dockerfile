@@ -39,6 +39,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     pkg-config \
     file \
     vim \
+    curl \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
