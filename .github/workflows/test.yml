@@ -16,9 +16,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Generate autogen files
-      run: make autogen
-
     - name: Clone PicoRuby
       run: git clone https://github.com/picoruby/picoruby
 
