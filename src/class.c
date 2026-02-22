@@ -631,10 +631,9 @@ void mrbc_init_class(void)
     mrbc_class *cls = MRBC_BuiltinClass[i].cls;
 
     cls->super = MRBC_BuiltinClass[i].super;
-    cls->method_link = 0;
+    if( !cls->flag_nomethod ) cls->method_link = 0;
     mrbc_set_tt( &vcls, cls->flag_module ? MRBC_TT_MODULE : MRBC_TT_CLASS );
     vcls.cls = cls;
-
     mrbc_set_const( cls->sym_id, &vcls );
   }
 

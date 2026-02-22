@@ -82,6 +82,7 @@ EOL
     file.puts "struct #{struct_name} mrbc_class_#{cls_name} = {"
     file.puts "  .sym_id = MRBC_SYM(#{cls_name}),"
     file.puts "  .flag_builtin = 1,"
+    file.puts "  .flag_nomethod = 1,"  if struct_name == "RBuiltinNoMethodClass"
     file.puts "  .flag_module = 1,"  if type == :module
 
     n = cls[:methods].empty? ? "0" : "sizeof(method_symbols_#{cls_name}) / sizeof(mrbc_sym)"

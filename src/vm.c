@@ -2804,6 +2804,13 @@ static inline void op_def( mrbc_vm *vm, mrbc_value *regs EXT )
   assert( mrbc_type(regs[a+1]) == MRBC_TT_PROC );
 
   mrbc_class *cls = regs[a].cls;
+  if( cls->flag_nomethod ) {
+    mrbc_raisef(vm, MRBC_CLASS(NotImplementedError),
+		"Adding methods to the %s class is not supported",
+		mrbc_symid_to_str(cls->sym_id));
+    return;
+  }
+
   mrbc_sym sym_id = mrbc_irep_symbol_id(vm->cur_irep, b);
   mrbc_proc *proc = regs[a+1].proc;
   mrbc_method *method = (vm->vm_id == 0) ?
