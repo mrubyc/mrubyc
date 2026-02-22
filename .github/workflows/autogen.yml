@@ -23,7 +23,7 @@ jobs:
         VERSION=${GITHUB_REF_NAME}
         PREFIX="mrubyc-${VERSION}"
         git archive --prefix="${PREFIX}/" HEAD | tar x
-        cp src/_autogen_*.h "${PREFIX}/src/"
+        cp build/_autogen_*.h "${PREFIX}/src/"
         tar czf "mrubyc-${VERSION}.tar.gz" "${PREFIX}/"
 
     - name: Create GitHub Release

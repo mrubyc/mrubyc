@@ -10,7 +10,7 @@
 include ../src/hal_selector.mk
 
 TARGETS = sample_scheduler sample_no_scheduler sample_include sample_concurrent sample_myclass
-CFLAGS += -I../src -Wall -g
+CFLAGS += -I../src -I../build -Wall -g
 LDFLAGS +=
 LIBMRUBYC = ../build/libmrubyc.a
 
