@@ -30,4 +30,5 @@ html/
 # PicoRuby for testing
 picoruby/
 
-# Auto-generated files are output to build/ which is already ignored above.
+# Auto-generated files (included in release archives via CI)
+src/_autogen_*

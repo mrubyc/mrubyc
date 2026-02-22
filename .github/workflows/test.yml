@@ -42,6 +42,9 @@ jobs:
           ${{ runner.os }}-buildx-
         enableCrossOsArchive: true
 
+    - name: Get runner UID
+      run: echo "RUNNER_UID=$(id -u)" >> $GITHUB_ENV
+
     - name: Build test container
       uses: docker/build-push-action@v5
       with:
@@ -49,7 +52,7 @@ jobs:
         load: true
         tags: mrubyc-test:latest
         build-args: |
-          USER_ID=1000
+          USER_ID=${{ env.RUNNER_UID }}
         cache-from: type=local,src=/tmp/.buildx-cache
         cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
         platforms: linux/amd64

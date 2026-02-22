@@ -15,7 +15,6 @@ include hal_selector.mk
 
 TARGET = $(BUILD_DIR)/libmrubyc.a
 CFLAGS += -Wall -g   #-std=c99 -pedantic -pedantic-errors
-CFLAGS += -I$(BUILD_DIR)
 
 # Optional feature flags (pass to make, e.g., make MRBC_USE_STRING_UTF8=1)
 ifdef MRBC_USE_STRING_UTF8
@@ -44,11 +43,11 @@ $(BUILD_DIR)/%.o: %.c
 .PHONY: clean clean_all autogen check_depend
 clean:
 	@rm -rf $(TARGET) $(OBJS) $(BUILD_DIR) *~
+	@rm -f $(AUTOGEN_SYMBOL_TABLE) $(AUTOGEN_CLASS_TABLE) $(AUTOGEN_METHOD_TABLE) $(AUTOGEN_UNICODE_CASE)
 
 clean_all: clean
 
 autogen:
-	@mkdir -p $(BUILD_DIR)
 	$(MAKE) $(AUTOGEN_SYMBOL_TABLE) $(AUTOGEN_UNICODE_CASE)
 
 check_depend:
@@ -70,30 +69,22 @@ GENERATE_UNICODE_CASE ?= ../support/generate_unicode_case_tables.rb
 # See doc/compile.md for the upgrade procedure.
 UNICODE_VERSION = 16.0.0
 UNICODE_DATA ?= UnicodeData.txt
-AUTOGEN_UNICODE_CASE = $(BUILD_DIR)/_autogen_unicode_case.h
+AUTOGEN_UNICODE_CASE = _autogen_unicode_case.h
 
-AUTOGEN_SYMBOL_TABLE = $(BUILD_DIR)/_autogen_builtin_symbol.h
-AUTOGEN_CLASS_TABLE = $(BUILD_DIR)/_autogen_builtin_class.h
-AUTOGEN_METHOD_TABLE = \
-	$(BUILD_DIR)/_autogen_class_array.h \
-	$(BUILD_DIR)/_autogen_class_exception.h \
-	$(BUILD_DIR)/_autogen_class_float.h \
-	$(BUILD_DIR)/_autogen_class_hash.h \
-	$(BUILD_DIR)/_autogen_class_integer.h \
-	$(BUILD_DIR)/_autogen_module_math.h \
-	$(BUILD_DIR)/_autogen_class_object.h \
-	$(BUILD_DIR)/_autogen_class_proc.h \
-	$(BUILD_DIR)/_autogen_class_range.h \
-	$(BUILD_DIR)/_autogen_class_string.h \
-	$(BUILD_DIR)/_autogen_class_symbol.h \
-	$(BUILD_DIR)/_autogen_class_rrt0.h
+AUTOGEN_SYMBOL_TABLE = _autogen_builtin_symbol.h
+AUTOGEN_CLASS_TABLE = _autogen_builtin_class.h
+AUTOGEN_METHOD_TABLE = _autogen_class_array.h _autogen_class_exception.h \
+	_autogen_class_float.h _autogen_class_hash.h _autogen_class_integer.h \
+	_autogen_module_math.h _autogen_class_object.h _autogen_class_proc.h \
+	_autogen_class_range.h _autogen_class_string.h _autogen_class_symbol.h \
+	_autogen_class_rrt0.h
 
 #
 # un-comment below, if you need add and/or delete method in builtin class.
 #
 #AUTOGEN_METHOD_SRCS = c_object.c symbol.c c_numeric.c c_string.c c_proc.c c_range.c c_array.c c_hash.c error.c c_math.c rrt0.c
 
-$(AUTOGEN_UNICODE_CASE):
+$(AUTOGEN_UNICODE_CASE): $(UNICODE_DATA)
 	ruby $(GENERATE_UNICODE_CASE) $(UNICODE_DATA) $@
 
 $(AUTOGEN_SYMBOL_TABLE): $(AUTOGEN_CLASS_TABLE)
@@ -102,30 +93,30 @@ $(AUTOGEN_SYMBOL_TABLE): $(AUTOGEN_CLASS_TABLE)
 $(AUTOGEN_CLASS_TABLE): $(AUTOGEN_METHOD_TABLE)
 	$(MAKE_CLASS_TABLE) -o $@ c_object.c symbol.c c_numeric.c c_string.c c_proc.c c_range.c c_array.c c_hash.c error.c c_math.c
 
-$(BUILD_DIR)/_autogen_class_array.h:	$(AUTOGEN_METHOD_SRCS)
-	$(MAKE_METHOD_TABLE) --output-dir $(BUILD_DIR) c_array.c
-$(BUILD_DIR)/_autogen_class_integer.h:	$(AUTOGEN_METHOD_SRCS)
-	$(MAKE_METHOD_TABLE) --output-dir $(BUILD_DIR) c_numeric.c
-$(BUILD_DIR)/_autogen_class_float.h:	$(AUTOGEN_METHOD_SRCS)
-	$(MAKE_METHOD_TABLE) --output-dir $(BUILD_DIR) c_numeric.c
-$(BUILD_DIR)/_autogen_class_hash.h:	$(AUTOGEN_METHOD_SRCS)
-	$(MAKE_METHOD_TABLE) --output-dir $(BUILD_DIR) c_hash.c
-$(BUILD_DIR)/_autogen_module_math.h:	$(AUTOGEN_METHOD_SRCS)
-	$(MAKE_METHOD_TABLE) --output-dir $(BUILD_DIR) c_math.c
-$(BUILD_DIR)/_autogen_class_object.h:	$(AUTOGEN_METHOD_SRCS)
-	$(MAKE_METHOD_TABLE) --output-dir $(BUILD_DIR) c_object.c
-$(BUILD_DIR)/_autogen_class_proc.h:	$(AUTOGEN_METHOD_SRCS)
-	$(MAKE_METHOD_TABLE) --output-dir $(BUILD_DIR) c_proc.c
-$(BUILD_DIR)/_autogen_class_range.h:	$(AUTOGEN_METHOD_SRCS)
-	$(MAKE_METHOD_TABLE) --output-dir $(BUILD_DIR) c_range.c
-$(BUILD_DIR)/_autogen_class_string.h:	$(AUTOGEN_METHOD_SRCS)
-	$(MAKE_METHOD_TABLE) --output-dir $(BUILD_DIR) c_string.c
-$(BUILD_DIR)/_autogen_class_symbol.h:	$(AUTOGEN_METHOD_SRCS)
-	$(MAKE_METHOD_TABLE) --output-dir $(BUILD_DIR) symbol.c
-$(BUILD_DIR)/_autogen_class_exception.h:	$(AUTOGEN_METHOD_SRCS)
-	$(MAKE_METHOD_TABLE) --output-dir $(BUILD_DIR) error.c
-$(BUILD_DIR)/_autogen_class_rrt0.h:	$(AUTOGEN_METHOD_SRCS)
-	$(MAKE_METHOD_TABLE) --output-dir $(BUILD_DIR) rrt0.c
+_autogen_class_array.h:		$(AUTOGEN_METHOD_SRCS)
+	$(MAKE_METHOD_TABLE) c_array.c
+_autogen_class_integer.h:	$(AUTOGEN_METHOD_SRCS)
+	$(MAKE_METHOD_TABLE) c_numeric.c
+_autogen_class_float.h:		$(AUTOGEN_METHOD_SRCS)
+	$(MAKE_METHOD_TABLE) c_numeric.c
+_autogen_class_hash.h:		$(AUTOGEN_METHOD_SRCS)
+	$(MAKE_METHOD_TABLE) c_hash.c
+_autogen_module_math.h:		$(AUTOGEN_METHOD_SRCS)
+	$(MAKE_METHOD_TABLE) c_math.c
+_autogen_class_object.h:	$(AUTOGEN_METHOD_SRCS)
+	$(MAKE_METHOD_TABLE) c_object.c
+_autogen_class_proc.h:		$(AUTOGEN_METHOD_SRCS)
+	$(MAKE_METHOD_TABLE) c_proc.c
+_autogen_class_range.h:		$(AUTOGEN_METHOD_SRCS)
+	$(MAKE_METHOD_TABLE) c_range.c
+_autogen_class_string.h:	$(AUTOGEN_METHOD_SRCS)
+	$(MAKE_METHOD_TABLE) c_string.c
+_autogen_class_symbol.h:	$(AUTOGEN_METHOD_SRCS)
+	$(MAKE_METHOD_TABLE) symbol.c
+_autogen_class_exception.h:	$(AUTOGEN_METHOD_SRCS)
+	$(MAKE_METHOD_TABLE) error.c
+_autogen_class_rrt0.h:		$(AUTOGEN_METHOD_SRCS)
+	$(MAKE_METHOD_TABLE) rrt0.c
 
 # HAL
 $(BUILD_DIR)/hal.o: $(HAL_DIR)/hal.c $(HAL_DIR)/hal.h
@@ -133,28 +124,28 @@ $(BUILD_DIR)/hal.o: $(HAL_DIR)/hal.c $(HAL_DIR)/hal.h
 
 # File dependencies.
 MRUBYC_H = vm_config.h \
-  $(AUTOGEN_CLASS_TABLE) $(AUTOGEN_SYMBOL_TABLE) alloc.h \
+  _autogen_builtin_class.h _autogen_builtin_symbol.h alloc.h \
   c_array.h c_hash.h c_math.h c_numeric.h c_object.h c_proc.h c_range.h \
   c_string.h class.h console.h error.h global.h keyvalue.h load.h symbol.h \
   value.h vm.h
 
 $(BUILD_DIR)/alloc.o: alloc.c vm_config.h alloc.h $(HAL_DIR)/hal.h console.h value.h
-$(BUILD_DIR)/c_array.o: c_array.c $(MRUBYC_H) $(BUILD_DIR)/_autogen_class_array.h
-$(BUILD_DIR)/c_hash.o: c_hash.c $(MRUBYC_H) $(BUILD_DIR)/_autogen_class_hash.h
+$(BUILD_DIR)/c_array.o: c_array.c $(MRUBYC_H) _autogen_class_array.h
+$(BUILD_DIR)/c_hash.o: c_hash.c $(MRUBYC_H) _autogen_class_hash.h
 $(BUILD_DIR)/c_math.o: c_math.c $(MRUBYC_H)
-$(BUILD_DIR)/c_numeric.o: c_numeric.c $(MRUBYC_H) $(BUILD_DIR)/_autogen_class_integer.h $(BUILD_DIR)/_autogen_class_float.h
-$(BUILD_DIR)/c_object.o: c_object.c $(MRUBYC_H) $(BUILD_DIR)/_autogen_class_object.h
-$(BUILD_DIR)/c_proc.o: c_proc.c $(MRUBYC_H) $(BUILD_DIR)/_autogen_class_proc.h
-$(BUILD_DIR)/c_range.o: c_range.c $(MRUBYC_H) $(BUILD_DIR)/_autogen_class_range.h
-$(BUILD_DIR)/c_string.o: c_string.c $(MRUBYC_H) $(BUILD_DIR)/_autogen_class_string.h $(AUTOGEN_UNICODE_CASE)
+$(BUILD_DIR)/c_numeric.o: c_numeric.c $(MRUBYC_H) _autogen_class_integer.h _autogen_class_float.h
+$(BUILD_DIR)/c_object.o: c_object.c $(MRUBYC_H) _autogen_class_object.h
+$(BUILD_DIR)/c_proc.o: c_proc.c $(MRUBYC_H) _autogen_class_proc.h
+$(BUILD_DIR)/c_range.o: c_range.c $(MRUBYC_H) _autogen_class_range.h
+$(BUILD_DIR)/c_string.o: c_string.c $(MRUBYC_H) _autogen_class_string.h $(AUTOGEN_UNICODE_CASE)
 $(BUILD_DIR)/class.o: class.c $(MRUBYC_H)
 $(BUILD_DIR)/console.o: console.c $(MRUBYC_H) $(HAL_DIR)/hal.h
-$(BUILD_DIR)/error.o: error.c $(MRUBYC_H) $(BUILD_DIR)/_autogen_class_exception.h
+$(BUILD_DIR)/error.o: error.c $(MRUBYC_H) _autogen_class_exception.h
 $(BUILD_DIR)/global.o: global.c $(MRUBYC_H)
 $(BUILD_DIR)/keyvalue.o: keyvalue.c $(MRUBYC_H)
 $(BUILD_DIR)/load.o: load.c $(MRUBYC_H)
 $(BUILD_DIR)/mrblib.o: mrblib.c
-$(BUILD_DIR)/rrt0.o: rrt0.c $(MRUBYC_H) rrt0.h $(BUILD_DIR)/_autogen_class_rrt0.h $(HAL_DIR)/hal.h
-$(BUILD_DIR)/symbol.o: symbol.c $(MRUBYC_H) $(BUILD_DIR)/_autogen_class_symbol.h
+$(BUILD_DIR)/rrt0.o: rrt0.c $(MRUBYC_H) rrt0.h _autogen_class_rrt0.h $(HAL_DIR)/hal.h
+$(BUILD_DIR)/symbol.o: symbol.c $(MRUBYC_H) _autogen_class_symbol.h
 $(BUILD_DIR)/value.o: value.c $(MRUBYC_H)
 $(BUILD_DIR)/vm.o: vm.c $(MRUBYC_H) opcode.h
