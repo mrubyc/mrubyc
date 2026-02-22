@@ -440,11 +440,17 @@ mrbc_method * mrbc_find_method( mrbc_method *r_method, mrbc_class *cls, mrbc_sym
 
   while( 1 ) {
     mrbc_method *method;
-    for( method = cls->method_link; method != 0; method = method->next ) {
-      if( method->sym_id == sym_id ) {
-        *r_method = *method;
-        r_method->cls = cls;
-        return r_method;
+    /* When flag_alias==1, the union holds 'aliased' (a class pointer) instead
+       of method_link. When flag_builtin==1 and num_builtin_method==0
+       (RBuiltinNoMethodClass), there is no method_link field.
+       Skip the dynamic method search in those cases. */
+    if( !cls->flag_alias && (!cls->flag_builtin || cls->num_builtin_method > 0) ) {
+      for( method = cls->method_link; method != 0; method = method->next ) {
+        if( method->sym_id == sym_id ) {
+          *r_method = *method;
+          r_method->cls = cls;
+          return r_method;
+        }
       }
     }
 
