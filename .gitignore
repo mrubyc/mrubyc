@@ -32,4 +32,3 @@ picoruby/
 
 # Auto-generated files (included in release archives via CI)
 src/_autogen_*
-src/UnicodeData.txt
