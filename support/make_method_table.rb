@@ -115,14 +115,27 @@ end
 ##
 # main
 #
-if !ARGV[0]
+output_dir = nil
+args = []
+i = 0
+while i < ARGV.size
+  if ARGV[i] == '--output-dir'
+    i += 1
+    output_dir = ARGV[i]
+  else
+    args << ARGV[i]
+  end
+  i += 1
+end
+
+if args.empty?
   puts <<EOL
 (usage)
-ruby make_method_table.rb TARGET_CLASS_FILE.c
+ruby make_method_table.rb [--output-dir DIR] TARGET_CLASS_FILE.c
 EOL
   exit 1
 end
-filename = ARGV[0]
+filename = args[0]
 
 begin
   file = File.open( filename )
@@ -140,6 +153,10 @@ end
 while src
   param = parse_source_string( src )
   exit 1 if !param
+  if output_dir
+    param[:file]   = File.join(output_dir, param[:file])   if param[:file]
+    param[:append] = File.join(output_dir, param[:append]) if param[:append]
+  end
   write_file( param )
 
   src = get_method_table_source( file )

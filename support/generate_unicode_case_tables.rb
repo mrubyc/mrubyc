@@ -15,13 +15,13 @@
 #
 
 if ARGV.empty?
-  puts "Usage: #{$0} <path/to/UnicodeData.txt>"
+  puts "Usage: #{$0} <path/to/UnicodeData.txt> [output_path]"
   puts "Download from: https://www.unicode.org/Public/UCD/latest/ucd/UnicodeData.txt"
   exit 1
 end
 
 unicode_data_path = ARGV[0]
-output_path = File.join(File.dirname(__FILE__), '../src/_autogen_unicode_case.h')
+output_path = ARGV[1] || File.join(File.dirname(__FILE__), '../src/_autogen_unicode_case.h')
 
 # Parse UnicodeData.txt
 upper_map = {}  # codepoint => uppercase codepoint

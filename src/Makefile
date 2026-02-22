@@ -43,12 +43,11 @@ $(BUILD_DIR)/%.o: %.c
 .PHONY: clean clean_all autogen check_depend
 clean:
 	@rm -rf $(TARGET) $(OBJS) $(BUILD_DIR) *~
+	@rm -f $(AUTOGEN_SYMBOL_TABLE) $(AUTOGEN_CLASS_TABLE) $(AUTOGEN_METHOD_TABLE) $(AUTOGEN_UNICODE_CASE)
 
 clean_all: clean
-	@rm -f $(AUTOGEN_SYMBOL_TABLE) $(AUTOGEN_CLASS_TABLE) $(AUTOGEN_METHOD_TABLE) $(AUTOGEN_UNICODE_CASE)
 
 autogen:
-	@rm -f $(AUTOGEN_SYMBOL_TABLE) $(AUTOGEN_CLASS_TABLE) $(AUTOGEN_METHOD_TABLE) $(AUTOGEN_UNICODE_CASE)
 	$(MAKE) $(AUTOGEN_SYMBOL_TABLE) $(AUTOGEN_UNICODE_CASE)
 
 check_depend:
@@ -85,14 +84,14 @@ AUTOGEN_METHOD_TABLE = _autogen_class_array.h _autogen_class_exception.h \
 #
 #AUTOGEN_METHOD_SRCS = c_object.c symbol.c c_numeric.c c_string.c c_proc.c c_range.c c_array.c c_hash.c error.c c_math.c rrt0.c
 
-$(AUTOGEN_UNICODE_CASE):
-	ruby $(GENERATE_UNICODE_CASE) $(UNICODE_DATA)
+$(AUTOGEN_UNICODE_CASE): $(UNICODE_DATA)
+	ruby $(GENERATE_UNICODE_CASE) $(UNICODE_DATA) $@
 
 $(AUTOGEN_SYMBOL_TABLE): $(AUTOGEN_CLASS_TABLE)
-	$(MAKE_SYMBOL_TABLE) --path-c . --path-rb ../mrblib -o $(AUTOGEN_SYMBOL_TABLE)
+	$(MAKE_SYMBOL_TABLE) --path-c . --path-rb ../mrblib -o $@
 
 $(AUTOGEN_CLASS_TABLE): $(AUTOGEN_METHOD_TABLE)
-	$(MAKE_CLASS_TABLE) -o $(AUTOGEN_CLASS_TABLE) c_object.c symbol.c c_numeric.c c_string.c c_proc.c c_range.c c_array.c c_hash.c error.c c_math.c
+	$(MAKE_CLASS_TABLE) -o $@ c_object.c symbol.c c_numeric.c c_string.c c_proc.c c_range.c c_array.c c_hash.c error.c c_math.c
 
 _autogen_class_array.h:		$(AUTOGEN_METHOD_SRCS)
 	$(MAKE_METHOD_TABLE) c_array.c
