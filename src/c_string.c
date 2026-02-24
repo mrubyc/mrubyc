@@ -1370,12 +1370,44 @@ static void c_string_inspect(struct VM *vm, mrbc_value v[], int argc)
 
   mrbc_value ret = mrbc_string_new_cstr(vm, "\"");
   const char *s = mrbc_string_cstr(v);
+  int size = mrbc_string_size(v);
 
-  for( int i = 0; i < mrbc_string_size(v); i++ ) {
+#if MRBC_USE_STRING_UTF8
+  for( int i = 0; i < size; ) {
+    unsigned char uch = (unsigned char)s[i];
+    if( uch < 0x80 ) {
+      // ASCII byte: use existing escape logic
+      char buf[10];
+      mrbc_char_to_s( buf, s[i] );
+      mrbc_string_append_cstr(&ret, buf);
+      i++;
+    } else {
+      int char_len = utf8_validated_char_len(s + i, s + size);
+      int raw_len = mrbc_string_utf8_size(s + i);
+      if( raw_len >= 2 && char_len == raw_len ) {
+        // Valid multi-byte UTF-8 character: output as-is
+        mrbc_string_append_cbuf(&ret, s + i, char_len);
+        i += char_len;
+      } else {
+        // Invalid/isolated byte: escape as \xHH
+        char buf[5];
+        buf[0] = '\\';
+        buf[1] = 'x';
+        buf[2] = "0123456789ABCDEF"[uch >> 4];
+        buf[3] = "0123456789ABCDEF"[uch & 0x0f];
+        buf[4] = 0;
+        mrbc_string_append_cstr(&ret, buf);
+        i++;
+      }
+    }
+  }
+#else
+  for( int i = 0; i < size; i++ ) {
     char buf[10];
     mrbc_char_to_s( buf, s[i] );
     mrbc_string_append_cstr(&ret, buf);
   }
+#endif
 
   mrbc_string_append_cstr(&ret, "\"");
 

@@ -757,6 +757,10 @@ class StringTest < Picotest::Test
   def test_string_inspect
     assert_equal "\"\\x00\"", "\0".inspect
     assert_equal "\"foo\"", "foo".inspect
+    # Non-ASCII bytes (>= 0x80) should be escaped as \xHH
+    assert_equal "\"\\xB5\"", 0xb5.chr.inspect
+    assert_equal "\"\\xFF\"", 0xff.chr.inspect
+    assert_equal "\"\\x80\"", 0x80.chr.inspect
   end
 
   description "String#upcase"

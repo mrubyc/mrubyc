@@ -312,7 +312,14 @@ static void c_integer_chr(struct VM *vm, mrbc_value v[], int argc)
     return;
   }
 
-  len = mrbc_utf8_encode(codepoint, buf);
+  // chr without encoding argument only accepts 0..255
+  if( codepoint > 0xFF ) {
+    mrbc_raise(vm, MRBC_CLASS(RangeError), "out of char range");
+    return;
+  }
+
+  buf[0] = (char)codepoint;
+  len = 1;
   mrbc_value value = mrbc_string_new(vm, buf, len);
   SET_RETURN(value);
 #else
