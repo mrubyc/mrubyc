@@ -412,13 +412,46 @@ int mrbc_p_sub(const mrbc_value *v)
 #if MRBC_USE_STRING
   case MRBC_TT_STRING:{
     const char *s = mrbc_string_cstr(v);
+    int size = mrbc_string_size(v);
 
     mrbc_putchar('"');
-    for( int i = 0; i < mrbc_string_size(v); i++ ) {
+#if MRBC_USE_STRING_UTF8
+    for( int i = 0; i < size; ) {
+      unsigned char uch = (unsigned char)s[i];
+      if( uch < 0x80 ) {
+        char buf[10];
+        mrbc_char_to_s( buf, s[i] );
+        mrbc_print( buf );
+        i++;
+      } else {
+        int raw_len = mrbc_string_utf8_size(s + i);
+        int valid = (raw_len >= 2 && i + raw_len <= size);
+        if( valid ) {
+          for( int j = 1; j < raw_len; j++ ) {
+            if( ((unsigned char)s[i + j] & 0xC0) != 0x80 ) { valid = 0; break; }
+          }
+        }
+        if( valid ) {
+          mrbc_nprint(s + i, raw_len);
+          i += raw_len;
+        } else {
+          char buf[5];
+          buf[0] = '\\'; buf[1] = 'x';
+          buf[2] = "0123456789ABCDEF"[uch >> 4];
+          buf[3] = "0123456789ABCDEF"[uch & 0x0f];
+          buf[4] = 0;
+          mrbc_print( buf );
+          i++;
+        }
+      }
+    }
+#else
+    for( int i = 0; i < size; i++ ) {
       char buf[10];
       mrbc_char_to_s( buf, s[i] );
       mrbc_print( buf );
     }
+#endif
     mrbc_putchar('"');
   } break;
 #endif

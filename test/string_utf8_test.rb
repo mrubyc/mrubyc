@@ -670,4 +670,19 @@ class StringUtf8Test < Picotest::Test
     assert_equal "abc", s.byteslice(2, 3)
   end
 
+  #
+  # String#inspect with UTF-8
+  #
+  description "inspect shows valid UTF-8 characters as-is"
+  def test_inspect_valid_utf8
+    assert_equal "\"あいう\"", "あいう".inspect
+    assert_equal "\"a\\x00b\"", "a\x00b".inspect
+  end
+
+  description "inspect escapes invalid UTF-8 bytes"
+  def test_inspect_invalid_utf8_bytes
+    assert_equal "\"\\xB5\"", "\xB5".inspect
+    assert_equal "\"a\\x80b\"", "a\x80b".inspect
+  end
+
 end
