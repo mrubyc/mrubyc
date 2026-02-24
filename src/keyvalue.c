@@ -109,12 +109,8 @@ static int binary_search(mrbc_kv_handle *kvh, mrbc_sym sym_id)
 mrbc_kv_handle * mrbc_kv_new(struct VM *vm, int size)
 {
   mrbc_kv_handle *kvh = mrbc_alloc(vm, sizeof(mrbc_kv_handle));
-  if( !kvh ) return NULL;	// ENOMEM
 
-  if( mrbc_kv_init_handle( vm, kvh, size ) != 0 ) {
-    mrbc_raw_free( kvh );
-    return NULL;
-  }
+  mrbc_kv_init_handle( vm, kvh, size );
 
   return kvh;
 }
@@ -126,7 +122,7 @@ mrbc_kv_handle * mrbc_kv_new(struct VM *vm, int size)
   @param  vm	Pointer to VM.
   @param  kvh	Pointer to Key-Value handle.
   @param  size	Initial size of data.
-  @return 	0 if no error.
+  @return 	0 (dummy)
 */
 int mrbc_kv_init_handle(struct VM *vm, mrbc_kv_handle *kvh, int size)
 {
@@ -140,7 +136,6 @@ int mrbc_kv_init_handle(struct VM *vm, mrbc_kv_handle *kvh, int size)
   } else {
     // Allocate data buffer.
     kvh->data = mrbc_alloc(vm, sizeof(mrbc_kv) * size);
-    if( !kvh->data ) return -1;		// ENOMEM
 
 #if defined(MRBC_DEBUG)
     memcpy( kvh->data->obj_mark_, "KV", 2 );
@@ -213,7 +208,6 @@ int mrbc_kv_resize(mrbc_kv_handle *kvh, int size)
   if( size <= 0 ) size = 1;
 
   mrbc_kv *data = mrbc_raw_realloc(kvh->data, sizeof(mrbc_kv) * size);
-  if( !data ) return E_NOMEMORY_ERROR;		// ENOMEM
 
   kvh->data = data;
   kvh->data_size = size;
@@ -253,7 +247,6 @@ int mrbc_kv_set(mrbc_kv_handle *kvh, mrbc_sym sym_id, mrbc_value *set_val)
   // need alloc?
   if( kvh->data_size == 0 ) {
     kvh->data = mrbc_alloc(kvh->vm, sizeof(mrbc_kv) * MRBC_KV_SIZE_INIT);
-    if( kvh->data == NULL ) return E_NOMEMORY_ERROR;	// ENOMEM
     kvh->data_size = MRBC_KV_SIZE_INIT;
 
 #if defined(MRBC_DEBUG)
@@ -262,9 +255,7 @@ int mrbc_kv_set(mrbc_kv_handle *kvh, mrbc_sym sym_id, mrbc_value *set_val)
 
   // need resize?
   } else if( kvh->n_stored >= kvh->data_size ) {
-    if( mrbc_kv_resize(kvh, kvh->data_size + MRBC_KV_SIZE_INCREMENT) != 0 ) {
-      return E_NOMEMORY_ERROR;		// ENOMEM
-    }
+    mrbc_kv_resize(kvh, kvh->data_size + MRBC_KV_SIZE_INCREMENT);
   }
 
   // need move data?
@@ -313,7 +304,6 @@ int mrbc_kv_append(mrbc_kv_handle *kvh, mrbc_sym sym_id, mrbc_value *set_val)
   // need alloc?
   if( kvh->data_size == 0 ) {
     kvh->data = mrbc_alloc(kvh->vm, sizeof(mrbc_kv) * MRBC_KV_SIZE_INIT);
-    if( kvh->data == NULL ) return E_NOMEMORY_ERROR;	// ENOMEM
     kvh->data_size = MRBC_KV_SIZE_INIT;
 
 #if defined(MRBC_DEBUG)
@@ -322,9 +312,7 @@ int mrbc_kv_append(mrbc_kv_handle *kvh, mrbc_sym sym_id, mrbc_value *set_val)
 
   // need resize?
   } else if( kvh->n_stored >= kvh->data_size ) {
-    if( mrbc_kv_resize(kvh, kvh->data_size + MRBC_KV_SIZE_INCREMENT) != 0 ) {
-      return E_NOMEMORY_ERROR;		// ENOMEM
-    }
+    mrbc_kv_resize(kvh, kvh->data_size + MRBC_KV_SIZE_INCREMENT);
   }
 
   kvh->data[kvh->n_stored].sym_id = sym_id;

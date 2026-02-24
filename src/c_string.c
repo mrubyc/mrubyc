@@ -1026,6 +1026,9 @@ static int string_slice_parse(struct VM *vm, mrbc_value v[], int argc,
 }
 
 
+//================================================================
+/*! (method) [], slice
+*/
 static void c_string_slice(struct VM *vm, mrbc_value v[], int argc)
 {
 #if MRBC_USE_STRING_UTF8
@@ -1047,7 +1050,6 @@ static void c_string_slice(struct VM *vm, mrbc_value v[], int argc)
 #else
   mrbc_value ret = mrbc_string_new(vm, mrbc_string_cstr(v) + pos, len);
 #endif
-  if( !ret.string ) { SET_NIL_RETURN(); return; }    // ENOMEM
 
   SET_RETURN(ret);
 }
@@ -1067,7 +1069,6 @@ static void c_string_byteslice(struct VM *vm, mrbc_value v[], int argc)
   }
 
   mrbc_value ret = mrbc_string_new(vm, mrbc_string_cstr(v) + pos, len);
-  if (!ret.string) { SET_NIL_RETURN(); return; }    // ENOMEM
 
   SET_RETURN(ret);
 }

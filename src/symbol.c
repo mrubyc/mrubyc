@@ -344,7 +344,6 @@ mrbc_value mrbc_symbol_new(struct VM *vm, const char *str)
   // create symbol object dynamically.
   int size = strlen(str) + 1;
   char *buf = mrbc_raw_alloc_no_free(size);
-  if( buf == NULL ) return mrbc_nil_value();	// ENOMEM raise?
 
   memcpy(buf, str, size);
   sym_id = add_index( calc_hash(buf), buf );

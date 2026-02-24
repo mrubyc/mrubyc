@@ -201,11 +201,9 @@ void mrbc_tick(void)
 mrbc_tcb * mrbc_tcb_new( int regs_size, enum MrbcTaskState task_state, int priority )
 {
   mrbc_tcb *tcb;
-
   unsigned int size = sizeof(mrbc_tcb) + sizeof(mrbc_value) * regs_size;
-  tcb = mrbc_raw_alloc(size);
-  if( !tcb ) return NULL;	// ENOMEM
 
+  tcb = mrbc_raw_alloc(size);
   memset(tcb, 0, size);
 #if defined(MRBC_DEBUG)
   memcpy( tcb->obj_mark_, "TCB", 4 );
@@ -228,7 +226,6 @@ mrbc_tcb * mrbc_tcb_new( int regs_size, enum MrbcTaskState task_state, int prior
 mrbc_tcb * mrbc_create_task(const void *byte_code, mrbc_tcb *tcb)
 {
   if( !tcb ) tcb = mrbc_tcb_new( MAX_REGS_SIZE, MRBC_TASK_DEFAULT_STATE, MRBC_TASK_DEFAULT_PRIORITY );
-  if( !tcb ) return NULL;	// ENOMEM
 
   tcb->priority_preemption = tcb->priority;
 
@@ -700,7 +697,6 @@ mrbc_mutex * mrbc_mutex_init( mrbc_mutex *mutex )
 {
   if( mutex == NULL ) {
     mutex = mrbc_raw_alloc( sizeof(mrbc_mutex) );
-    if( mutex == NULL ) return NULL;	// ENOMEM
   }
 
   static const mrbc_mutex init_val = MRBC_MUTEX_INITIALIZER;
@@ -1372,7 +1368,6 @@ static void c_task_rewind(mrbc_vm *vm, mrbc_value v[], int argc)
 static void c_mutex_new(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   *v = mrbc_instance_new(vm, v->cls, sizeof(mrbc_mutex));
-  if( !v->instance ) return;
 
   mrbc_mutex_init( (mrbc_mutex *)(v->instance->data) );
 }
