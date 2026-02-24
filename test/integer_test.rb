@@ -11,6 +11,18 @@ class IntegerTest < Picotest::Test
   description "chr"
   def test_chr
     assert_equal "A", 65.chr
+    assert_equal 1, 0x7F.chr.bytesize
+
+    # Values 128-255 must produce a single byte, not UTF-8 multi-byte
+    assert_equal 1, 0x80.chr.bytesize
+    assert_equal 1, 0xB5.chr.bytesize
+    assert_equal 1, 0xFF.chr.bytesize
+    assert_equal 0xB5, 0xB5.chr.getbyte(0)
+    assert_equal 0xFF, 0xFF.chr.getbyte(0)
+
+    # 256+ raises RangeError (same as CRuby without encoding argument)
+    assert_raise(RangeError) { 256.chr }
+    assert_raise(RangeError) { 0x1FF.chr }
   end
 
   description "times"

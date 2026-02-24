@@ -213,18 +213,11 @@ class StringUtf8Test < Picotest::Test
     assert_equal "A", 65.chr
   end
 
-  description "chr creates UTF-8 character from codepoint"
-  def test_chr_utf8
-    # U+3042 = "あ"
-    assert_equal "あ", 12354.chr
-    # U+3044 = "い"
-    assert_equal "い", 12356.chr
-  end
-
-  description "chr creates emoji from codepoint"
-  def test_chr_emoji
-    # U+1F600 = "😀"
-    assert_equal "😀", 128512.chr
+  description "chr raises RangeError for codepoint > 255"
+  def test_chr_out_of_range
+    assert_raise(RangeError) { 256.chr }
+    assert_raise(RangeError) { 12354.chr }
+    assert_raise(RangeError) { 128512.chr }
   end
 
   #
@@ -494,10 +487,10 @@ class StringUtf8Test < Picotest::Test
     assert_equal 171581, "𩸽".ord
   end
 
-  description "chr creates 4-byte UTF-8 character"
-  def test_chr_outer_bmp
-    # U+29E3D = 171581 = "𩸽"
-    assert_equal "𩸽", 171581.chr
+  description "chr raises RangeError for 4-byte codepoint"
+  def test_chr_outer_bmp_raises
+    # U+29E3D = 171581
+    assert_raise(RangeError) { 171581.chr }
   end
 
   description "reverse works with 4-byte UTF-8 characters"
