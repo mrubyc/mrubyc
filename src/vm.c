@@ -749,11 +749,13 @@ static inline void op_getconst( mrbc_vm *vm, mrbc_value *regs EXT )
   }
 
   // search in super class.
-  cls = crit_cls->super;
-  while( cls ) {
+  mrbc_class *nest_buf[MRBC_TRAVERSE_NEST_LEVEL];
+  int nest_idx = 0;
+
+  cls = crit_cls;
+  while( (cls = mrbc_traverse_class_tree( cls, nest_buf, &nest_idx )) ) {
     ret = mrbc_get_class_const(cls, sym_id);
     if( ret ) goto DONE;
-    cls = cls->super;
   }
 
   // is top level constant definition?
@@ -816,8 +818,12 @@ static inline void op_getmcnst( mrbc_vm *vm, mrbc_value *regs EXT )
     goto DONE;
   }
 
+  mrbc_class *nest_buf[MRBC_TRAVERSE_NEST_LEVEL];
+  int nest_idx = 0;
+
   while( !(ret = mrbc_get_class_const(cls, sym_id)) ) {
-    cls = cls->super;
+    cls = mrbc_traverse_class_tree( cls, nest_buf, &nest_idx );
+
     if( !cls ) {
       mrbc_raisef( vm, MRBC_CLASS(NameError), "uninitialized constant %s::%s",
         mrbc_symid_to_str( regs[a].cls->sym_id ), mrbc_symid_to_str( sym_id ));
