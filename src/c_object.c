@@ -410,8 +410,8 @@ static void c_object_instance_methods(struct VM *vm, mrbc_value v[], int argc)
       mrbc_array_push( &ret, &mrbc_symbol_value(((struct RBuiltinClass *)cls)->method_symbols[i]) );
     }
 
-    // non builtin method.
-    const mrbc_method *method = cls->method_link;
+    // no builtin method.
+    const mrbc_method *method = cls->flag_nomethod ? NULL : cls->method_link;
     while( method ) {
       mrbc_array_push( &ret, &mrbc_symbol_value(method->sym_id) );
       method = method->next;
@@ -607,6 +607,7 @@ static void c_object_include(struct VM *vm, mrbc_value v[], int argc)
       .super = self->super,
       .aliased = module,
 #if defined(MRBC_DEBUG)
+      .obj_mark_ = "MI",
       .name = module->name,
 #endif
     };

@@ -73,22 +73,19 @@ mrbc_class * mrbc_traverse_class_tree( mrbc_class *cls, mrbc_class *nest_buf[], 
     cls = nest_buf[--(*nest_idx)];	// rewind to the saved point.
     cls = cls->super;
   }
+  if( !cls->flag_alias ) return cls;
 
-  // is the next module alias?
-  if( cls->flag_alias ) {
-    if( cls->super ) {
-      // save the branch point to nest_buf.
-      if( *nest_idx >= MRBC_TRAVERSE_NEST_LEVEL ) {
-        mrbc_printf("Warning: Module nest exceeds upper limit.\n");
-      } else {
-        nest_buf[(*nest_idx)++] = cls;
-      }
+  // when alias module
+  if( cls->super ) {
+    // save the branch point to nest_buf.
+    if( *nest_idx >= MRBC_TRAVERSE_NEST_LEVEL ) {
+      mrbc_printf("Warning: Module nest exceeds upper limit.\n");
+    } else {
+      nest_buf[(*nest_idx)++] = cls;
     }
-
-    cls = cls->aliased;
   }
 
-  return cls;
+  return cls->aliased;
 }
 
 
@@ -304,6 +301,12 @@ mrbc_class * mrbc_define_module_under(struct VM *vm, const mrbc_class *outer, co
 void mrbc_define_method(struct VM *vm, mrbc_class *cls, const char *name, mrbc_func_t cfunc)
 {
   if( cls == NULL ) cls = MRBC_CLASS(Object);	// set default to Object.
+  if( cls->flag_nomethod ) {
+    mrbc_raisef(vm, MRBC_CLASS(NotImplementedError),
+		"Adding methods to the %s class is not supported",
+		mrbc_symid_to_str(cls->sym_id));
+    return;
+  }
 
   mrbc_method *method = mrbc_raw_alloc_no_free( sizeof(mrbc_method) );
 
@@ -438,27 +441,30 @@ mrbc_method * mrbc_find_method( mrbc_method *r_method, mrbc_class *cls, mrbc_sym
   int nest_idx = 0;
   int flag_module = cls->flag_module;
 
+  if( cls->flag_alias ) {
+    if( cls->super ) nest_buf[nest_idx++] = cls;
+    cls = cls->aliased;
+  }
+
   while( 1 ) {
     mrbc_method *method;
-    /* When flag_alias==1, the union holds 'aliased' (a class pointer) instead
-       of method_link. When flag_builtin==1 and num_builtin_method==0
-       (RBuiltinNoMethodClass), there is no method_link field.
-       Skip the dynamic method search in those cases. */
-    if( !cls->flag_alias && (!cls->flag_builtin || cls->num_builtin_method > 0) ) {
-      for( method = cls->method_link; method != 0; method = method->next ) {
-        if( method->sym_id == sym_id ) {
-          *r_method = *method;
-          r_method->cls = cls;
-          return r_method;
-        }
+
+    assert( !cls->flag_alias );
+    if( cls->flag_nomethod ) goto next_class;
+    for( method = cls->method_link; method != 0; method = method->next ) {
+      if( method->sym_id == sym_id ) {
+	*r_method = *method;
+	r_method->cls = cls;
+	return r_method;
       }
     }
 
     struct RBuiltinClass *c = (struct RBuiltinClass *)cls;
     int right = c->num_builtin_method;
-    if( right == 0 ) goto NEXT;
+    if( right == 0 ) goto next_class;
     int left = 0;
 
+    assert( cls->flag_builtin );
     while( left < right ) {
       int mid = (left + right) / 2;
       if( c->method_symbols[mid] < sym_id ) {
@@ -477,7 +483,7 @@ mrbc_method * mrbc_find_method( mrbc_method *r_method, mrbc_class *cls, mrbc_sym
       return r_method;
     }
 
-  NEXT:
+  next_class:
     cls = mrbc_traverse_class_tree( cls, nest_buf, &nest_idx );
     if( cls == 0 ) {
       if( !flag_module ) break;
