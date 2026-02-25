@@ -607,7 +607,7 @@ static void c_object_include(struct VM *vm, mrbc_value v[], int argc)
       .super = self->super,
       .aliased = module,
 #if defined(MRBC_DEBUG)
-      .obj_mark_ = "MI",
+      .obj_mark_ = "MA",
       .name = module->name,
 #endif
     };
