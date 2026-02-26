@@ -97,12 +97,13 @@ typedef struct RClass {
   unsigned int flag_alias : 1;    //!< is module alias?
   uint8_t num_builtin_method;     //!< num of built-in method.
   struct RClass *super;           //!< pointer to super class.
+
+  // --- Specific members ---
   union {
     struct RMethod *method_link;  //!< pointer to method link.
     struct RClass *aliased;       //!< aliased class or module.
   };
 
-  // --- Specific members ---
   void (*destructor)( mrbc_value * );	//!< specify a destructor if need.
 
 } mrbc_class;
@@ -130,12 +131,13 @@ struct RBuiltinClass {
   unsigned int flag_alias : 1;    //!< is module alias?
   uint8_t num_builtin_method;     //!< num of built-in method.
   struct RClass *super;           //!< pointer to super class.
+
+  // --- Specific members ---
   union {
     struct RMethod *method_link;  //!< pointer to method link.
     struct RClass *aliased;       //!< aliased class or module.
   };
 
-  // --- Specific members ---
   const mrbc_sym *method_symbols;	//!< built-in method sym-id table.
   const mrbc_func_t *method_functions;	//!< built-in method function table.
 };

@@ -73,10 +73,9 @@ mrbc_class * mrbc_traverse_class_tree( mrbc_class *cls, mrbc_class *nest_buf[], 
     cls = nest_buf[--(*nest_idx)];	// rewind to the saved point.
     cls = cls->super;
   }
-  if( !cls->flag_alias ) return cls;
 
   // when alias module
-  if( cls->super ) {
+  if( cls->flag_alias && cls->super ) {
     // save the branch point to nest_buf.
     if( *nest_idx >= MRBC_TRAVERSE_NEST_LEVEL ) {
       mrbc_printf("Warning: Module nest exceeds upper limit.\n");
@@ -85,7 +84,7 @@ mrbc_class * mrbc_traverse_class_tree( mrbc_class *cls, mrbc_class *nest_buf[], 
     }
   }
 
-  return cls->aliased;
+  return cls;
 }
 
 
@@ -420,7 +419,8 @@ int mrbc_obj_is_kind_of( const mrbc_value *obj, const mrbc_class *tcls )
 
   while( cls != tcls ) {
     cls = mrbc_traverse_class_tree( cls, nest_buf, &nest_idx );
-    if( ! cls ) return 0;
+    if( !cls ) return 0;
+    if( cls->flag_alias ) cls = cls->aliased;
   }
 
   return 1;
@@ -490,6 +490,8 @@ mrbc_method * mrbc_find_method( mrbc_method *r_method, mrbc_class *cls, mrbc_sym
 
       cls = MRBC_CLASS(Object);
       flag_module = 0;
+    } else if( cls->flag_alias ) {
+      cls = cls->aliased;
     }
   }  // loop next.
 

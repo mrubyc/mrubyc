@@ -754,6 +754,7 @@ static inline void op_getconst( mrbc_vm *vm, mrbc_value *regs EXT )
 
   cls = crit_cls;
   while( (cls = mrbc_traverse_class_tree( cls, nest_buf, &nest_idx )) ) {
+    if( cls->flag_alias ) cls = cls->aliased;
     ret = mrbc_get_class_const(cls, sym_id);
     if( ret ) goto DONE;
   }
@@ -823,12 +824,12 @@ static inline void op_getmcnst( mrbc_vm *vm, mrbc_value *regs EXT )
 
   while( !(ret = mrbc_get_class_const(cls, sym_id)) ) {
     cls = mrbc_traverse_class_tree( cls, nest_buf, &nest_idx );
-
     if( !cls ) {
       mrbc_raisef( vm, MRBC_CLASS(NameError), "uninitialized constant %s::%s",
         mrbc_symid_to_str( regs[a].cls->sym_id ), mrbc_symid_to_str( sym_id ));
       return;
     }
+    if( cls->flag_alias ) cls = cls->aliased;
   }
 
  DONE:

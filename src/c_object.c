@@ -404,10 +404,11 @@ static void c_object_instance_methods(struct VM *vm, mrbc_value v[], int argc)
   mrbc_class *nest_buf[MRBC_TRAVERSE_NEST_LEVEL];
   int nest_idx = 0;
 
-  do {
+  while( 1 ) {
     // builtin method.
     for( int i = 0; i < cls->num_builtin_method; i++ ) {
-      mrbc_array_push( &ret, &mrbc_symbol_value(((struct RBuiltinClass *)cls)->method_symbols[i]) );
+      mrbc_array_push( &ret,
+	&mrbc_symbol_value(((struct RBuiltinClass *)cls)->method_symbols[i]) );
     }
 
     // no builtin method.
@@ -419,14 +420,10 @@ static void c_object_instance_methods(struct VM *vm, mrbc_value v[], int argc)
 
     if( !flag_inherit ) break;
 
-  REDO:
     cls = mrbc_traverse_class_tree( cls, nest_buf, &nest_idx );
-    if( cls == MRBC_CLASS(Object) ) {
-      cls = mrbc_traverse_class_tree_skip( nest_buf, &nest_idx );
-      if( !cls ) break;
-      goto REDO;
-    }
-  } while( cls );
+    if( !cls ) break;
+    if( cls->flag_alias ) cls = cls->aliased;
+  }
 
   SET_RETURN(ret);
 }
@@ -632,7 +629,8 @@ static void c_object_constants(mrbc_vm *vm, mrbc_value v[], int argc)
   mrbc_class *nest_buf[MRBC_TRAVERSE_NEST_LEVEL];
   int nest_idx = 0;
 
-  do {
+
+  while( 1 ) {
     mrbc_get_all_class_const( cls, &ret );
     if( !flag_inherit ) break;
 
@@ -640,7 +638,9 @@ static void c_object_constants(mrbc_vm *vm, mrbc_value v[], int argc)
     if( cls == MRBC_CLASS(Object) ) {
       cls = mrbc_traverse_class_tree_skip( nest_buf, &nest_idx );
     }
-  } while( cls );
+    if( !cls ) break;
+    if( cls->flag_alias ) cls = cls->aliased;
+  }
 
   SET_RETURN(ret);
 }
