@@ -732,6 +732,7 @@ static inline void op_getconst( mrbc_vm *vm, mrbc_value *regs EXT )
 
   if( vm->callinfo_tail && vm->callinfo_tail->own_class ) {
     crit_cls = vm->callinfo_tail->own_class;
+    if( crit_cls->flag_alias ) crit_cls = crit_cls->aliased;
   } else {
     crit_cls = find_class_by_object( mrbc_get_self(vm, regs) );
   }

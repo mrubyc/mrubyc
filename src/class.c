@@ -440,6 +440,7 @@ mrbc_method * mrbc_find_method( mrbc_method *r_method, mrbc_class *cls, mrbc_sym
   mrbc_class *nest_buf[MRBC_TRAVERSE_NEST_LEVEL];
   int nest_idx = 0;
   int flag_module = cls->flag_module;
+  mrbc_class *cls_save = cls;
 
   if( cls->flag_alias ) {
     if( cls->super ) nest_buf[nest_idx++] = cls;
@@ -454,7 +455,7 @@ mrbc_method * mrbc_find_method( mrbc_method *r_method, mrbc_class *cls, mrbc_sym
     for( method = cls->method_link; method != 0; method = method->next ) {
       if( method->sym_id == sym_id ) {
 	*r_method = *method;
-	r_method->cls = cls;
+	r_method->cls = cls_save;
 	return r_method;
       }
     }
@@ -479,23 +480,24 @@ mrbc_method * mrbc_find_method( mrbc_method *r_method, mrbc_class *cls, mrbc_sym
       r_method->c_func = 2;
       r_method->sym_id = sym_id;
       r_method->func = c->method_functions[right];
-      r_method->cls = cls;
+      r_method->cls = cls_save;
       return r_method;
     }
 
   next_class:
     cls = mrbc_traverse_class_tree( cls, nest_buf, &nest_idx );
-    if( cls == 0 ) {
+    if( cls == NULL ) {
       if( !flag_module ) break;
-
       cls = MRBC_CLASS(Object);
       flag_module = 0;
-    } else if( cls->flag_alias ) {
+    }
+    cls_save = cls;
+    if( cls->flag_alias ) {
       cls = cls->aliased;
     }
   }  // loop next.
 
-  return 0;
+  return NULL;
 }
 
 
