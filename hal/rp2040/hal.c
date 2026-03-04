@@ -55,6 +55,9 @@ void hal_init(void){
                         | CLOCKS_SLEEP_EN1_CLK_PERI_UART0_BITS;
 }
 
+#endif /* ifndef MRBC_NO_TIMER */
+
+
 //================================================================
 /*!@brief
   Write
@@ -94,9 +97,6 @@ int hal_write(int fd, const void *buf, int nbytes)
 int hal_flush(int fd) {
   return 0;
 }
-
-#endif /* ifndef MRBC_NO_TIMER */
-
 
 //================================================================
 /*!@brief
