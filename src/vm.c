@@ -681,12 +681,8 @@ static inline void op_getiv( mrbc_vm *vm, mrbc_value *regs EXT )
     mrbc_raise(vm, MRBC_CLASS(Exception), "Overflow MAX_SYMBOLS_COUNT");
     return;
   }
-  mrbc_value *self = mrbc_get_self( vm, regs );
-  if( mrbc_type(*self) != MRBC_TT_OBJECT ) {
-    mrbc_raise(vm, MRBC_CLASS(NotImplementedError), 0);
-    return;
-  }
 
+  mrbc_value *self = mrbc_get_self( vm, regs );
   mrbc_decref(&regs[a]);
   regs[a] = mrbc_instance_getiv(self, sym_id);
 }
@@ -707,13 +703,11 @@ static inline void op_setiv( mrbc_vm *vm, mrbc_value *regs EXT )
     mrbc_raise(vm, MRBC_CLASS(Exception), "Overflow MAX_SYMBOLS_COUNT");
     return;
   }
-  mrbc_value *self = mrbc_get_self( vm, regs );
-  if( mrbc_type(*self) != MRBC_TT_OBJECT ) {
-    mrbc_raise(vm, MRBC_CLASS(NotImplementedError), 0);
-    return;
-  }
 
-  mrbc_instance_setiv(self, sym_id, &regs[a]);
+  mrbc_value *self = mrbc_get_self( vm, regs );
+  if( mrbc_instance_setiv(self, sym_id, &regs[a]) == E_NOTIMP_ERROR ) {
+    mrbc_raise(vm, MRBC_CLASS(NotImplementedError), 0);
+  }
 }
 
 
