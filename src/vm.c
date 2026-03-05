@@ -1267,8 +1267,11 @@ static inline void op_ssend0( mrbc_vm *vm, mrbc_value *regs EXT )
 {
   FETCH_BB();
 
-  // TODO
-  mrbc_raisef( vm, MRBC_CLASS(Exception), "Unimplemented OP_SSEND0" );
+  mrbc_decref( &regs[a] );
+  regs[a] = *mrbc_get_self( vm, regs );
+  mrbc_incref( &regs[a] );
+
+  send_by_name( vm, mrbc_irep_symbol_id(vm->cur_irep, b), a, 0 );
 }
 
 
@@ -1313,8 +1316,7 @@ static inline void op_send0( mrbc_vm *vm, mrbc_value *regs EXT )
 {
   FETCH_BB();
 
-  // TODO
-  mrbc_raisef( vm, MRBC_CLASS(Exception), "Unimplemented OP_SEND0" );
+  send_by_name( vm, mrbc_irep_symbol_id(vm->cur_irep, b), a, 0 );
 }
 
 
