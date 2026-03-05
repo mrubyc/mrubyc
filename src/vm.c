@@ -2907,21 +2907,21 @@ static inline void op_exec( mrbc_vm *vm, mrbc_value *regs EXT )
 
 
 //----------------------------------------------------------------
-static void sub_irep_incref( mrbc_irep *irep, int inc_dec )
+static void sub_irep_inc_dec_ref( mrbc_irep *irep, int inc_dec )
 {
   for( int i = 0; i < irep->rlen; i++ ) {
-    sub_irep_incref( mrbc_irep_child_irep(irep, i), inc_dec );
+    sub_irep_inc_dec_ref( mrbc_irep_child_irep(irep, i), inc_dec );
   }
 
   irep->ref_count += inc_dec;
 }
 
-static void sub_def_alias( mrbc_class *cls, mrbc_method *method, mrbc_sym sym_id )
+static void sub_newmethod( mrbc_class *cls, mrbc_method *method, mrbc_sym sym_id )
 {
   method->next = cls->method_link;
   cls->method_link = method;
 
-  if( !method->c_func ) sub_irep_incref( method->irep, +1 );
+  if( !method->c_func ) sub_irep_inc_dec_ref( method->irep, +1 );
 
   // checking same method
   for( ;method->next != NULL; method = method->next ) {
@@ -2931,7 +2931,7 @@ static void sub_def_alias( mrbc_class *cls, mrbc_method *method, mrbc_sym sym_id
 
       method->next = del_method->next;
       if( del_method->type == 'M' ) {
-        if( !del_method->c_func ) sub_irep_incref( del_method->irep, -1 );
+        if( !del_method->c_func ) sub_irep_inc_dec_ref( del_method->irep, -1 );
         mrbc_raw_free( del_method );
       }
 
@@ -2966,12 +2966,14 @@ static inline void op_def( mrbc_vm *vm, mrbc_value *regs EXT )
     mrbc_raw_alloc_no_free( sizeof(mrbc_method) ) :
     mrbc_raw_alloc( sizeof(mrbc_method) );
 
-  method->type = (vm->vm_id == 0) ? 'm' : 'M';
-  method->c_func = 0;
-  method->sym_id = sym_id;
-  method->irep = proc->irep;
+  *method = (mrbc_method){
+    .type = (vm->vm_id == 0) ? 'm' : 'M',
+    .c_func = 0,
+    .sym_id = sym_id,
+    .irep = proc->irep,
+  };
 
-  sub_def_alias( cls, method, sym_id );
+  sub_newmethod( cls, method, sym_id );
   mrbc_set_symbol(&regs[a], sym_id);
 }
 
@@ -2985,8 +2987,28 @@ static inline void op_tdef( mrbc_vm *vm, mrbc_value *regs EXT )
 {
   FETCH_BBB();
 
-  // TODO
-  mrbc_raisef( vm, MRBC_CLASS(Exception), "Unimplemented OP_TDEF" );
+  mrbc_class *cls = vm->target_class;
+  if( cls->flag_nomethod ) {
+    mrbc_raisef(vm, MRBC_CLASS(NotImplementedError),
+		"Adding methods to the %s class is not supported",
+		mrbc_symid_to_str(cls->sym_id));
+    return;
+  }
+
+  mrbc_sym sym_id = mrbc_irep_symbol_id(vm->cur_irep, b);
+  mrbc_method *method = (vm->vm_id == 0) ?
+    mrbc_raw_alloc_no_free( sizeof(mrbc_method) ) :
+    mrbc_raw_alloc( sizeof(mrbc_method) );
+
+  *method = (mrbc_method){
+    .type = (vm->vm_id == 0) ? 'm' : 'M',
+    .c_func = 0,
+    .sym_id = sym_id,
+    .irep = mrbc_irep_child_irep(vm->cur_irep, c),
+  };
+
+  sub_newmethod( cls, method, sym_id );
+  mrbc_set_symbol(&regs[a], sym_id);
 }
 
 
@@ -3030,7 +3052,7 @@ static inline void op_alias( mrbc_vm *vm, mrbc_value *regs EXT )
   method->type = (vm->vm_id == 0) ? 'm' : 'M';
   method->sym_id = sym_id_new;
 
-  sub_def_alias( cls, method, sym_id_new );
+  sub_newmethod( cls, method, sym_id_new );
 }
 
 
