@@ -487,11 +487,11 @@ static inline void op_loadl( mrbc_vm *vm, mrbc_value *regs EXT )
 
 
 //================================================================
-/*! OP_LOADI
+/*! OP_LOADI8
 
   R[a] = mrb_int(b)
 */
-static inline void op_loadi( mrbc_vm *vm, mrbc_value *regs EXT )
+static inline void op_loadi8( mrbc_vm *vm, mrbc_value *regs EXT )
 {
   FETCH_BB();
 
@@ -605,11 +605,11 @@ static inline void op_loadself( mrbc_vm *vm, mrbc_value *regs EXT )
 
 
 //================================================================
-/*! OP_LOADT
+/*! OP_LOADTRUE
 
   R[a] = true
 */
-static inline void op_loadt( mrbc_vm *vm, mrbc_value *regs EXT )
+static inline void op_loadtrue( mrbc_vm *vm, mrbc_value *regs EXT )
 {
   FETCH_B();
 
@@ -619,11 +619,11 @@ static inline void op_loadt( mrbc_vm *vm, mrbc_value *regs EXT )
 
 
 //================================================================
-/*! OP_LOADF
+/*! OP_LOADFALSE
 
   R[a] = false
 */
-static inline void op_loadf( mrbc_vm *vm, mrbc_value *regs EXT )
+static inline void op_loadfalse( mrbc_vm *vm, mrbc_value *regs EXT )
 {
   FETCH_B();
 
@@ -922,6 +922,20 @@ static inline void op_getidx( mrbc_vm *vm, mrbc_value *regs EXT )
 
 
 //================================================================
+/*! OP_GETIDX0
+
+  R[a] = R[b][0]; a+1 for method call
+*/
+static inline void op_getidx0( mrbc_vm *vm, mrbc_value *regs EXT )
+{
+  FETCH_BB();
+
+  // TODO
+  mrbc_raisef( vm, MRBC_CLASS(Exception), "Unimplemented OP_GETIDX0" );
+}
+
+
+//================================================================
 /*! OP_SETIDX
 
   R[a][R[a+1]] = R[a+2]
@@ -1212,6 +1226,21 @@ CASE_OP_EXCEPTION:
 
 
 //================================================================
+/*! OP_MATCHERR
+
+  raise NoMatchingPatternError unless R[a]
+*/
+static inline void op_matcherr( mrbc_vm *vm, mrbc_value *regs EXT )
+{
+  FETCH_B();
+
+  // TODO
+  mrbc_raisef( vm, MRBC_CLASS(Exception), "Unimplemented OP_MATCHERR" );
+}
+
+
+
+//================================================================
 /*! OP_SSEND
 
   R[a] = self.send(Syms[b],R[a+1]..,R[a+n+1]:R[a+n+2]..) (c=n|k<<4)
@@ -1225,6 +1254,21 @@ static inline void op_ssend( mrbc_vm *vm, mrbc_value *regs EXT )
   mrbc_incref( &regs[a] );
 
   send_by_name( vm, mrbc_irep_symbol_id(vm->cur_irep, b), a, c );
+}
+
+
+
+//================================================================
+/*! OP_SSEND0
+
+  R[a] = self.send(Syms[b]) (no args)
+*/
+static inline void op_ssend0( mrbc_vm *vm, mrbc_value *regs EXT )
+{
+  FETCH_BB();
+
+  // TODO
+  mrbc_raisef( vm, MRBC_CLASS(Exception), "Unimplemented OP_SSEND0" );
 }
 
 
@@ -1261,6 +1305,20 @@ static inline void op_send( mrbc_vm *vm, mrbc_value *regs EXT )
 
 
 //================================================================
+/*! OP_SEND0
+
+  R[a] = R[a].send(Syms[b]) (no args)
+*/
+static inline void op_send0( mrbc_vm *vm, mrbc_value *regs EXT )
+{
+  FETCH_BB();
+
+  // TODO
+  mrbc_raisef( vm, MRBC_CLASS(Exception), "Unimplemented OP_SEND0" );
+}
+
+
+//================================================================
 /*! OP_SENDB
 
   R[a] = R[a].send(Syms[b],R[a+1]..,R[a+n+1]:R[a+n+2]..,&R[a+n+2k+1])
@@ -1270,6 +1328,20 @@ static inline void op_sendb( mrbc_vm *vm, mrbc_value *regs EXT )
   FETCH_BBB();
 
   send_by_name( vm, mrbc_irep_symbol_id(vm->cur_irep, b), a, c | 0x100 );
+}
+
+
+//================================================================
+/*! OP_BLKCALL
+
+  R[a] = R[a].call(R[a+1],... ,R[a+b]); direct block call
+*/
+static inline void op_blkcall( mrbc_vm *vm, mrbc_value *regs EXT )
+{
+  FETCH_BB();
+
+  // TODO
+  mrbc_raisef( vm, MRBC_CLASS(Exception), "Unimplemented OP_BLKCALL" );
 }
 
 
@@ -1770,6 +1842,62 @@ static inline void op_return_blk( mrbc_vm *vm, mrbc_value *regs EXT )
 
 
 //================================================================
+/*! OP_RETSELF
+
+  return self
+*/
+static inline void op_retself( mrbc_vm *vm, mrbc_value *regs EXT )
+{
+  FETCH_Z();
+
+  // TODO
+  mrbc_raisef( vm, MRBC_CLASS(Exception), "Unimplemented OP_RETSELF" );
+}
+
+
+//================================================================
+/*! OP_RETNIL
+
+  return nil
+*/
+static inline void op_retnil( mrbc_vm *vm, mrbc_value *regs EXT )
+{
+  FETCH_Z();
+
+  // TODO
+  mrbc_raisef( vm, MRBC_CLASS(Exception), "Unimplemented OP_RETNIL" );
+}
+
+
+//================================================================
+/*! OP_RETTRUE
+
+  return true
+*/
+static inline void op_rettrue( mrbc_vm *vm, mrbc_value *regs EXT )
+{
+  FETCH_Z();
+
+  // TODO
+  mrbc_raisef( vm, MRBC_CLASS(Exception), "Unimplemented OP_RETTRUE" );
+}
+
+
+//================================================================
+/*! OP_RETFALSE
+
+  return false
+*/
+static inline void op_retfalse( mrbc_vm *vm, mrbc_value *regs EXT )
+{
+  FETCH_Z();
+
+  // TODO
+  mrbc_raisef( vm, MRBC_CLASS(Exception), "Unimplemented OP_RETFALSE" );
+}
+
+
+//================================================================
 /*! OP_BREAK
 
   break R[a]
@@ -2007,6 +2135,34 @@ static inline void op_subi( mrbc_vm *vm, mrbc_value *regs EXT )
   mrbc_decref(&regs[a+1]);
   regs[a+1] = mrbc_integer_value(b);
   send_by_name(vm, MRBC_SYM(MINUS), a, 1);
+}
+
+
+//================================================================
+/*! OP_ADDILV
+
+  R[a] = R[a]+mrb_int(c); R[b],R[b+1] for method call
+*/
+static inline void op_addilv( mrbc_vm *vm, mrbc_value *regs EXT )
+{
+  FETCH_BBB();
+
+  // TODO
+  mrbc_raisef( vm, MRBC_CLASS(Exception), "Unimplemented OP_ADDILV" );
+}
+
+
+//================================================================
+/*! OP_SUBILV
+
+  R[a] = R[a]-mrb_int(c); R[b],R[b+1] for method call
+*/
+static inline void op_subilv( mrbc_vm *vm, mrbc_value *regs EXT )
+{
+  FETCH_BBB();
+
+  // TODO
+  mrbc_raisef( vm, MRBC_CLASS(Exception), "Unimplemented OP_SUBILV" );
 }
 
 
@@ -2315,11 +2471,11 @@ static inline void op_arypush( mrbc_vm *vm, mrbc_value *regs EXT )
 
 
 //================================================================
-/*! OP_ARYDUP
+/*! OP_ARYSPLAT
 
   R[a] = ary_dup(R[a])
 */
-static inline void op_arydup( mrbc_vm *vm, mrbc_value *regs EXT )
+static inline void op_arysplat( mrbc_vm *vm, mrbc_value *regs EXT )
 {
   FETCH_B();
 
@@ -2821,6 +2977,34 @@ static inline void op_def( mrbc_vm *vm, mrbc_value *regs EXT )
 
 
 //================================================================
+/*! OP_TDEF
+
+  target_class.newmethod(Syms[b],Irep[c]); R[a] = Syms[b]
+*/
+static inline void op_tdef( mrbc_vm *vm, mrbc_value *regs EXT )
+{
+  FETCH_BBB();
+
+  // TODO
+  mrbc_raisef( vm, MRBC_CLASS(Exception), "Unimplemented OP_TDEF" );
+}
+
+
+//================================================================
+/*! OP_SDEF
+
+  R[a].singleton_class.newmethod(Syms[b],Irep[c]); R[a] = Syms[b]
+*/
+static inline void op_sdef( mrbc_vm *vm, mrbc_value *regs EXT )
+{
+  FETCH_BBB();
+
+  // TODO
+  mrbc_raisef( vm, MRBC_CLASS(Exception), "Unimplemented OP_SDEF" );
+}
+
+
+//================================================================
 /*! OP_ALIAS
 
   alias_method(target_class,Syms[a],Syms[b])
@@ -2945,7 +3129,7 @@ int mrbc_vm_run( struct VM *vm )
     case OP_NOP:        op_nop        (vm, regs EXT); break;
     case OP_MOVE:       op_move       (vm, regs EXT); break;
     case OP_LOADL:      op_loadl      (vm, regs EXT); break;
-    case OP_LOADI:      op_loadi      (vm, regs EXT); break;
+    case OP_LOADI8:     op_loadi8     (vm, regs EXT); break;
     case OP_LOADINEG:   op_loadineg   (vm, regs EXT); break;
     case OP_LOADI__1:   // fall through
     case OP_LOADI_0:    // fall through
@@ -2961,8 +3145,8 @@ int mrbc_vm_run( struct VM *vm )
     case OP_LOADSYM:    op_loadsym    (vm, regs EXT); break;
     case OP_LOADNIL:    op_loadnil    (vm, regs EXT); break;
     case OP_LOADSELF:   op_loadself   (vm, regs EXT); break;
-    case OP_LOADT:      op_loadt      (vm, regs EXT); break;
-    case OP_LOADF:      op_loadf      (vm, regs EXT); break;
+    case OP_LOADTRUE:   op_loadtrue   (vm, regs EXT); break;
+    case OP_LOADFALSE:  op_loadfalse  (vm, regs EXT); break;
     case OP_GETGV:      op_getgv      (vm, regs EXT); break;
     case OP_SETGV:      op_setgv      (vm, regs EXT); break;
     case OP_GETSV:      op_unsupported(vm, regs EXT); break; // not implemented.
@@ -2978,6 +3162,7 @@ int mrbc_vm_run( struct VM *vm )
     case OP_GETUPVAR:   op_getupvar   (vm, regs EXT); break;
     case OP_SETUPVAR:   op_setupvar   (vm, regs EXT); break;
     case OP_GETIDX:     op_getidx     (vm, regs EXT); break;
+    case OP_GETIDX0:    op_getidx0    (vm, regs EXT); break;
     case OP_SETIDX:     op_setidx     (vm, regs EXT); break;
     case OP_JMP:        op_jmp        (vm, regs EXT); break;
     case OP_JMPIF:      op_jmpif      (vm, regs EXT); break;
@@ -2987,11 +3172,15 @@ int mrbc_vm_run( struct VM *vm )
     case OP_EXCEPT:     op_except     (vm, regs EXT); break;
     case OP_RESCUE:     op_rescue     (vm, regs EXT); break;
     case OP_RAISEIF:    op_raiseif    (vm, regs EXT); break;
+    case OP_MATCHERR:   op_matcherr   (vm, regs EXT); break;
     case OP_SSEND:      op_ssend      (vm, regs EXT); break;
+    case OP_SSEND0:     op_ssend0     (vm, regs EXT); break;
     case OP_SSENDB:     op_ssendb     (vm, regs EXT); break;
     case OP_SEND:       op_send       (vm, regs EXT); break;
+    case OP_SEND0:      op_send0      (vm, regs EXT); break;
     case OP_SENDB:      op_sendb      (vm, regs EXT); break;
     case OP_CALL:       op_unsupported(vm, regs EXT); break; // not implemented.
+    case OP_BLKCALL:    op_blkcall    (vm, regs EXT); break;
     case OP_SUPER:      op_super      (vm, regs EXT); break;
     case OP_ARGARY:     op_argary     (vm, regs EXT); break;
     case OP_ENTER:      op_enter      (vm, regs EXT); break;
@@ -3000,12 +3189,18 @@ int mrbc_vm_run( struct VM *vm )
     case OP_KARG:       op_karg       (vm, regs EXT); break;
     case OP_RETURN:     op_return     (vm, regs EXT); break;
     case OP_RETURN_BLK: op_return_blk (vm, regs EXT); break;
+    case OP_RETSELF:    op_retself    (vm, regs EXT); break;
+    case OP_RETNIL:     op_retnil     (vm, regs EXT); break;
+    case OP_RETTRUE:    op_rettrue    (vm, regs EXT); break;
+    case OP_RETFALSE:   op_retfalse   (vm, regs EXT); break;
     case OP_BREAK:      op_break      (vm, regs EXT); break;
     case OP_BLKPUSH:    op_blkpush    (vm, regs EXT); break;
     case OP_ADD:        op_add        (vm, regs EXT); break;
     case OP_ADDI:       op_addi       (vm, regs EXT); break;
     case OP_SUB:        op_sub        (vm, regs EXT); break;
     case OP_SUBI:       op_subi       (vm, regs EXT); break;
+    case OP_ADDILV:     op_addilv     (vm, regs EXT); break;
+    case OP_SUBILV:     op_subilv     (vm, regs EXT); break;
     case OP_MUL:        op_mul        (vm, regs EXT); break;
     case OP_DIV:        op_div        (vm, regs EXT); break;
     case OP_EQ:         op_eq         (vm, regs EXT); break;
@@ -3017,7 +3212,7 @@ int mrbc_vm_run( struct VM *vm )
     case OP_ARRAY2:     op_array2     (vm, regs EXT); break;
     case OP_ARYCAT:     op_arycat     (vm, regs EXT); break;
     case OP_ARYPUSH:    op_arypush    (vm, regs EXT); break;
-    case OP_ARYDUP:     op_arydup     (vm, regs EXT); break;
+    case OP_ARYSPLAT:   op_arysplat   (vm, regs EXT); break;
     case OP_AREF:       op_aref       (vm, regs EXT); break;
     case OP_ASET:       op_aset       (vm, regs EXT); break;
     case OP_APOST:      op_apost      (vm, regs EXT); break;
@@ -3038,12 +3233,15 @@ int mrbc_vm_run( struct VM *vm )
     case OP_MODULE:     op_module     (vm, regs EXT); break;
     case OP_EXEC:       op_exec       (vm, regs EXT); break;
     case OP_DEF:        op_def        (vm, regs EXT); break;
+    case OP_TDEF:       op_tdef       (vm, regs EXT); break;
+    case OP_SDEF:       op_sdef       (vm, regs EXT); break;
     case OP_ALIAS:      op_alias      (vm, regs EXT); break;
     case OP_UNDEF:      op_unsupported(vm, regs EXT); break; // not implemented.
     case OP_SCLASS:     op_sclass     (vm, regs EXT); break;
     case OP_TCLASS:     op_tclass     (vm, regs EXT); break;
     case OP_DEBUG:      op_unsupported(vm, regs EXT); break; // not implemented.
     case OP_ERR:        op_unsupported(vm, regs EXT); break; // not implemented.
+
 #if defined(MRBC_SUPPORT_OP_EXT)
     case OP_EXT1:       ext = 1; continue;
     case OP_EXT2:       ext = 2; continue;

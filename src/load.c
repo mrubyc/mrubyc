@@ -27,7 +27,7 @@
 /***** Constat values *******************************************************/
 // for mrb file structure.
 static const char RITE[4] = "RITE";
-static const char RITE_VERSION[4] = "0300";
+static const char RITE_VERSION[4] = "0400";
 static const int SIZE_RITE_BINARY_HEADER = 20;
 static const int SIZE_RITE_SECTION_HEADER = 12;
 static const int SIZE_RITE_CATCH_HANDLER = 13;
