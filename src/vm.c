@@ -1720,7 +1720,7 @@ static inline void op_karg( mrbc_vm *vm, mrbc_value *regs EXT )
 //================================================================
 /*! op_return, op_return_blk subroutine.
 */
-static inline void op_return__sub( mrbc_vm *vm, mrbc_value *regs, int a )
+static inline void sub_op_return( mrbc_vm *vm, mrbc_value *regs, int a )
 {
   // If have a ensure, jump to it.
   if( vm->cur_irep->clen ) {
@@ -1785,7 +1785,7 @@ static inline void op_return( mrbc_vm *vm, mrbc_value *regs EXT )
 {
   FETCH_B();
 
-  op_return__sub( vm, regs, a );
+  sub_op_return( vm, regs, a );
 }
 
 
@@ -1799,7 +1799,7 @@ static inline void op_return_blk( mrbc_vm *vm, mrbc_value *regs EXT )
   FETCH_B();
 
   if( mrbc_type(regs[0]) != MRBC_TT_PROC ) {
-    op_return__sub( vm, regs, a );
+    sub_op_return( vm, regs, a );
     return;
   }
 
@@ -1852,8 +1852,11 @@ static inline void op_retself( mrbc_vm *vm, mrbc_value *regs EXT )
 {
   FETCH_Z();
 
-  // TODO
-  mrbc_raisef( vm, MRBC_CLASS(Exception), "Unimplemented OP_RETSELF" );
+  mrbc_decref(&regs[1]);
+  regs[1] = *mrbc_get_self( vm, regs );
+  mrbc_incref( &regs[1] );
+
+  sub_op_return( vm, regs, 1 );
 }
 
 
@@ -1866,8 +1869,11 @@ static inline void op_retnil( mrbc_vm *vm, mrbc_value *regs EXT )
 {
   FETCH_Z();
 
-  // TODO
-  mrbc_raisef( vm, MRBC_CLASS(Exception), "Unimplemented OP_RETNIL" );
+  mrbc_decref(&regs[1]);
+  regs[1] = mrbc_nil_value();
+  mrbc_incref( &regs[1] );
+
+  sub_op_return( vm, regs, 1 );
 }
 
 
@@ -1880,8 +1886,11 @@ static inline void op_rettrue( mrbc_vm *vm, mrbc_value *regs EXT )
 {
   FETCH_Z();
 
-  // TODO
-  mrbc_raisef( vm, MRBC_CLASS(Exception), "Unimplemented OP_RETTRUE" );
+  mrbc_decref(&regs[1]);
+  regs[1] = mrbc_true_value();
+  mrbc_incref( &regs[1] );
+
+  sub_op_return( vm, regs, 1 );
 }
 
 
@@ -1894,8 +1903,11 @@ static inline void op_retfalse( mrbc_vm *vm, mrbc_value *regs EXT )
 {
   FETCH_Z();
 
-  // TODO
-  mrbc_raisef( vm, MRBC_CLASS(Exception), "Unimplemented OP_RETFALSE" );
+  mrbc_decref(&regs[1]);
+  regs[1] = mrbc_false_value();
+  mrbc_incref( &regs[1] );
+
+  sub_op_return( vm, regs, 1 );
 }
 
 
