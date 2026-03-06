@@ -173,4 +173,24 @@ class HashTest < Picotest::Test
     assert_equal( {}, h.to_h )
   end
 
+  description "Hash#deconstruct_keys always returns self"
+  def test_deconstruct_keys_always_returns_self
+    h = {a: 1, b: 2, c: 3}
+    result = h.deconstruct_keys([:a, :x])
+    assert_equal(h.object_id, result.object_id)
+    assert_equal h, result
+  end
+
+  description "Hash#deconstruct_keys raises ArgumentError with no arguments"
+  def test_deconstruct_keys_no_args
+    h = {a: 1}
+    assert_raise(ArgumentError) { h.deconstruct_keys }
+  end
+
+  description "Hash#deconstruct_keys raises ArgumentError with too many arguments"
+  def test_deconstruct_keys_too_many_args
+    h = {a: 1}
+    assert_raise(ArgumentError) { h.deconstruct_keys(nil, nil) }
+  end
+
 end
