@@ -16,14 +16,16 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Generate autogen files
-      run: make autogen
+      run: |
+        make autogen
+        sed -E -e '/^[A-Z]+_VERSION/!d' mrblib/global.rb > src/VERSION
 
     - name: Create release archive with autogen files
       run: |
         VERSION=${GITHUB_REF_NAME}
         PREFIX="mrubyc-${VERSION}"
         git archive --prefix="${PREFIX}/" HEAD | tar x
-        cp src/_autogen_*.h "${PREFIX}/src/"
+        cp src/_autogen_*.h src/VERSION "${PREFIX}/src/"
         tar czf "mrubyc-${VERSION}.tar.gz" "${PREFIX}/"
 
     - name: Create GitHub Release
