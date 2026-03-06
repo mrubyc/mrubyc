@@ -2954,6 +2954,29 @@ static void sub_newmethod( mrbc_class *cls, mrbc_method *method, mrbc_sym sym_id
   }
 }
 
+static void sub_op_def( mrbc_vm *vm, mrbc_class *cls, mrbc_irep *irep, mrbc_sym sym_id )
+{
+  if( cls->flag_nomethod ) {
+    mrbc_raisef(vm, MRBC_CLASS(NotImplementedError),
+		"Adding methods to the %s class is not supported",
+		mrbc_symid_to_str(cls->sym_id));
+    return;
+  }
+
+  mrbc_method *method = (vm->vm_id == 0) ?
+    mrbc_raw_alloc_no_free( sizeof(mrbc_method) ) :
+    mrbc_raw_alloc( sizeof(mrbc_method) );
+
+  *method = (mrbc_method){
+    .type = (vm->vm_id == 0) ? 'm' : 'M',
+    .c_func = 0,
+    .sym_id = sym_id,
+    .irep = irep,
+  };
+
+  sub_newmethod( cls, method, sym_id );
+}
+
 //================================================================
 /*! OP_DEF
 
@@ -2963,31 +2986,11 @@ static inline void op_def( mrbc_vm *vm, mrbc_value *regs EXT )
 {
   FETCH_BB();
 
-  assert( mrbc_type(regs[a]) == MRBC_TT_CLASS || mrbc_type(regs[a]) == MRBC_TT_MODULE );
-  assert( mrbc_type(regs[a+1]) == MRBC_TT_PROC );
-
   mrbc_class *cls = regs[a].cls;
-  if( cls->flag_nomethod ) {
-    mrbc_raisef(vm, MRBC_CLASS(NotImplementedError),
-		"Adding methods to the %s class is not supported",
-		mrbc_symid_to_str(cls->sym_id));
-    return;
-  }
-
+  mrbc_irep *irep = regs[a+1].proc->irep;
   mrbc_sym sym_id = mrbc_irep_symbol_id(vm->cur_irep, b);
-  mrbc_proc *proc = regs[a+1].proc;
-  mrbc_method *method = (vm->vm_id == 0) ?
-    mrbc_raw_alloc_no_free( sizeof(mrbc_method) ) :
-    mrbc_raw_alloc( sizeof(mrbc_method) );
 
-  *method = (mrbc_method){
-    .type = (vm->vm_id == 0) ? 'm' : 'M',
-    .c_func = 0,
-    .sym_id = sym_id,
-    .irep = proc->irep,
-  };
-
-  sub_newmethod( cls, method, sym_id );
+  sub_op_def( vm, cls, irep, sym_id );
   mrbc_set_symbol(&regs[a], sym_id);
 }
 
@@ -3002,26 +3005,10 @@ static inline void op_tdef( mrbc_vm *vm, mrbc_value *regs EXT )
   FETCH_BBB();
 
   mrbc_class *cls = vm->target_class;
-  if( cls->flag_nomethod ) {
-    mrbc_raisef(vm, MRBC_CLASS(NotImplementedError),
-		"Adding methods to the %s class is not supported",
-		mrbc_symid_to_str(cls->sym_id));
-    return;
-  }
-
+  mrbc_irep *irep = mrbc_irep_child_irep(vm->cur_irep, c);
   mrbc_sym sym_id = mrbc_irep_symbol_id(vm->cur_irep, b);
-  mrbc_method *method = (vm->vm_id == 0) ?
-    mrbc_raw_alloc_no_free( sizeof(mrbc_method) ) :
-    mrbc_raw_alloc( sizeof(mrbc_method) );
 
-  *method = (mrbc_method){
-    .type = (vm->vm_id == 0) ? 'm' : 'M',
-    .c_func = 0,
-    .sym_id = sym_id,
-    .irep = mrbc_irep_child_irep(vm->cur_irep, c),
-  };
-
-  sub_newmethod( cls, method, sym_id );
+  sub_op_def( vm, cls, irep, sym_id );
   mrbc_set_symbol(&regs[a], sym_id);
 }
 
@@ -3035,8 +3022,12 @@ static inline void op_sdef( mrbc_vm *vm, mrbc_value *regs EXT )
 {
   FETCH_BBB();
 
-  // TODO
-  mrbc_raisef( vm, MRBC_CLASS(Exception), "Unimplemented OP_SDEF" );
+  mrbc_class *cls = regs[a].cls;
+  mrbc_irep *irep = mrbc_irep_child_irep(vm->cur_irep, c);
+  mrbc_sym sym_id = mrbc_irep_symbol_id(vm->cur_irep, b);
+
+  sub_op_def( vm, cls, irep, sym_id );
+  mrbc_set_symbol(&regs[a], sym_id);
 }
 
 
