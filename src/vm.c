@@ -136,6 +136,7 @@ static void send_by_name( struct VM *vm, mrbc_sym sym_id, int a, int c )
  CALL_METHOD:
   if( !method.c_func ) goto CALL_RUBY_METHOD;
 
+  vm->callee_sym_id = sym_id;
   method.func(vm, recv, narg);
 
   if( mrbc_israised(vm) && vm->exception.exception->method_id == 0 ) {
@@ -195,36 +196,6 @@ static const mrbc_irep_catch_handler *find_catch_handler_ensure( const struct VM
 void mrbc_cleanup_vm(void)
 {
   memset(free_vm_bitmap, 0, sizeof(free_vm_bitmap));
-}
-
-
-//================================================================
-/*! get callee symbol id
-
-  @param  vm	Pointer to VM
-  @return	string
-*/
-mrbc_sym mrbc_get_callee_symid( struct VM *vm )
-{
-  uint8_t rb = vm->inst[-2];
-  /* NOTE
-     -2 is not always better value.
-     This value is OP_SEND operator's B register.
-  */
-  return mrbc_irep_symbol_id(vm->cur_irep, rb);
-}
-
-
-//================================================================
-/*! get callee name
-
-  @param  vm	Pointer to VM
-  @return	string
-*/
-const char *mrbc_get_callee_name( struct VM *vm )
-{
-  uint8_t rb = vm->inst[-2];
-  return mrbc_irep_symbol_cstr(vm->cur_irep, rb);
 }
 
 

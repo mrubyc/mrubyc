@@ -156,17 +156,18 @@ typedef struct VM {
   unsigned int flag_stop : 1;
   unsigned int flag_permanence : 1;
 
-  uint16_t	  regs_size;		//!< size of regs[]
-
   mrbc_irep       *top_irep;		//!< IREP tree top.
   const mrbc_irep *cur_irep;		//!< IREP currently running.
   const uint8_t   *inst;		//!< Instruction pointer.
-  mrbc_value	  *cur_regs;		//!< Current register top.
+  mrbc_value      *cur_regs;		//!< Current register top.
   mrbc_class      *target_class;	//!< Target class.
   mrbc_callinfo	  *callinfo_tail;	//!< Last point of CALLINFO link.
-  mrbc_proc	  *ret_blk;		//!< Return block.
+  mrbc_proc       *ret_blk;		//!< Return block.
 
   mrbc_value	  exception;		//!< Raised exception or nil.
+
+  mrbc_sym        callee_sym_id;	//!< Current called method.
+  uint16_t        regs_size;		//!< size of regs[]
   mrbc_value      regs[];
 
 } mrbc_vm;
@@ -179,8 +180,6 @@ typedef struct VM mrb_vm;
 /***** Function prototypes **************************************************/
 //@cond
 void mrbc_cleanup_vm(void);
-mrbc_sym mrbc_get_callee_symid(struct VM *vm);
-const char *mrbc_get_callee_name(struct VM *vm);
 mrbc_callinfo *mrbc_push_callinfo(struct VM *vm, mrbc_sym method_id, int reg_offset, int n_args);
 void mrbc_pop_callinfo(struct VM *vm);
 mrbc_vm *mrbc_vm_new(int regs_size);
@@ -203,6 +202,30 @@ int mrbc_vm_run(struct VM *vm);
 static inline mrbc_value * mrbc_get_self( struct VM *vm, mrbc_value *regs )
 {
   return mrbc_type(regs[0]) == MRBC_TT_PROC ? &(regs[0].proc->self) : &regs[0];
+}
+
+
+//================================================================
+/*! get callee symbol id
+
+  @param  vm	Pointer to VM
+  @return	string
+*/
+static inline mrbc_sym mrbc_get_callee_symid( const struct VM *vm )
+{
+  return vm->callee_sym_id;
+}
+
+
+//================================================================
+/*! get callee name
+
+  @param  vm	Pointer to VM
+  @return	string
+*/
+static inline const char *mrbc_get_callee_name( const struct VM *vm )
+{
+  return mrbc_symid_to_str( vm->callee_sym_id );
 }
 
 
