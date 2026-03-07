@@ -930,8 +930,14 @@ static inline void op_getidx0( mrbc_vm *vm, mrbc_value *regs EXT )
 {
   FETCH_BB();
 
-  // TODO
-  mrbc_raisef( vm, MRBC_CLASS(Exception), "Unimplemented OP_GETIDX0" );
+  if( a != b ) {
+    mrbc_decref( &regs[a] );
+    regs[a] = regs[b];
+    mrbc_incref( &regs[a] );
+  }
+  mrbc_decref( &regs[a+1] );
+  mrbc_set_integer( &regs[a+1], 0 );
+  send_by_name( vm, MRBC_SYMID_BL_BR, a, 1 );
 }
 
 
