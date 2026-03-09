@@ -2138,8 +2138,22 @@ static inline void op_addilv( mrbc_vm *vm, mrbc_value *regs EXT )
 {
   FETCH_BBB();
 
-  // TODO
-  mrbc_raisef( vm, MRBC_CLASS(Exception), "Unimplemented OP_ADDILV" );
+  switch( mrbc_type(regs[a]) ) {
+  case MRBC_TT_INTEGER:
+    regs[a].i += c;
+    break;
+
+#if MRBC_USE_FLOAT
+  case MRBC_TT_FLOAT:
+    regs[a].d += c;
+    break;
+#endif
+
+  default:
+    mrbc_decref(&regs[a+1]);
+    regs[a+1] = mrbc_integer_value(c);
+    send_by_name(vm, MRBC_SYM(PLUS), a, 1);
+  }
 }
 
 
@@ -2152,8 +2166,22 @@ static inline void op_subilv( mrbc_vm *vm, mrbc_value *regs EXT )
 {
   FETCH_BBB();
 
-  // TODO
-  mrbc_raisef( vm, MRBC_CLASS(Exception), "Unimplemented OP_SUBILV" );
+  switch( mrbc_type(regs[a]) ) {
+  case MRBC_TT_INTEGER:
+    regs[a].i -= c;
+    break;
+
+#if MRBC_USE_FLOAT
+  case MRBC_TT_FLOAT:
+    regs[a].d -= c;
+    break;
+#endif
+
+  default:
+    mrbc_decref(&regs[a+1]);
+    regs[a+1] = mrbc_integer_value(c);
+    send_by_name(vm, MRBC_SYM(MINUS), a, 1);
+  }
 }
 
 
