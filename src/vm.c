@@ -1319,8 +1319,7 @@ static inline void op_blkcall( mrbc_vm *vm, mrbc_value *regs EXT )
 {
   FETCH_BB();
 
-  // TODO
-  mrbc_raisef( vm, MRBC_CLASS(Exception), "Unimplemented OP_BLKCALL" );
+  send_by_name( vm, MRBC_SYM(call), a, b | 0x100 );
 }
 
 
