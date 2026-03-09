@@ -173,4 +173,40 @@ class HashTest < Picotest::Test
     assert_equal( {}, h.to_h )
   end
 
+  description "fetch"
+  def test_fetch
+    h = {:a=>1, :b=>2, :c=>3}
+    assert_equal( 1, h.fetch(:a) )
+    assert_equal( 2, h.fetch(:b) )
+    assert_equal( 3, h.fetch(:c) )
+  end
+
+  description "fetch with default"
+  def test_fetch_default
+    h = {:a=>1}
+    assert_equal( 99, h.fetch(:z, 99) )
+    assert_equal( nil, h.fetch(:z, nil) )
+    assert_equal( "fallback", h.fetch(:z, "fallback") )
+  end
+
+  description "fetch existing key ignores default"
+  def test_fetch_existing_ignores_default
+    h = {:a=>1}
+    assert_equal( 1, h.fetch(:a, 99) )
+  end
+
+  description "fetch missing key without default raises"
+  def test_fetch_raise
+    h = {:a=>1}
+    assert_raise(RuntimeError) { h.fetch(:z) }
+  end
+
+  description "fetch with various key types"
+  def test_fetch_key_types
+    h = {1=>"one", "name"=>"mrubyc"}
+    assert_equal( "one", h.fetch(1) )
+    assert_equal( "mrubyc", h.fetch("name") )
+    assert_equal( "default", h.fetch(99, "default") )
+  end
+
 end
