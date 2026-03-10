@@ -37,11 +37,12 @@ static const char END[4] = "END\0";
 
 /*! IREP TT */
 enum irep_pool_type {
-  IREP_TT_STR   = 0,	// string (need free)
-  IREP_TT_SSTR  = 2,	// string (static)
-  IREP_TT_INT32 = 1,	// 32bit integer
-  IREP_TT_INT64 = 3,	// 64bit integer
-  IREP_TT_FLOAT = 5,	// float (double/float)
+  IREP_TT_STR    = 0,	// string (need free)
+  IREP_TT_SSTR   = 2,	// string (static)
+  IREP_TT_INT32  = 1,	// 32bit integer
+  IREP_TT_INT64  = 3,	// 64bit integer
+  IREP_TT_BIGINT = 7,	// big integer
+  IREP_TT_FLOAT  = 5,	// float (double/float)
 };
 
 
