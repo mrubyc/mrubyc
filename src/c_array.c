@@ -887,11 +887,7 @@ static void c_array_empty(struct VM *vm, mrbc_value v[], int argc)
 {
   int n = mrbc_array_size(v);
 
-  if( n ) {
-    SET_FALSE_RETURN();
-  } else {
-    SET_TRUE_RETURN();
-  }
+  SET_BOOL_RETURN( !n );
 }
 
 

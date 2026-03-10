@@ -791,21 +791,26 @@ int mrbc_string_downcase(mrbc_value *str)
 */
 static void c_string_new(struct VM *vm, mrbc_value v[], int argc)
 {
-  if (argc == 1 && mrbc_type(v[1]) != MRBC_TT_STRING) {
-    mrbc_raisef( vm, MRBC_CLASS(TypeError), "no implicit conversion into %s", "String");
-    return;
-  }
-  if (argc > 1) {
+  mrbc_value value;
+
+  switch( argc ) {
+  case 0:
+    value = mrbc_string_new(vm, NULL, 0);
+    break;
+
+  case 1:
+    if( mrbc_type(v[1]) != MRBC_TT_STRING ) {
+      mrbc_raisef( vm, MRBC_CLASS(TypeError), "no implicit conversion into %s", "String");
+      return;
+    }
+    value = mrbc_string_dup(vm, &v[1]);
+    break;
+
+  default:
     mrbc_raise( vm, MRBC_CLASS(ArgumentError), "wrong number of arguments");
     return;
   }
 
-  mrbc_value value;
-  if (argc == 0) {
-    value = mrbc_string_new(vm, NULL, 0);
-  } else {
-    value = mrbc_string_dup(vm, &v[1]);
-  }
   SET_RETURN(value);
 }
 

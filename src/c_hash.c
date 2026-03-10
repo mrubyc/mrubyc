@@ -412,11 +412,7 @@ static void c_hash_empty(struct VM *vm, mrbc_value v[], int argc)
 {
   int n = mrbc_hash_size(v);
 
-  if( n ) {
-    SET_FALSE_RETURN();
-  } else {
-    SET_TRUE_RETURN();
-  }
+  SET_BOOL_RETURN( !n );
 }
 
 
@@ -427,11 +423,7 @@ static void c_hash_has_key(struct VM *vm, mrbc_value v[], int argc)
 {
   mrbc_value *res = mrbc_hash_search(v, v+1);
 
-  if( res ) {
-    SET_TRUE_RETURN();
-  } else {
-    SET_FALSE_RETURN();
-  }
+  SET_BOOL_RETURN( res != NULL );
 }
 
 
@@ -451,11 +443,7 @@ static void c_hash_has_value(struct VM *vm, mrbc_value v[], int argc)
     }
   }
 
-  if( ret ) {
-    SET_TRUE_RETURN();
-  } else {
-    SET_FALSE_RETURN();
-  }
+  SET_BOOL_RETURN( ret );
 }
 
 

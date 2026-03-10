@@ -1077,7 +1077,7 @@ static inline void op_raiseif( mrbc_vm *vm, mrbc_value *regs EXT )
 
 
 CASE_OP_RETURN:
-{
+ {
   // find ensure that still needs to be executed.
   const mrbc_irep_catch_handler *handler = find_catch_handler_ensure(vm);
   if( handler ) {
@@ -1093,11 +1093,11 @@ CASE_OP_RETURN:
 
   mrbc_pop_callinfo(vm);
   return;
-}
+ }
 
 
 CASE_OP_RETURN_BLK:
-{
+ {
   assert( vm->ret_blk );
 
   // return to the proc generated level.
@@ -1136,10 +1136,11 @@ CASE_OP_RETURN_BLK:
 
   mrbc_pop_callinfo(vm);
   return;
-}
+ }
 
 
-CASE_OP_BREAK: {
+CASE_OP_BREAK:
+ {
   assert( vm->ret_blk );
 
   // return to the proc generated level.
@@ -1165,11 +1166,11 @@ CASE_OP_BREAK: {
   mrbc_decref(&mrbc_immediate_value(MRBC_TT_PROC, .proc = vm->ret_blk));
   vm->ret_blk = 0;
   return;
-}
+ }
 
 
 CASE_OP_JMPUW:
-{
+ {
   // find ensure that still needs to be executed.
   const mrbc_irep_catch_handler *handler = find_catch_handler_ensure(vm);
   if( !handler ) {
@@ -1190,15 +1191,15 @@ CASE_OP_JMPUW:
   vm->exception = ra;
   vm->inst = vm->cur_irep->inst + bin_to_uint32(handler->target);
   return;
-}
+ }
 
 
 CASE_OP_EXCEPTION:
-{
+ {
   vm->exception = ra;
   vm->flag_preemption = 2;
   return;
-}
+ }
 }
 
 
@@ -1214,7 +1215,6 @@ static inline void op_matcherr( mrbc_vm *vm, mrbc_value *regs EXT )
   // TODO
   mrbc_raisef( vm, MRBC_CLASS(Exception), "Unimplemented OP_MATCHERR" );
 }
-
 
 
 //================================================================
