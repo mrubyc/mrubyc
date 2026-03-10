@@ -298,6 +298,7 @@ static void c_exception_message(struct VM *vm, mrbc_value v[], int argc)
         IOError
         NameError
           NoMethodError
+	NoMatchingPatternError
         RangeError
         RuntimeError
         TypeError
@@ -320,31 +321,34 @@ static void c_exception_message(struct VM *vm, mrbc_value v[], int argc)
   CLASS("StandardError")
   SUPER("Exception")
 
-  CLASS("ArgumentError")
-  SUPER("StandardError")
+    CLASS("ArgumentError")
+    SUPER("StandardError")
 
-  CLASS("IndexError")
-  SUPER("StandardError")
+    CLASS("IndexError")
+    SUPER("StandardError")
 
-  CLASS("IOError")
-  SUPER("StandardError")
+    CLASS("IOError")
+    SUPER("StandardError")
 
-  CLASS("NameError")
-  SUPER("StandardError")
+    CLASS("NameError")
+    SUPER("StandardError")
 
-  CLASS("NoMethodError")
-  SUPER("NameError")
+      CLASS("NoMethodError")
+      SUPER("NameError")
 
-  CLASS("RangeError")
-  SUPER("StandardError")
+    CLASS("NoMatchingPatternError")
+    SUPER("StandardError")
 
-  CLASS("RuntimeError")
-  SUPER("StandardError")
+    CLASS("RangeError")
+    SUPER("StandardError")
 
-  CLASS("TypeError")
-  SUPER("StandardError")
+    CLASS("RuntimeError")
+    SUPER("StandardError")
 
-  CLASS("ZeroDivisionError")
-  SUPER("StandardError")
+    CLASS("TypeError")
+    SUPER("StandardError")
+
+    CLASS("ZeroDivisionError")
+    SUPER("StandardError")
 */
 #include "_autogen_class_exception.h"

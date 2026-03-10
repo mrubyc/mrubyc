@@ -1212,8 +1212,9 @@ static inline void op_matcherr( mrbc_vm *vm, mrbc_value *regs EXT )
 {
   FETCH_B();
 
-  // TODO
-  mrbc_raisef( vm, MRBC_CLASS(Exception), "Unimplemented OP_MATCHERR" );
+  if( mrbc_type(regs[a]) > MRBC_TT_FALSE ) {
+    mrbc_raise( vm, MRBC_CLASS(NoMatchingPatternError), 0);
+  }
 }
 
 
