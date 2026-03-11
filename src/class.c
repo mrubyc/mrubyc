@@ -577,7 +577,7 @@ mrbc_value mrbc_send( struct VM *vm, mrbc_value *v, int argc,
     regs[i] = *va_arg(ap, mrbc_value *);
   }
   mrbc_decref( &regs[i] );
-  regs[i] = mrbc_nil_value();
+  mrbc_set_nil( &regs[i] );
   va_end(ap);
 
   // call method.

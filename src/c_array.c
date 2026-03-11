@@ -186,7 +186,7 @@ int mrbc_array_set(mrbc_value *ary, int idx, mrbc_value *set_val)
   } else {
     // clear empty cells.
     for( int i = h->n_stored; i < idx; i++ ) {
-      h->data[i] = mrbc_nil_value();
+      mrbc_set_nil( &h->data[i] );
     }
     h->n_stored = idx + 1;
   }
@@ -367,7 +367,7 @@ int mrbc_array_insert(mrbc_value *ary, int idx, mrbc_value *set_val)
   // clear empty cells if need.
   if( idx >= h->n_stored ) {
     for( int i = h->n_stored-1; i < idx; i++ ) {
-      h->data[i] = mrbc_nil_value();
+      mrbc_set_nil( &h->data[i] );
     }
     h->n_stored = idx + 1;
   }

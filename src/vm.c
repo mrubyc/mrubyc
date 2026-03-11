@@ -128,7 +128,7 @@ static void send_by_name( struct VM *vm, mrbc_sym sym_id, int a, int c )
   for( int i = narg+1; i != 0; i-- ) {	// shift arguments
     recv[i+1] = recv[i];
   }
-  recv[1] = mrbc_symbol_value(sym_id);
+  mrbc_set_symbol( &recv[1], sym_id );
   sym_id = MRBC_SYM(method_missing);
   narg++;
 
@@ -348,7 +348,7 @@ void mrbc_vm_begin( struct VM *vm )
   mrbc_decref( &vm->regs[0] );
   vm->regs[0] = mrbc_instance_new(vm, MRBC_CLASS(Object), 0);
   for( int i = 1; i < vm->regs_size; i++ ) {
-    vm->regs[i] = mrbc_nil_value();
+    mrbc_set_nil( &vm->regs[i] );
   }
 }
 
@@ -1847,8 +1847,7 @@ static inline void op_retnil( mrbc_vm *vm, mrbc_value *regs EXT )
   FETCH_Z();
 
   mrbc_decref(&regs[1]);
-  regs[1] = mrbc_nil_value();
-  mrbc_incref( &regs[1] );
+  mrbc_set_nil( &regs[1] );
 
   sub_op_return( vm, regs, 1 );
 }
@@ -1864,8 +1863,7 @@ static inline void op_rettrue( mrbc_vm *vm, mrbc_value *regs EXT )
   FETCH_Z();
 
   mrbc_decref(&regs[1]);
-  regs[1] = mrbc_true_value();
-  mrbc_incref( &regs[1] );
+  mrbc_set_true( &regs[1] );
 
   sub_op_return( vm, regs, 1 );
 }
@@ -1881,8 +1879,7 @@ static inline void op_retfalse( mrbc_vm *vm, mrbc_value *regs EXT )
   FETCH_Z();
 
   mrbc_decref(&regs[1]);
-  regs[1] = mrbc_false_value();
-  mrbc_incref( &regs[1] );
+  mrbc_set_false( &regs[1] );
 
   sub_op_return( vm, regs, 1 );
 }
@@ -2053,7 +2050,7 @@ static inline void op_addi( mrbc_vm *vm, mrbc_value *regs EXT )
 #endif
 
   mrbc_decref(&regs[a+1]);
-  regs[a+1] = mrbc_integer_value(b);
+  mrbc_set_integer( &regs[a+1], b);
   send_by_name(vm, MRBC_SYM(PLUS), a, 1);
 }
 
@@ -2124,7 +2121,7 @@ static inline void op_subi( mrbc_vm *vm, mrbc_value *regs EXT )
 #endif
 
   mrbc_decref(&regs[a+1]);
-  regs[a+1] = mrbc_integer_value(b);
+  mrbc_set_integer( &regs[a+1], b);
   send_by_name(vm, MRBC_SYM(MINUS), a, 1);
 }
 
@@ -2151,7 +2148,7 @@ static inline void op_addilv( mrbc_vm *vm, mrbc_value *regs EXT )
 
   default:
     mrbc_decref(&regs[a+1]);
-    regs[a+1] = mrbc_integer_value(c);
+    mrbc_set_integer( &regs[a+1], c);
     send_by_name(vm, MRBC_SYM(PLUS), a, 1);
   }
 }
@@ -2179,7 +2176,7 @@ static inline void op_subilv( mrbc_vm *vm, mrbc_value *regs EXT )
 
   default:
     mrbc_decref(&regs[a+1]);
-    regs[a+1] = mrbc_integer_value(c);
+    mrbc_set_integer( &regs[a+1], c);
     send_by_name(vm, MRBC_SYM(MINUS), a, 1);
   }
 }
@@ -2626,7 +2623,7 @@ static inline void op_symbol( mrbc_vm *vm, mrbc_value *regs EXT )
   }
 
   mrbc_decref(&regs[a]);
-  regs[a] = mrbc_symbol_value( sym_id );
+  mrbc_set_symbol( &regs[a], sym_id );
 }
 
 

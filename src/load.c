@@ -290,7 +290,7 @@ int mrbc_load_mrb(struct VM *vm, const void *bytecode)
 {
   const uint8_t *bin = bytecode;
 
-  vm->exception = mrbc_nil_value();
+  mrbc_set_nil( &vm->exception );
   if( load_header(vm, bin) != 0 ) return -1;
 
   bin += SIZE_RITE_BINARY_HEADER;
