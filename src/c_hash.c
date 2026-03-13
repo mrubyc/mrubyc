@@ -566,6 +566,36 @@ static void c_hash_values(struct VM *vm, mrbc_value v[], int argc)
 }
 
 
+//================================================================
+/*! (method) fetch
+*/
+static void c_hash_fetch(struct VM *vm, mrbc_value v[], int argc)
+{
+  if( argc < 1 || argc > 2 ) {
+    mrbc_raise(vm, MRBC_CLASS(ArgumentError), "wrong number of arguments");
+    return;
+  }
+
+  mrbc_value *val = mrbc_hash_search(v, v+1);
+  if( val ) {
+    mrbc_incref(++val);
+    SET_RETURN(*val);
+    return;
+  }
+
+  // key not found
+  if( argc == 2 ) {
+    // return default value
+    mrbc_incref(&v[2]);
+    SET_RETURN(v[2]);
+    return;
+  }
+
+  // no default - raise
+  mrbc_raise(vm, MRBC_CLASS(RuntimeError), "key not found");
+}
+
+
 #if MRBC_USE_STRING
 //================================================================
 /*! (method) inspect, to_s
@@ -623,6 +653,7 @@ static void c_hash_inspect(struct VM *vm, mrbc_value v[], int argc)
   METHOD( "dup",	c_hash_dup )
   METHOD( "delete",	c_hash_delete )
   METHOD( "empty?",	c_hash_empty )
+  METHOD( "fetch",	c_hash_fetch )
   METHOD( "has_key?",	c_hash_has_key )
   METHOD( "has_value?",	c_hash_has_value )
   METHOD( "key",	c_hash_key )
