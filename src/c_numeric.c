@@ -39,7 +39,7 @@
 //================================================================
 /*! (operator) [] bit reference
  */
-static void c_integer_bitref(struct VM *vm, mrbc_value v[], int argc)
+static void c_integer_bitref(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   if( mrbc_integer(v[1]) < 0 ) {
     SET_INT_RETURN( 0 );
@@ -53,7 +53,7 @@ static void c_integer_bitref(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (operator) unary +
 */
-static void c_integer_positive(struct VM *vm, mrbc_value v[], int argc)
+static void c_integer_positive(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   // do nothing
 }
@@ -62,7 +62,7 @@ static void c_integer_positive(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (operator) unary -
 */
-static void c_integer_negative(struct VM *vm, mrbc_value v[], int argc)
+static void c_integer_negative(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   mrbc_int_t num = mrbc_integer(v[0]);
   SET_INT_RETURN( -num );
@@ -72,7 +72,7 @@ static void c_integer_negative(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (operator) ** power
  */
-static void c_integer_power(struct VM *vm, mrbc_value v[], int argc)
+static void c_integer_power(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   if( mrbc_type(v[1]) == MRBC_TT_INTEGER ) {
     mrbc_int_t x = 1;
@@ -95,7 +95,7 @@ static void c_integer_power(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (operator) %
  */
-static void c_integer_mod(struct VM *vm, mrbc_value v[], int argc)
+static void c_integer_mod(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   if( mrbc_type(v[1]) != MRBC_TT_INTEGER ) {
     mrbc_raise(vm, MRBC_CLASS(TypeError), 0 );
@@ -120,7 +120,7 @@ static void c_integer_mod(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (operator) &; bit operation AND
  */
-static void c_integer_and(struct VM *vm, mrbc_value v[], int argc)
+static void c_integer_and(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   mrbc_int_t num = mrbc_integer(v[1]);
   SET_INT_RETURN(v->i & num);
@@ -130,7 +130,7 @@ static void c_integer_and(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (operator) |; bit operation OR
  */
-static void c_integer_or(struct VM *vm, mrbc_value v[], int argc)
+static void c_integer_or(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   mrbc_int_t num = mrbc_integer(v[1]);
   SET_INT_RETURN(v->i | num);
@@ -140,7 +140,7 @@ static void c_integer_or(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (operator) ^; bit operation XOR
  */
-static void c_integer_xor(struct VM *vm, mrbc_value v[], int argc)
+static void c_integer_xor(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   mrbc_int_t num = mrbc_integer(v[1]);
   SET_INT_RETURN( v->i ^ num );
@@ -150,7 +150,7 @@ static void c_integer_xor(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (operator) ~; bit operation NOT
  */
-static void c_integer_not(struct VM *vm, mrbc_value v[], int argc)
+static void c_integer_not(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   mrbc_int_t num = mrbc_integer(v[0]);
   SET_INT_RETURN( ~num );
@@ -175,7 +175,7 @@ static mrbc_int_t shift(mrbc_int_t x, mrbc_int_t y)
 //================================================================
 /*! (operator) <<; bit operation LEFT_SHIFT
  */
-static void c_integer_lshift(struct VM *vm, mrbc_value v[], int argc)
+static void c_integer_lshift(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   int num = mrbc_integer(v[1]);
   SET_INT_RETURN( shift(v->i, num) );
@@ -185,7 +185,7 @@ static void c_integer_lshift(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (operator) >>; bit operation RIGHT_SHIFT
  */
-static void c_integer_rshift(struct VM *vm, mrbc_value v[], int argc)
+static void c_integer_rshift(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   int num = mrbc_integer(v[1]);
   SET_INT_RETURN( shift(v->i, -num) );
@@ -195,7 +195,7 @@ static void c_integer_rshift(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) abs
 */
-static void c_integer_abs(struct VM *vm, mrbc_value v[], int argc)
+static void c_integer_abs(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   if( mrbc_integer(v[0]) < 0 ) {
     mrbc_integer(v[0]) = -mrbc_integer(v[0]);
@@ -209,7 +209,7 @@ static void c_integer_abs(struct VM *vm, mrbc_value v[], int argc)
  * Note: Does not support Range object as the argument
  *       like `3.clamp(1..2) #=> 2`
 */
-static void c_numeric_clamp(struct VM *vm, mrbc_value v[], int argc)
+static void c_numeric_clamp(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   if (argc != 2) {
     mrbc_raise(vm, MRBC_CLASS(ArgumentError), "wrong number of arguments");
@@ -244,7 +244,7 @@ static void c_numeric_clamp(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) to_f
 */
-static void c_integer_to_f(struct VM *vm, mrbc_value v[], int argc)
+static void c_integer_to_f(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   mrbc_float_t f = mrbc_integer(v[0]);
   SET_FLOAT_RETURN( f );
@@ -292,7 +292,7 @@ int mrbc_utf8_encode(int32_t codepoint, char *buf)
 //================================================================
 /*! (method) chr
 */
-static void c_integer_chr(struct VM *vm, mrbc_value v[], int argc)
+static void c_integer_chr(mrbc_vm *vm, mrbc_value v[], int argc)
 {
 #if MRBC_USE_STRING_UTF8
   mrbc_int_t codepoint = mrbc_integer(v[0]);
@@ -334,7 +334,7 @@ static void c_integer_chr(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) inspect, to_s
 */
-static void c_integer_inspect(struct VM *vm, mrbc_value v[], int argc)
+static void c_integer_inspect(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   if( mrbc_type(v[0]) == MRBC_TT_CLASS ) {
     mrbc_object_inspect(vm, v, argc);
@@ -401,7 +401,7 @@ static void c_integer_inspect(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (operator) unary +
 */
-static void c_float_positive(struct VM *vm, mrbc_value v[], int argc)
+static void c_float_positive(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   // do nothing
 }
@@ -410,7 +410,7 @@ static void c_float_positive(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (operator) unary -
 */
-static void c_float_negative(struct VM *vm, mrbc_value v[], int argc)
+static void c_float_negative(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   mrbc_float_t num = mrbc_float(v[0]);
   SET_FLOAT_RETURN( -num );
@@ -421,7 +421,7 @@ static void c_float_negative(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (operator) ** power
  */
-static void c_float_power(struct VM *vm, mrbc_value v[], int argc)
+static void c_float_power(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   mrbc_float_t n = 0;
   switch( mrbc_type(v[1]) ) {
@@ -438,7 +438,7 @@ static void c_float_power(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) abs
 */
-static void c_float_abs(struct VM *vm, mrbc_value v[], int argc)
+static void c_float_abs(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   if( mrbc_float(v[0]) < 0 ) {
     mrbc_float(v[0]) = -mrbc_float(v[0]);
@@ -449,7 +449,7 @@ static void c_float_abs(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) to_i
 */
-static void c_float_to_i(struct VM *vm, mrbc_value v[], int argc)
+static void c_float_to_i(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   mrbc_int_t i = (mrbc_int_t)mrbc_float(v[0]);
   SET_INT_RETURN( i );
@@ -460,7 +460,7 @@ static void c_float_to_i(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) inspect, to_s
 */
-static void c_float_inspect(struct VM *vm, mrbc_value v[], int argc)
+static void c_float_inspect(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   if( mrbc_type(v[0]) == MRBC_TT_CLASS ) {
     mrbc_object_inspect(vm, v, argc);

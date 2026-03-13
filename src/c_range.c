@@ -40,7 +40,7 @@
   @param  flag_exclude	true: exclude the end object, otherwise include.
   @return		range object.
 */
-mrbc_value mrbc_range_new(struct VM *vm, mrbc_value *first, mrbc_value *last, int flag_exclude)
+mrbc_value mrbc_range_new(mrbc_vm *vm, mrbc_value *first, mrbc_value *last, int flag_exclude)
 {
   mrbc_value value = mrbc_immediate_value(MRBC_TT_RANGE);
 
@@ -111,7 +111,7 @@ int mrbc_range_compare(const mrbc_value *v1, const mrbc_value *v2)
 //================================================================
 /*! (method) ===
 */
-static void c_range_equal3(struct VM *vm, mrbc_value v[], int argc)
+static void c_range_equal3(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   if( mrbc_type(v[0]) == MRBC_TT_CLASS ) {
     mrbc_value result = mrbc_send( vm, v, argc, &v[1], "kind_of?", 1, &v[0] );
@@ -134,7 +134,7 @@ static void c_range_equal3(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) first
 */
-static void c_range_first(struct VM *vm, mrbc_value v[], int argc)
+static void c_range_first(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   mrbc_value ret = mrbc_range_first(v);
   SET_RETURN(ret);
@@ -144,7 +144,7 @@ static void c_range_first(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) last
 */
-static void c_range_last(struct VM *vm, mrbc_value v[], int argc)
+static void c_range_last(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   mrbc_value ret = mrbc_range_last(v);
   SET_RETURN(ret);
@@ -155,7 +155,7 @@ static void c_range_last(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) exclude_end?
 */
-static void c_range_exclude_end(struct VM *vm, mrbc_value v[], int argc)
+static void c_range_exclude_end(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   int result = v->range->flag_exclude;
   SET_BOOL_RETURN( result );
@@ -167,7 +167,7 @@ static void c_range_exclude_end(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) inspect, to_s
 */
-static void c_range_inspect(struct VM *vm, mrbc_value v[], int argc)
+static void c_range_inspect(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   if( mrbc_type(v[0]) == MRBC_TT_CLASS ) {
     mrbc_object_inspect(vm, v, argc);

@@ -71,7 +71,7 @@ enum irep_pool_type {
    "0000"     compiler version
   </pre>
 */
-static int load_header(struct VM *vm, const uint8_t *bin)
+static int load_header(mrbc_vm *vm, const uint8_t *bin)
 {
   if( memcmp(bin, RITE, sizeof(RITE)) != 0 ) {
     mrbc_raise( vm, MRBC_CLASS(Exception), "Illegal bytecode");
@@ -127,7 +127,7 @@ static int load_header(struct VM *vm, const uint8_t *bin)
      ...	symbol data
   </pre>
 */
-static mrbc_irep * load_irep_1(struct VM *vm, const uint8_t *bin, int *len)
+static mrbc_irep * load_irep_1(mrbc_vm *vm, const uint8_t *bin, int *len)
 {
   mrbc_irep irep;
   const uint8_t *p = bin + 4;	// 4 = skip record size.
@@ -257,7 +257,7 @@ static mrbc_irep * load_irep_1(struct VM *vm, const uint8_t *bin, int *len)
   @param  len	Returns the parsed length.
   @return	Pointer to allocated mrbc_irep or NULL
 */
-static mrbc_irep *load_irep(struct VM *vm, const uint8_t *bin, int *len)
+static mrbc_irep *load_irep(mrbc_vm *vm, const uint8_t *bin, int *len)
 {
   int len1;
   mrbc_irep *irep = load_irep_1(vm, bin, &len1);
@@ -286,7 +286,7 @@ static mrbc_irep *load_irep(struct VM *vm, const uint8_t *bin, int *len)
   @param  bytecode	Pointer to bytecode.
   @return int		zero if no error.
 */
-int mrbc_load_mrb(struct VM *vm, const void *bytecode)
+int mrbc_load_mrb(mrbc_vm *vm, const void *bytecode)
 {
   const uint8_t *bin = bytecode;
 
@@ -318,7 +318,7 @@ int mrbc_load_mrb(struct VM *vm, const void *bytecode)
   @param  bytecode	Pointer to IREP section.
   @return int		zero if no error.
 */
-int mrbc_load_irep(struct VM *vm, const void *bytecode)
+int mrbc_load_irep(mrbc_vm *vm, const void *bytecode)
 {
   const uint8_t *bin = bytecode;
 
@@ -334,7 +334,8 @@ int mrbc_load_irep(struct VM *vm, const void *bytecode)
 
   @param  irep	Pointer to allocated mrbc_irep.
 */
-void mrbc_irep_free(struct IREP *irep)
+//void mrbc_irep_free(struct IREP *irep)
+void mrbc_irep_free(mrbc_irep *irep)
 {
   // release child ireps.
   for( int i = 0; i < irep->rlen; i++ ) {
@@ -354,7 +355,7 @@ void mrbc_irep_free(struct IREP *irep)
   @param  n		n'th
   @return mrbc_value	value
 */
-mrbc_value mrbc_irep_pool_value(struct VM *vm, int n)
+mrbc_value mrbc_irep_pool_value(mrbc_vm *vm, int n)
 {
   const uint8_t *p = mrbc_irep_pool_ptr(vm->cur_irep, n);
   mrbc_value obj;

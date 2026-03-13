@@ -71,7 +71,7 @@ int mrbc_set_const( mrbc_sym sym_id, mrbc_value *v )
   @param  v		pointer to mrbc_value.
   @return		mrbc_error_code.
 */
-int mrbc_set_class_const( const struct RClass *cls, mrbc_sym sym_id, mrbc_value *v )
+int mrbc_set_class_const( const mrbc_class *cls, mrbc_sym sym_id, mrbc_value *v )
 {
   char buf[sizeof(mrbc_sym)*4+1];
 
@@ -101,7 +101,7 @@ mrbc_value * mrbc_get_const( mrbc_sym sym_id )
   @param  sym_id	symbol ID.
   @return		pointer to mrbc_value or NULL.
 */
-mrbc_value * mrbc_get_class_const( const struct RClass *cls, mrbc_sym sym_id )
+mrbc_value * mrbc_get_class_const( const mrbc_class *cls, mrbc_sym sym_id )
 {
   char buf[sizeof(mrbc_sym)*4+1];
 
@@ -119,7 +119,7 @@ mrbc_value * mrbc_get_class_const( const struct RClass *cls, mrbc_sym sym_id )
   @param  cls		class
   @param  ret		return value as array type.
 */
-void mrbc_get_all_class_const( const struct RClass *cls, mrbc_value *ret )
+void mrbc_get_all_class_const( const mrbc_class *cls, mrbc_value *ret )
 {
   mrbc_kv_iterator ite = mrbc_kv_iterator_new( &handle_const );
   int flag_object_class = (cls == MRBC_CLASS(Object));

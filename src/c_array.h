@@ -18,11 +18,13 @@
 /***** System headers *******************************************************/
 //@cond
 #include <stdint.h>
+#include "vm_config.h"
 //@endcond
 
 /***** Local headers ********************************************************/
 #include "alloc.h"
 #include "value.h"
+#include "vm.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -50,7 +52,7 @@ typedef struct RArray {
 /***** Global variables *****************************************************/
 /***** Function prototypes **************************************************/
 //@cond
-mrbc_value mrbc_array_new(struct VM *vm, int size);
+mrbc_value mrbc_array_new(mrbc_vm *vm, int size);
 void mrbc_array_delete(mrbc_value *ary);
 void mrbc_array_clear_vm_id(mrbc_value *ary);
 int mrbc_array_resize(mrbc_value *ary, int size);
@@ -67,10 +69,10 @@ mrbc_value mrbc_array_remove(mrbc_value *ary, int idx);
 void mrbc_array_clear(mrbc_value *ary);
 int mrbc_array_compare(const mrbc_value *v1, const mrbc_value *v2);
 void mrbc_array_minmax(mrbc_value *ary, mrbc_value **pp_min_value, mrbc_value **pp_max_value);
-mrbc_value mrbc_array_dup(struct VM *vm, const mrbc_value *ary);
-mrbc_value mrbc_array_divide(struct VM *vm, mrbc_value *src, int pos);
+mrbc_value mrbc_array_dup(mrbc_vm *vm, const mrbc_value *ary);
+mrbc_value mrbc_array_divide(mrbc_vm *vm, mrbc_value *src, int pos);
 int mrbc_array_index(const mrbc_value *ary, const mrbc_value *val);
-mrbc_value mrbc_array_uniq(struct VM *vm, const mrbc_value *ary);
+mrbc_value mrbc_array_uniq(mrbc_vm *vm, const mrbc_value *ary);
 int mrbc_array_uniq_self(mrbc_value *ary);
 //@endcond
 

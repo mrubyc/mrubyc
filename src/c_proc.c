@@ -93,7 +93,7 @@ void mrbc_proc_clear_vm_id(mrbc_value *v)
 //================================================================
 /*! (method) new
 */
-static void c_proc_new(struct VM *vm, mrbc_value v[], int argc)
+static void c_proc_new(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   if( mrbc_type(v[1]) != MRBC_TT_PROC ) {
     mrbc_raise(vm, MRBC_CLASS(ArgumentError),
@@ -109,7 +109,7 @@ static void c_proc_new(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) call
 */
-static void c_proc_call(struct VM *vm, mrbc_value v[], int argc)
+static void c_proc_call(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   assert( mrbc_type(v[0]) == MRBC_TT_PROC );
 

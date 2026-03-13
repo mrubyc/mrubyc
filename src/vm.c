@@ -49,7 +49,7 @@ static uint16_t free_vm_bitmap[MAX_VM_COUNT / 16 + 1];
   @param  a		operand a
   @param  c		bit: 0-3=narg, 4-7=karg, 8=have block param flag.
 */
-static void send_by_name( struct VM *vm, mrbc_sym sym_id, int a, int c )
+static void send_by_name( mrbc_vm *vm, mrbc_sym sym_id, int a, int c )
 {
   int narg = c & 0x0f;
   int karg = (c >> 4) & 0x0f;
@@ -164,7 +164,7 @@ static void send_by_name( struct VM *vm, mrbc_sym sym_id, int a, int c )
 //================================================================
 /*! Find ensure catch handler
 */
-static const mrbc_irep_catch_handler *find_catch_handler_ensure( const struct VM *vm )
+static const mrbc_irep_catch_handler *find_catch_handler_ensure( const mrbc_vm *vm )
 {
   const mrbc_irep *irep = vm->cur_irep;
   int cnt = irep->clen;
@@ -202,7 +202,7 @@ void mrbc_cleanup_vm(void)
 //================================================================
 /*! Push current status to callinfo stack
 */
-mrbc_callinfo * mrbc_push_callinfo( struct VM *vm, mrbc_sym method_id, int reg_offset, int n_args )
+mrbc_callinfo * mrbc_push_callinfo( mrbc_vm *vm, mrbc_sym method_id, int reg_offset, int n_args )
 {
   mrbc_callinfo *callinfo = mrbc_alloc(vm, sizeof(mrbc_callinfo));
 
@@ -233,7 +233,7 @@ mrbc_callinfo * mrbc_push_callinfo( struct VM *vm, mrbc_sym method_id, int reg_o
 //================================================================
 /*! Pop current status from callinfo stack
 */
-void mrbc_pop_callinfo( struct VM *vm )
+void mrbc_pop_callinfo( mrbc_vm *vm )
 {
   assert( vm->callinfo_tail );
 
@@ -301,7 +301,7 @@ mrbc_vm * mrbc_vm_new( int regs_size )
   @param vm	Pointer to VM or NULL.
   @return	Pointer to VM, or NULL is error.
 */
-mrbc_vm * mrbc_vm_open( struct VM *vm )
+mrbc_vm * mrbc_vm_open( mrbc_vm *vm )
 {
   if( !vm ) vm = mrbc_vm_new( MAX_REGS_SIZE );
 
@@ -332,7 +332,7 @@ mrbc_vm * mrbc_vm_open( struct VM *vm )
 
   @param  vm  Pointer to VM
 */
-void mrbc_vm_begin( struct VM *vm )
+void mrbc_vm_begin( mrbc_vm *vm )
 {
   vm->cur_irep = vm->top_irep;
   vm->inst = vm->cur_irep->inst;
@@ -358,7 +358,7 @@ void mrbc_vm_begin( struct VM *vm )
 
   @param  vm  Pointer to VM
 */
-void mrbc_vm_end( struct VM *vm )
+void mrbc_vm_end( mrbc_vm *vm )
 {
   if( mrbc_israised(vm) ) {
 #if defined(MRBC_ABORT_BY_EXCEPTION)
@@ -394,7 +394,7 @@ void mrbc_vm_end( struct VM *vm )
 
   @param  vm  Pointer to VM
 */
-void mrbc_vm_close( struct VM *vm )
+void mrbc_vm_close( mrbc_vm *vm )
 {
   mrbc_decref( &vm->regs[0] );
 
@@ -3141,7 +3141,7 @@ static inline void op_unsupported( mrbc_vm *vm, mrbc_value *regs EXT )
   @retval 1	program done.
   @retval 2	exception occurred.
 */
-int mrbc_vm_run( struct VM *vm )
+int mrbc_vm_run( mrbc_vm *vm )
 {
 #if defined(MRBC_SUPPORT_OP_EXT)
   int ext = 0;

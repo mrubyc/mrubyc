@@ -24,6 +24,7 @@
 
 /***** Local headers ********************************************************/
 #include "value.h"
+#include "vm.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -56,13 +57,13 @@ typedef struct RString {
 /***** Global variables *****************************************************/
 /***** Function prototypes **************************************************/
 //@cond
-mrbc_value mrbc_string_new(struct VM *vm, const void *src, int len);
-mrbc_value mrbc_string_new_alloc(struct VM *vm, void *buf, int len);
+mrbc_value mrbc_string_new(mrbc_vm *vm, const void *src, int len);
+mrbc_value mrbc_string_new_alloc(mrbc_vm *vm, void *buf, int len);
 void mrbc_string_delete(mrbc_value *str);
 void mrbc_string_clear(mrbc_value *str);
 void mrbc_string_clear_vm_id(mrbc_value *str);
-mrbc_value mrbc_string_dup(struct VM *vm, mrbc_value *s1);
-mrbc_value mrbc_string_add(struct VM *vm, const mrbc_value *s1, const mrbc_value *s2);
+mrbc_value mrbc_string_dup(mrbc_vm *vm, mrbc_value *s1);
+mrbc_value mrbc_string_add(mrbc_vm *vm, const mrbc_value *s1, const mrbc_value *s2);
 int mrbc_string_append(mrbc_value *s1, const mrbc_value *s2);
 int mrbc_string_append_cbuf(mrbc_value *s1, const void *s2, int len2);
 int mrbc_string_index(const mrbc_value *src, const mrbc_value *pattern, int offset);
@@ -70,12 +71,10 @@ int mrbc_string_strip(mrbc_value *src, int mode);
 int mrbc_string_chomp(mrbc_value *src);
 int mrbc_string_upcase(mrbc_value *str);
 int mrbc_string_downcase(mrbc_value *str);
-#if MRBC_USE_STRING_UTF8
 int mrbc_string_utf8_size(const char *str);
 int mrbc_string_char_size(const char *str, int len);
 int mrbc_string_chars2bytes(mrbc_value *src, int off, int idx);
 int mrbc_string_bytes2chars(const mrbc_value *src, int byte_index);
-#endif
 //@endcond
 
 
@@ -88,7 +87,7 @@ int mrbc_string_bytes2chars(const mrbc_value *src, int byte_index);
   @param  src	source string or NULL
   @return 	string object
 */
-static inline mrbc_value mrbc_string_new_cstr(struct VM *vm, const char *src)
+static inline mrbc_value mrbc_string_new_cstr(mrbc_vm *vm, const char *src)
 {
   return mrbc_string_new(vm, src, (src ? strlen(src) : 0));
 }

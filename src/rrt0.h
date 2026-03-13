@@ -18,6 +18,7 @@
 //@cond
 #include <stddef.h>
 #include <stdint.h>
+#include "vm_config.h"
 //@endcond
 
 /***** Local headers ********************************************************/

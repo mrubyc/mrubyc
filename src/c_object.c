@@ -51,7 +51,7 @@ static int set_sym_name_by_id( char *buf, int bufsiz, mrbc_sym sym_id )
 //================================================================
 /*! call initializer
  */
-void mrbc_instance_call_initialize( struct VM *vm, mrbc_value v[], int argc )
+void mrbc_instance_call_initialize( mrbc_vm *vm, mrbc_value v[], int argc )
 {
   // call the initialize method.
   mrbc_method method;
@@ -80,7 +80,7 @@ void mrbc_instance_call_initialize( struct VM *vm, mrbc_value v[], int argc )
 //================================================================
 /*! Object#inspect, Object.inspect method main routine.
  */
-void mrbc_object_inspect(struct VM *vm, mrbc_value v[], int argc)
+void mrbc_object_inspect(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   char buf[64];		// max length of class (or object) name.
   char *s = buf;
@@ -107,7 +107,7 @@ void mrbc_object_inspect(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) new
  */
-static void c_object_new(struct VM *vm, mrbc_value v[], int argc)
+static void c_object_new(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   v[0] = mrbc_instance_new(vm, v[0].cls, 0);
   mrbc_instance_call_initialize( vm, v, argc );
@@ -117,7 +117,7 @@ static void c_object_new(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (operator) !
  */
-static void c_object_not(struct VM *vm, mrbc_value v[], int argc)
+static void c_object_not(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   SET_BOOL_RETURN( mrbc_type(v[0]) == MRBC_TT_NIL || mrbc_type(v[0]) == MRBC_TT_FALSE );
 }
@@ -126,7 +126,7 @@ static void c_object_not(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (operator) !=
  */
-static void c_object_neq(struct VM *vm, mrbc_value v[], int argc)
+static void c_object_neq(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   int result = mrbc_compare( &v[0], &v[1] );
   SET_BOOL_RETURN( result != 0 );
@@ -136,7 +136,7 @@ static void c_object_neq(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (operator) <=>
  */
-static void c_object_compare(struct VM *vm, mrbc_value v[], int argc)
+static void c_object_compare(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   int result = mrbc_compare( &v[0], &v[1] );
   SET_INT_RETURN( result );
@@ -146,7 +146,7 @@ static void c_object_compare(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (operator) ==
  */
-static void c_object_equal2(struct VM *vm, mrbc_value v[], int argc)
+static void c_object_equal2(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   int result = mrbc_compare( &v[0], &v[1] );
   SET_BOOL_RETURN( result == 0 );
@@ -156,7 +156,7 @@ static void c_object_equal2(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (operator) ===
  */
-static void c_object_equal3(struct VM *vm, mrbc_value v[], int argc)
+static void c_object_equal3(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   int result;
 
@@ -173,7 +173,7 @@ static void c_object_equal3(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) class
  */
-static void c_object_class(struct VM *vm, mrbc_value v[], int argc)
+static void c_object_class(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   mrbc_value value;
 
@@ -186,7 +186,7 @@ static void c_object_class(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) dup
  */
-static void c_object_dup(struct VM *vm, mrbc_value v[], int argc)
+static void c_object_dup(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   if( mrbc_type(v[0]) == MRBC_TT_OBJECT ) {
     mrbc_value new_obj = mrbc_instance_new(vm, v->instance->cls, 0);
@@ -206,7 +206,7 @@ static void c_object_dup(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) block_given?
  */
-static void c_object_block_given(struct VM *vm, mrbc_value v[], int argc)
+static void c_object_block_given(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   mrbc_callinfo *callinfo = vm->callinfo_tail;
   if( !callinfo ) goto RETURN_FALSE;
@@ -231,7 +231,7 @@ static void c_object_block_given(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) is_a, kind_of
  */
-static void c_object_kind_of(struct VM *vm, mrbc_value v[], int argc)
+static void c_object_kind_of(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   if( mrbc_type(v[1]) != MRBC_TT_CLASS && mrbc_type(v[1]) != MRBC_TT_MODULE ) {
     mrbc_raise(vm, MRBC_CLASS(TypeError), "class or module required");
@@ -245,7 +245,7 @@ static void c_object_kind_of(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) nil?
  */
-static void c_object_nil(struct VM *vm, mrbc_value v[], int argc)
+static void c_object_nil(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   SET_BOOL_RETURN( mrbc_type(v[0]) == MRBC_TT_NIL );
 }
@@ -255,7 +255,7 @@ static void c_object_nil(struct VM *vm, mrbc_value v[], int argc)
 /*! (method) p
  */
 #if !defined(MRBC_NO_STDIO)
-static void c_object_p(struct VM *vm, mrbc_value v[], int argc)
+static void c_object_p(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   for( int i = 1; i <= argc; i++ ) {
     mrbc_p( &v[i] );
@@ -284,7 +284,7 @@ static void c_object_p(struct VM *vm, mrbc_value v[], int argc)
 /*! (method) print
  */
 #if !defined(MRBC_NO_STDIO)
-static void c_object_print(struct VM *vm, mrbc_value v[], int argc)
+static void c_object_print(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   for( int i = 1; i <= argc; i++ ) {
     mrbc_print_sub( &v[i] );
@@ -298,7 +298,7 @@ static void c_object_print(struct VM *vm, mrbc_value v[], int argc)
 /*! (method) puts
  */
 #if !defined(MRBC_NO_STDIO)
-static void c_object_puts(struct VM *vm, mrbc_value v[], int argc)
+static void c_object_puts(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   if( argc ) {
     for( int i = 1; i <= argc; i++ ) {
@@ -322,7 +322,7 @@ static void c_object_puts(struct VM *vm, mrbc_value v[], int argc)
   case 5. raise ExceptionClass, "message"
   case 6. raise ExceptionObject, "message"
 */
-static void c_object_raise(struct VM *vm, mrbc_value v[], int argc)
+static void c_object_raise(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   assert( !mrbc_israised(vm) );
 
@@ -382,7 +382,7 @@ static void c_object_raise(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method - debug) object_id
  */
-static void c_object_object_id(struct VM *vm, mrbc_value v[], int argc)
+static void c_object_object_id(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   // tiny implementation.
   SET_INT_RETURN( mrbc_integer(v[0]) );
@@ -394,7 +394,7 @@ static void c_object_object_id(struct VM *vm, mrbc_value v[], int argc)
 
   temporary code for operation check.
 */
-static void c_object_instance_methods(struct VM *vm, mrbc_value v[], int argc)
+static void c_object_instance_methods(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   if( mrbc_type(v[0]) != MRBC_TT_CLASS ) return;
 
@@ -432,7 +432,7 @@ static void c_object_instance_methods(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method - debug) instance_variables
  */
-static void c_object_instance_variables(struct VM *vm, mrbc_value v[], int argc)
+static void c_object_instance_variables(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   // temporary code for operation check.
 
@@ -456,7 +456,7 @@ static void c_object_instance_variables(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method - debug) memory_statistics
  */
-static void c_object_memory_statistics(struct VM *vm, mrbc_value v[], int argc)
+static void c_object_memory_statistics(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   struct MRBC_ALLOC_STATISTICS mem;
 
@@ -489,7 +489,7 @@ static void c_object_memory_statistics(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) instance variable getter used by attr_reader.
  */
-static void c_object_getiv(struct VM *vm, mrbc_value v[], int argc)
+static void c_object_getiv(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   mrbc_sym sym_id = mrbc_get_callee_symid(vm);
   mrbc_value ret = mrbc_instance_getiv(&v[0], sym_id);
@@ -501,7 +501,7 @@ static void c_object_getiv(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) instance variable setter used by attr_accessor.
  */
-static void c_object_setiv(struct VM *vm, mrbc_value v[], int argc)
+static void c_object_setiv(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   char namebuf_auto[16];
   char *namebuf;
@@ -527,7 +527,7 @@ static void c_object_setiv(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (class method) access method 'attr_reader'
  */
-static void c_object_attr_reader(struct VM *vm, mrbc_value v[], int argc)
+static void c_object_attr_reader(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   for( int i = 1; i <= argc; i++ ) {
     if( mrbc_type(v[i]) != MRBC_TT_SYMBOL ) {
@@ -546,7 +546,7 @@ static void c_object_attr_reader(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (class method) access method 'attr_accessor'
  */
-static void c_object_attr_accessor(struct VM *vm, mrbc_value v[], int argc)
+static void c_object_attr_accessor(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   for( int i = 1; i <= argc; i++ ) {
     if( mrbc_type(v[i]) != MRBC_TT_SYMBOL ) {
@@ -576,7 +576,7 @@ static void c_object_attr_accessor(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (class method) include
  */
-static void c_object_include(struct VM *vm, mrbc_value v[], int argc)
+static void c_object_include(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   mrbc_class *self;
 
@@ -650,7 +650,7 @@ static void c_object_constants(mrbc_vm *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) sprintf
 */
-static void c_object_sprintf(struct VM *vm, mrbc_value v[], int argc)
+static void c_object_sprintf(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   static const int BUF_INC_STEP = 32;	// bytes.
 
@@ -785,7 +785,7 @@ static void c_object_sprintf(struct VM *vm, mrbc_value v[], int argc)
 /*! (method) printf
 */
 #if !defined(MRBC_NO_STDIO)
-static void c_object_printf(struct VM *vm, mrbc_value v[], int argc)
+static void c_object_printf(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   c_object_sprintf(vm, v, argc);
   mrbc_nprint( mrbc_string_cstr(v), mrbc_string_size(v) );
@@ -797,7 +797,7 @@ static void c_object_printf(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) inspect
  */
-static void c_object_inspect(struct VM *vm, mrbc_value v[], int argc)
+static void c_object_inspect(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   mrbc_object_inspect(vm, v, argc);
 }
@@ -862,7 +862,7 @@ static void c_object_inspect(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) to_i
 */
-static void c_nil_to_i(struct VM *vm, mrbc_value v[], int argc)
+static void c_nil_to_i(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   v[0] = mrbc_integer_value(0);
 }
@@ -871,7 +871,7 @@ static void c_nil_to_i(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) to_a
 */
-static void c_nil_to_a(struct VM *vm, mrbc_value v[], int argc)
+static void c_nil_to_a(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   v[0] = mrbc_array_new(vm, 0);
 }
@@ -880,7 +880,7 @@ static void c_nil_to_a(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) to_h
 */
-static void c_nil_to_h(struct VM *vm, mrbc_value v[], int argc)
+static void c_nil_to_h(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   v[0] = mrbc_hash_new(vm, 0);
 }
@@ -890,7 +890,7 @@ static void c_nil_to_h(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) to_f
 */
-static void c_nil_to_f(struct VM *vm, mrbc_value v[], int argc)
+static void c_nil_to_f(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   v[0] = mrbc_float_value(vm,0);
 }
@@ -901,7 +901,7 @@ static void c_nil_to_f(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) inspect
 */
-static void c_nil_inspect(struct VM *vm, mrbc_value v[], int argc)
+static void c_nil_inspect(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   if( mrbc_type(v[0]) == MRBC_TT_CLASS ) {
     mrbc_object_inspect(vm, v, argc);
@@ -915,7 +915,7 @@ static void c_nil_inspect(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) to_s
 */
-static void c_nil_to_s(struct VM *vm, mrbc_value v[], int argc)
+static void c_nil_to_s(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   if( mrbc_type(v[0]) == MRBC_TT_CLASS ) {
     mrbc_object_inspect(vm, v, argc);
@@ -953,7 +953,7 @@ static void c_nil_to_s(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) inspect, to_s
 */
-static void c_true_inspect(struct VM *vm, mrbc_value v[], int argc)
+static void c_true_inspect(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   if( mrbc_type(v[0]) == MRBC_TT_CLASS ) {
     mrbc_object_inspect(vm, v, argc);
@@ -983,7 +983,7 @@ static void c_true_inspect(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) inspect, to_s
 */
-static void c_false_inspect(struct VM *vm, mrbc_value v[], int argc)
+static void c_false_inspect(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   if( mrbc_type(v[0]) == MRBC_TT_CLASS ) {
     mrbc_object_inspect(vm, v, argc);
