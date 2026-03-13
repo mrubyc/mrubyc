@@ -49,7 +49,7 @@ static uint16_t free_vm_bitmap[MAX_VM_COUNT / 16 + 1];
   @param  a		operand a
   @param  c		bit: 0-3=narg, 4-7=karg, 8=have block param flag.
 */
-static void send_by_name( struct VM *vm, mrbc_sym sym_id, int a, int c )
+static void send_by_name( mrbc_vm *vm, mrbc_sym sym_id, int a, int c )
 {
   int narg = c & 0x0f;
   int karg = (c >> 4) & 0x0f;
@@ -128,7 +128,7 @@ static void send_by_name( struct VM *vm, mrbc_sym sym_id, int a, int c )
   for( int i = narg+1; i != 0; i-- ) {	// shift arguments
     recv[i+1] = recv[i];
   }
-  recv[1] = mrbc_symbol_value(sym_id);
+  mrbc_set_symbol( &recv[1], sym_id );
   sym_id = MRBC_SYM(method_missing);
   narg++;
 
@@ -136,6 +136,7 @@ static void send_by_name( struct VM *vm, mrbc_sym sym_id, int a, int c )
  CALL_METHOD:
   if( !method.c_func ) goto CALL_RUBY_METHOD;
 
+  vm->callee_sym_id = sym_id;
   method.func(vm, recv, narg);
 
   if( mrbc_israised(vm) && vm->exception.exception->method_id == 0 ) {
@@ -163,7 +164,7 @@ static void send_by_name( struct VM *vm, mrbc_sym sym_id, int a, int c )
 //================================================================
 /*! Find ensure catch handler
 */
-static const mrbc_irep_catch_handler *find_catch_handler_ensure( const struct VM *vm )
+static const mrbc_irep_catch_handler *find_catch_handler_ensure( const mrbc_vm *vm )
 {
   const mrbc_irep *irep = vm->cur_irep;
   int cnt = irep->clen;
@@ -199,39 +200,9 @@ void mrbc_cleanup_vm(void)
 
 
 //================================================================
-/*! get callee symbol id
-
-  @param  vm	Pointer to VM
-  @return	string
-*/
-mrbc_sym mrbc_get_callee_symid( struct VM *vm )
-{
-  uint8_t rb = vm->inst[-2];
-  /* NOTE
-     -2 is not always better value.
-     This value is OP_SEND operator's B register.
-  */
-  return mrbc_irep_symbol_id(vm->cur_irep, rb);
-}
-
-
-//================================================================
-/*! get callee name
-
-  @param  vm	Pointer to VM
-  @return	string
-*/
-const char *mrbc_get_callee_name( struct VM *vm )
-{
-  uint8_t rb = vm->inst[-2];
-  return mrbc_irep_symbol_cstr(vm->cur_irep, rb);
-}
-
-
-//================================================================
 /*! Push current status to callinfo stack
 */
-mrbc_callinfo * mrbc_push_callinfo( struct VM *vm, mrbc_sym method_id, int reg_offset, int n_args )
+mrbc_callinfo * mrbc_push_callinfo( mrbc_vm *vm, mrbc_sym method_id, int reg_offset, int n_args )
 {
   mrbc_callinfo *callinfo = mrbc_alloc(vm, sizeof(mrbc_callinfo));
 
@@ -262,7 +233,7 @@ mrbc_callinfo * mrbc_push_callinfo( struct VM *vm, mrbc_sym method_id, int reg_o
 //================================================================
 /*! Pop current status from callinfo stack
 */
-void mrbc_pop_callinfo( struct VM *vm )
+void mrbc_pop_callinfo( mrbc_vm *vm )
 {
   assert( vm->callinfo_tail );
 
@@ -330,7 +301,7 @@ mrbc_vm * mrbc_vm_new( int regs_size )
   @param vm	Pointer to VM or NULL.
   @return	Pointer to VM, or NULL is error.
 */
-mrbc_vm * mrbc_vm_open( struct VM *vm )
+mrbc_vm * mrbc_vm_open( mrbc_vm *vm )
 {
   if( !vm ) vm = mrbc_vm_new( MAX_REGS_SIZE );
 
@@ -361,7 +332,7 @@ mrbc_vm * mrbc_vm_open( struct VM *vm )
 
   @param  vm  Pointer to VM
 */
-void mrbc_vm_begin( struct VM *vm )
+void mrbc_vm_begin( mrbc_vm *vm )
 {
   vm->cur_irep = vm->top_irep;
   vm->inst = vm->cur_irep->inst;
@@ -377,7 +348,7 @@ void mrbc_vm_begin( struct VM *vm )
   mrbc_decref( &vm->regs[0] );
   vm->regs[0] = mrbc_instance_new(vm, MRBC_CLASS(Object), 0);
   for( int i = 1; i < vm->regs_size; i++ ) {
-    vm->regs[i] = mrbc_nil_value();
+    mrbc_set_nil( &vm->regs[i] );
   }
 }
 
@@ -387,7 +358,7 @@ void mrbc_vm_begin( struct VM *vm )
 
   @param  vm  Pointer to VM
 */
-void mrbc_vm_end( struct VM *vm )
+void mrbc_vm_end( mrbc_vm *vm )
 {
   if( mrbc_israised(vm) ) {
 #if defined(MRBC_ABORT_BY_EXCEPTION)
@@ -423,7 +394,7 @@ void mrbc_vm_end( struct VM *vm )
 
   @param  vm  Pointer to VM
 */
-void mrbc_vm_close( struct VM *vm )
+void mrbc_vm_close( mrbc_vm *vm )
 {
   mrbc_decref( &vm->regs[0] );
 
@@ -487,11 +458,11 @@ static inline void op_loadl( mrbc_vm *vm, mrbc_value *regs EXT )
 
 
 //================================================================
-/*! OP_LOADI
+/*! OP_LOADI8
 
   R[a] = mrb_int(b)
 */
-static inline void op_loadi( mrbc_vm *vm, mrbc_value *regs EXT )
+static inline void op_loadi8( mrbc_vm *vm, mrbc_value *regs EXT )
 {
   FETCH_BB();
 
@@ -605,11 +576,11 @@ static inline void op_loadself( mrbc_vm *vm, mrbc_value *regs EXT )
 
 
 //================================================================
-/*! OP_LOADT
+/*! OP_LOADTRUE
 
   R[a] = true
 */
-static inline void op_loadt( mrbc_vm *vm, mrbc_value *regs EXT )
+static inline void op_loadtrue( mrbc_vm *vm, mrbc_value *regs EXT )
 {
   FETCH_B();
 
@@ -619,11 +590,11 @@ static inline void op_loadt( mrbc_vm *vm, mrbc_value *regs EXT )
 
 
 //================================================================
-/*! OP_LOADF
+/*! OP_LOADFALSE
 
   R[a] = false
 */
-static inline void op_loadf( mrbc_vm *vm, mrbc_value *regs EXT )
+static inline void op_loadfalse( mrbc_vm *vm, mrbc_value *regs EXT )
 {
   FETCH_B();
 
@@ -922,6 +893,26 @@ static inline void op_getidx( mrbc_vm *vm, mrbc_value *regs EXT )
 
 
 //================================================================
+/*! OP_GETIDX0
+
+  R[a] = R[b][0]; a+1 for method call
+*/
+static inline void op_getidx0( mrbc_vm *vm, mrbc_value *regs EXT )
+{
+  FETCH_BB();
+
+  if( a != b ) {
+    mrbc_decref( &regs[a] );
+    regs[a] = regs[b];
+    mrbc_incref( &regs[a] );
+  }
+  mrbc_decref( &regs[a+1] );
+  mrbc_set_integer( &regs[a+1], 0 );
+  send_by_name( vm, MRBC_SYMID_BL_BR, a, 1 );
+}
+
+
+//================================================================
 /*! OP_SETIDX
 
   R[a][R[a+1]] = R[a+2]
@@ -1086,7 +1077,7 @@ static inline void op_raiseif( mrbc_vm *vm, mrbc_value *regs EXT )
 
 
 CASE_OP_RETURN:
-{
+ {
   // find ensure that still needs to be executed.
   const mrbc_irep_catch_handler *handler = find_catch_handler_ensure(vm);
   if( handler ) {
@@ -1102,11 +1093,11 @@ CASE_OP_RETURN:
 
   mrbc_pop_callinfo(vm);
   return;
-}
+ }
 
 
 CASE_OP_RETURN_BLK:
-{
+ {
   assert( vm->ret_blk );
 
   // return to the proc generated level.
@@ -1145,10 +1136,11 @@ CASE_OP_RETURN_BLK:
 
   mrbc_pop_callinfo(vm);
   return;
-}
+ }
 
 
-CASE_OP_BREAK: {
+CASE_OP_BREAK:
+ {
   assert( vm->ret_blk );
 
   // return to the proc generated level.
@@ -1174,11 +1166,11 @@ CASE_OP_BREAK: {
   mrbc_decref(&mrbc_immediate_value(MRBC_TT_PROC, .proc = vm->ret_blk));
   vm->ret_blk = 0;
   return;
-}
+ }
 
 
 CASE_OP_JMPUW:
-{
+ {
   // find ensure that still needs to be executed.
   const mrbc_irep_catch_handler *handler = find_catch_handler_ensure(vm);
   if( !handler ) {
@@ -1199,15 +1191,30 @@ CASE_OP_JMPUW:
   vm->exception = ra;
   vm->inst = vm->cur_irep->inst + bin_to_uint32(handler->target);
   return;
-}
+ }
 
 
 CASE_OP_EXCEPTION:
-{
+ {
   vm->exception = ra;
   vm->flag_preemption = 2;
   return;
+ }
 }
+
+
+//================================================================
+/*! OP_MATCHERR
+
+  raise NoMatchingPatternError unless R[a]
+*/
+static inline void op_matcherr( mrbc_vm *vm, mrbc_value *regs EXT )
+{
+  FETCH_B();
+
+  if( mrbc_type(regs[a]) > MRBC_TT_FALSE ) {
+    mrbc_raise( vm, MRBC_CLASS(NoMatchingPatternError), 0);
+  }
 }
 
 
@@ -1225,6 +1232,24 @@ static inline void op_ssend( mrbc_vm *vm, mrbc_value *regs EXT )
   mrbc_incref( &regs[a] );
 
   send_by_name( vm, mrbc_irep_symbol_id(vm->cur_irep, b), a, c );
+}
+
+
+
+//================================================================
+/*! OP_SSEND0
+
+  R[a] = self.send(Syms[b]) (no args)
+*/
+static inline void op_ssend0( mrbc_vm *vm, mrbc_value *regs EXT )
+{
+  FETCH_BB();
+
+  mrbc_decref( &regs[a] );
+  regs[a] = *mrbc_get_self( vm, regs );
+  mrbc_incref( &regs[a] );
+
+  send_by_name( vm, mrbc_irep_symbol_id(vm->cur_irep, b), a, 0 );
 }
 
 
@@ -1261,6 +1286,19 @@ static inline void op_send( mrbc_vm *vm, mrbc_value *regs EXT )
 
 
 //================================================================
+/*! OP_SEND0
+
+  R[a] = R[a].send(Syms[b]) (no args)
+*/
+static inline void op_send0( mrbc_vm *vm, mrbc_value *regs EXT )
+{
+  FETCH_BB();
+
+  send_by_name( vm, mrbc_irep_symbol_id(vm->cur_irep, b), a, 0 );
+}
+
+
+//================================================================
 /*! OP_SENDB
 
   R[a] = R[a].send(Syms[b],R[a+1]..,R[a+n+1]:R[a+n+2]..,&R[a+n+2k+1])
@@ -1270,6 +1308,19 @@ static inline void op_sendb( mrbc_vm *vm, mrbc_value *regs EXT )
   FETCH_BBB();
 
   send_by_name( vm, mrbc_irep_symbol_id(vm->cur_irep, b), a, c | 0x100 );
+}
+
+
+//================================================================
+/*! OP_BLKCALL
+
+  R[a] = R[a].call(R[a+1],... ,R[a+b]); direct block call
+*/
+static inline void op_blkcall( mrbc_vm *vm, mrbc_value *regs EXT )
+{
+  FETCH_BB();
+
+  send_by_name( vm, MRBC_SYM(call), a, b | 0x100 );
 }
 
 
@@ -1646,7 +1697,7 @@ static inline void op_karg( mrbc_vm *vm, mrbc_value *regs EXT )
 //================================================================
 /*! op_return, op_return_blk subroutine.
 */
-static inline void op_return__sub( mrbc_vm *vm, mrbc_value *regs, int a )
+static inline void sub_op_return( mrbc_vm *vm, mrbc_value *regs, int a )
 {
   // If have a ensure, jump to it.
   if( vm->cur_irep->clen ) {
@@ -1711,7 +1762,7 @@ static inline void op_return( mrbc_vm *vm, mrbc_value *regs EXT )
 {
   FETCH_B();
 
-  op_return__sub( vm, regs, a );
+  sub_op_return( vm, regs, a );
 }
 
 
@@ -1725,7 +1776,7 @@ static inline void op_return_blk( mrbc_vm *vm, mrbc_value *regs EXT )
   FETCH_B();
 
   if( mrbc_type(regs[0]) != MRBC_TT_PROC ) {
-    op_return__sub( vm, regs, a );
+    sub_op_return( vm, regs, a );
     return;
   }
 
@@ -1766,6 +1817,71 @@ static inline void op_return_blk( mrbc_vm *vm, mrbc_value *regs EXT )
 
   mrbc_decref(&mrbc_immediate_value(MRBC_TT_PROC, .proc = vm->ret_blk));
   vm->ret_blk = 0;
+}
+
+
+//================================================================
+/*! OP_RETSELF
+
+  return self
+*/
+static inline void op_retself( mrbc_vm *vm, mrbc_value *regs EXT )
+{
+  FETCH_Z();
+
+  mrbc_decref(&regs[1]);
+  regs[1] = *mrbc_get_self( vm, regs );
+  mrbc_incref( &regs[1] );
+
+  sub_op_return( vm, regs, 1 );
+}
+
+
+//================================================================
+/*! OP_RETNIL
+
+  return nil
+*/
+static inline void op_retnil( mrbc_vm *vm, mrbc_value *regs EXT )
+{
+  FETCH_Z();
+
+  mrbc_decref(&regs[1]);
+  mrbc_set_nil( &regs[1] );
+
+  sub_op_return( vm, regs, 1 );
+}
+
+
+//================================================================
+/*! OP_RETTRUE
+
+  return true
+*/
+static inline void op_rettrue( mrbc_vm *vm, mrbc_value *regs EXT )
+{
+  FETCH_Z();
+
+  mrbc_decref(&regs[1]);
+  mrbc_set_true( &regs[1] );
+
+  sub_op_return( vm, regs, 1 );
+}
+
+
+//================================================================
+/*! OP_RETFALSE
+
+  return false
+*/
+static inline void op_retfalse( mrbc_vm *vm, mrbc_value *regs EXT )
+{
+  FETCH_Z();
+
+  mrbc_decref(&regs[1]);
+  mrbc_set_false( &regs[1] );
+
+  sub_op_return( vm, regs, 1 );
 }
 
 
@@ -1934,7 +2050,7 @@ static inline void op_addi( mrbc_vm *vm, mrbc_value *regs EXT )
 #endif
 
   mrbc_decref(&regs[a+1]);
-  regs[a+1] = mrbc_integer_value(b);
+  mrbc_set_integer( &regs[a+1], b);
   send_by_name(vm, MRBC_SYM(PLUS), a, 1);
 }
 
@@ -2005,8 +2121,64 @@ static inline void op_subi( mrbc_vm *vm, mrbc_value *regs EXT )
 #endif
 
   mrbc_decref(&regs[a+1]);
-  regs[a+1] = mrbc_integer_value(b);
+  mrbc_set_integer( &regs[a+1], b);
   send_by_name(vm, MRBC_SYM(MINUS), a, 1);
+}
+
+
+//================================================================
+/*! OP_ADDILV
+
+  R[a] = R[a]+mrb_int(c); R[b],R[b+1] for method call
+*/
+static inline void op_addilv( mrbc_vm *vm, mrbc_value *regs EXT )
+{
+  FETCH_BBB();
+
+  switch( mrbc_type(regs[a]) ) {
+  case MRBC_TT_INTEGER:
+    regs[a].i += c;
+    break;
+
+#if MRBC_USE_FLOAT
+  case MRBC_TT_FLOAT:
+    regs[a].d += c;
+    break;
+#endif
+
+  default:
+    mrbc_decref(&regs[a+1]);
+    mrbc_set_integer( &regs[a+1], c);
+    send_by_name(vm, MRBC_SYM(PLUS), a, 1);
+  }
+}
+
+
+//================================================================
+/*! OP_SUBILV
+
+  R[a] = R[a]-mrb_int(c); R[b],R[b+1] for method call
+*/
+static inline void op_subilv( mrbc_vm *vm, mrbc_value *regs EXT )
+{
+  FETCH_BBB();
+
+  switch( mrbc_type(regs[a]) ) {
+  case MRBC_TT_INTEGER:
+    regs[a].i -= c;
+    break;
+
+#if MRBC_USE_FLOAT
+  case MRBC_TT_FLOAT:
+    regs[a].d -= c;
+    break;
+#endif
+
+  default:
+    mrbc_decref(&regs[a+1]);
+    mrbc_set_integer( &regs[a+1], c);
+    send_by_name(vm, MRBC_SYM(MINUS), a, 1);
+  }
 }
 
 
@@ -2315,11 +2487,11 @@ static inline void op_arypush( mrbc_vm *vm, mrbc_value *regs EXT )
 
 
 //================================================================
-/*! OP_ARYDUP
+/*! OP_ARYSPLAT
 
   R[a] = ary_dup(R[a])
 */
-static inline void op_arydup( mrbc_vm *vm, mrbc_value *regs EXT )
+static inline void op_arysplat( mrbc_vm *vm, mrbc_value *regs EXT )
 {
   FETCH_B();
 
@@ -2451,7 +2623,7 @@ static inline void op_symbol( mrbc_vm *vm, mrbc_value *regs EXT )
   }
 
   mrbc_decref(&regs[a]);
-  regs[a] = mrbc_symbol_value( sym_id );
+  mrbc_set_symbol( &regs[a], sym_id );
 }
 
 
@@ -2751,21 +2923,21 @@ static inline void op_exec( mrbc_vm *vm, mrbc_value *regs EXT )
 
 
 //----------------------------------------------------------------
-static void sub_irep_incref( mrbc_irep *irep, int inc_dec )
+static void sub_irep_inc_dec_ref( mrbc_irep *irep, int inc_dec )
 {
   for( int i = 0; i < irep->rlen; i++ ) {
-    sub_irep_incref( mrbc_irep_child_irep(irep, i), inc_dec );
+    sub_irep_inc_dec_ref( mrbc_irep_child_irep(irep, i), inc_dec );
   }
 
   irep->ref_count += inc_dec;
 }
 
-static void sub_def_alias( mrbc_class *cls, mrbc_method *method, mrbc_sym sym_id )
+static void sub_newmethod( mrbc_class *cls, mrbc_method *method, mrbc_sym sym_id )
 {
   method->next = cls->method_link;
   cls->method_link = method;
 
-  if( !method->c_func ) sub_irep_incref( method->irep, +1 );
+  if( !method->c_func ) sub_irep_inc_dec_ref( method->irep, +1 );
 
   // checking same method
   for( ;method->next != NULL; method = method->next ) {
@@ -2775,13 +2947,36 @@ static void sub_def_alias( mrbc_class *cls, mrbc_method *method, mrbc_sym sym_id
 
       method->next = del_method->next;
       if( del_method->type == 'M' ) {
-        if( !del_method->c_func ) sub_irep_incref( del_method->irep, -1 );
+        if( !del_method->c_func ) sub_irep_inc_dec_ref( del_method->irep, -1 );
         mrbc_raw_free( del_method );
       }
 
       break;
     }
   }
+}
+
+static void sub_op_def( mrbc_vm *vm, mrbc_class *cls, mrbc_irep *irep, mrbc_sym sym_id )
+{
+  if( cls->flag_nomethod ) {
+    mrbc_raisef(vm, MRBC_CLASS(NotImplementedError),
+		"Adding methods to the %s class is not supported",
+		mrbc_symid_to_str(cls->sym_id));
+    return;
+  }
+
+  mrbc_method *method = (vm->vm_id == 0) ?
+    mrbc_raw_alloc_no_free( sizeof(mrbc_method) ) :
+    mrbc_raw_alloc( sizeof(mrbc_method) );
+
+  *method = (mrbc_method){
+    .type = (vm->vm_id == 0) ? 'm' : 'M',
+    .c_func = 0,
+    .sym_id = sym_id,
+    .irep = irep,
+  };
+
+  sub_newmethod( cls, method, sym_id );
 }
 
 //================================================================
@@ -2793,29 +2988,47 @@ static inline void op_def( mrbc_vm *vm, mrbc_value *regs EXT )
 {
   FETCH_BB();
 
-  assert( mrbc_type(regs[a]) == MRBC_TT_CLASS || mrbc_type(regs[a]) == MRBC_TT_MODULE );
-  assert( mrbc_type(regs[a+1]) == MRBC_TT_PROC );
+  mrbc_class *cls = regs[a].cls;
+  mrbc_irep *irep = regs[a+1].proc->irep;
+  mrbc_sym sym_id = mrbc_irep_symbol_id(vm->cur_irep, b);
+
+  sub_op_def( vm, cls, irep, sym_id );
+  mrbc_set_symbol(&regs[a], sym_id);
+}
+
+
+//================================================================
+/*! OP_TDEF
+
+  target_class.newmethod(Syms[b],Irep[c]); R[a] = Syms[b]
+*/
+static inline void op_tdef( mrbc_vm *vm, mrbc_value *regs EXT )
+{
+  FETCH_BBB();
+
+  mrbc_class *cls = vm->target_class;
+  mrbc_irep *irep = mrbc_irep_child_irep(vm->cur_irep, c);
+  mrbc_sym sym_id = mrbc_irep_symbol_id(vm->cur_irep, b);
+
+  sub_op_def( vm, cls, irep, sym_id );
+  mrbc_set_symbol(&regs[a], sym_id);
+}
+
+
+//================================================================
+/*! OP_SDEF
+
+  R[a].singleton_class.newmethod(Syms[b],Irep[c]); R[a] = Syms[b]
+*/
+static inline void op_sdef( mrbc_vm *vm, mrbc_value *regs EXT )
+{
+  FETCH_BBB();
 
   mrbc_class *cls = regs[a].cls;
-  if( cls->flag_nomethod ) {
-    mrbc_raisef(vm, MRBC_CLASS(NotImplementedError),
-		"Adding methods to the %s class is not supported",
-		mrbc_symid_to_str(cls->sym_id));
-    return;
-  }
-
+  mrbc_irep *irep = mrbc_irep_child_irep(vm->cur_irep, c);
   mrbc_sym sym_id = mrbc_irep_symbol_id(vm->cur_irep, b);
-  mrbc_proc *proc = regs[a+1].proc;
-  mrbc_method *method = (vm->vm_id == 0) ?
-    mrbc_raw_alloc_no_free( sizeof(mrbc_method) ) :
-    mrbc_raw_alloc( sizeof(mrbc_method) );
 
-  method->type = (vm->vm_id == 0) ? 'm' : 'M';
-  method->c_func = 0;
-  method->sym_id = sym_id;
-  method->irep = proc->irep;
-
-  sub_def_alias( cls, method, sym_id );
+  sub_op_def( vm, cls, irep, sym_id );
   mrbc_set_symbol(&regs[a], sym_id);
 }
 
@@ -2846,7 +3059,7 @@ static inline void op_alias( mrbc_vm *vm, mrbc_value *regs EXT )
   method->type = (vm->vm_id == 0) ? 'm' : 'M';
   method->sym_id = sym_id_new;
 
-  sub_def_alias( cls, method, sym_id_new );
+  sub_newmethod( cls, method, sym_id_new );
 }
 
 
@@ -2928,7 +3141,7 @@ static inline void op_unsupported( mrbc_vm *vm, mrbc_value *regs EXT )
   @retval 1	program done.
   @retval 2	exception occurred.
 */
-int mrbc_vm_run( struct VM *vm )
+int mrbc_vm_run( mrbc_vm *vm )
 {
 #if defined(MRBC_SUPPORT_OP_EXT)
   int ext = 0;
@@ -2945,7 +3158,7 @@ int mrbc_vm_run( struct VM *vm )
     case OP_NOP:        op_nop        (vm, regs EXT); break;
     case OP_MOVE:       op_move       (vm, regs EXT); break;
     case OP_LOADL:      op_loadl      (vm, regs EXT); break;
-    case OP_LOADI:      op_loadi      (vm, regs EXT); break;
+    case OP_LOADI8:     op_loadi8     (vm, regs EXT); break;
     case OP_LOADINEG:   op_loadineg   (vm, regs EXT); break;
     case OP_LOADI__1:   // fall through
     case OP_LOADI_0:    // fall through
@@ -2961,8 +3174,8 @@ int mrbc_vm_run( struct VM *vm )
     case OP_LOADSYM:    op_loadsym    (vm, regs EXT); break;
     case OP_LOADNIL:    op_loadnil    (vm, regs EXT); break;
     case OP_LOADSELF:   op_loadself   (vm, regs EXT); break;
-    case OP_LOADT:      op_loadt      (vm, regs EXT); break;
-    case OP_LOADF:      op_loadf      (vm, regs EXT); break;
+    case OP_LOADTRUE:   op_loadtrue   (vm, regs EXT); break;
+    case OP_LOADFALSE:  op_loadfalse  (vm, regs EXT); break;
     case OP_GETGV:      op_getgv      (vm, regs EXT); break;
     case OP_SETGV:      op_setgv      (vm, regs EXT); break;
     case OP_GETSV:      op_unsupported(vm, regs EXT); break; // not implemented.
@@ -2978,6 +3191,7 @@ int mrbc_vm_run( struct VM *vm )
     case OP_GETUPVAR:   op_getupvar   (vm, regs EXT); break;
     case OP_SETUPVAR:   op_setupvar   (vm, regs EXT); break;
     case OP_GETIDX:     op_getidx     (vm, regs EXT); break;
+    case OP_GETIDX0:    op_getidx0    (vm, regs EXT); break;
     case OP_SETIDX:     op_setidx     (vm, regs EXT); break;
     case OP_JMP:        op_jmp        (vm, regs EXT); break;
     case OP_JMPIF:      op_jmpif      (vm, regs EXT); break;
@@ -2987,11 +3201,15 @@ int mrbc_vm_run( struct VM *vm )
     case OP_EXCEPT:     op_except     (vm, regs EXT); break;
     case OP_RESCUE:     op_rescue     (vm, regs EXT); break;
     case OP_RAISEIF:    op_raiseif    (vm, regs EXT); break;
+    case OP_MATCHERR:   op_matcherr   (vm, regs EXT); break;
     case OP_SSEND:      op_ssend      (vm, regs EXT); break;
+    case OP_SSEND0:     op_ssend0     (vm, regs EXT); break;
     case OP_SSENDB:     op_ssendb     (vm, regs EXT); break;
     case OP_SEND:       op_send       (vm, regs EXT); break;
+    case OP_SEND0:      op_send0      (vm, regs EXT); break;
     case OP_SENDB:      op_sendb      (vm, regs EXT); break;
     case OP_CALL:       op_unsupported(vm, regs EXT); break; // not implemented.
+    case OP_BLKCALL:    op_blkcall    (vm, regs EXT); break;
     case OP_SUPER:      op_super      (vm, regs EXT); break;
     case OP_ARGARY:     op_argary     (vm, regs EXT); break;
     case OP_ENTER:      op_enter      (vm, regs EXT); break;
@@ -3000,12 +3218,18 @@ int mrbc_vm_run( struct VM *vm )
     case OP_KARG:       op_karg       (vm, regs EXT); break;
     case OP_RETURN:     op_return     (vm, regs EXT); break;
     case OP_RETURN_BLK: op_return_blk (vm, regs EXT); break;
+    case OP_RETSELF:    op_retself    (vm, regs EXT); break;
+    case OP_RETNIL:     op_retnil     (vm, regs EXT); break;
+    case OP_RETTRUE:    op_rettrue    (vm, regs EXT); break;
+    case OP_RETFALSE:   op_retfalse   (vm, regs EXT); break;
     case OP_BREAK:      op_break      (vm, regs EXT); break;
     case OP_BLKPUSH:    op_blkpush    (vm, regs EXT); break;
     case OP_ADD:        op_add        (vm, regs EXT); break;
     case OP_ADDI:       op_addi       (vm, regs EXT); break;
     case OP_SUB:        op_sub        (vm, regs EXT); break;
     case OP_SUBI:       op_subi       (vm, regs EXT); break;
+    case OP_ADDILV:     op_addilv     (vm, regs EXT); break;
+    case OP_SUBILV:     op_subilv     (vm, regs EXT); break;
     case OP_MUL:        op_mul        (vm, regs EXT); break;
     case OP_DIV:        op_div        (vm, regs EXT); break;
     case OP_EQ:         op_eq         (vm, regs EXT); break;
@@ -3017,7 +3241,7 @@ int mrbc_vm_run( struct VM *vm )
     case OP_ARRAY2:     op_array2     (vm, regs EXT); break;
     case OP_ARYCAT:     op_arycat     (vm, regs EXT); break;
     case OP_ARYPUSH:    op_arypush    (vm, regs EXT); break;
-    case OP_ARYDUP:     op_arydup     (vm, regs EXT); break;
+    case OP_ARYSPLAT:   op_arysplat   (vm, regs EXT); break;
     case OP_AREF:       op_aref       (vm, regs EXT); break;
     case OP_ASET:       op_aset       (vm, regs EXT); break;
     case OP_APOST:      op_apost      (vm, regs EXT); break;
@@ -3038,12 +3262,15 @@ int mrbc_vm_run( struct VM *vm )
     case OP_MODULE:     op_module     (vm, regs EXT); break;
     case OP_EXEC:       op_exec       (vm, regs EXT); break;
     case OP_DEF:        op_def        (vm, regs EXT); break;
+    case OP_TDEF:       op_tdef       (vm, regs EXT); break;
+    case OP_SDEF:       op_sdef       (vm, regs EXT); break;
     case OP_ALIAS:      op_alias      (vm, regs EXT); break;
     case OP_UNDEF:      op_unsupported(vm, regs EXT); break; // not implemented.
     case OP_SCLASS:     op_sclass     (vm, regs EXT); break;
     case OP_TCLASS:     op_tclass     (vm, regs EXT); break;
     case OP_DEBUG:      op_unsupported(vm, regs EXT); break; // not implemented.
     case OP_ERR:        op_unsupported(vm, regs EXT); break; // not implemented.
+
 #if defined(MRBC_SUPPORT_OP_EXT)
     case OP_EXT1:       ext = 1; continue;
     case OP_EXT2:       ext = 2; continue;

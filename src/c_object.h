@@ -17,6 +17,9 @@
 /***** Feature test switches ************************************************/
 /***** System headers *******************************************************/
 /***** Local headers ********************************************************/
+#include "value.h"
+#include "vm.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -27,8 +30,8 @@ extern "C" {
 /***** Global variables *****************************************************/
 /***** Function prototypes **************************************************/
 //@cond
-void mrbc_instance_call_initialize(struct VM *vm, mrbc_value v[], int argc);
-void mrbc_object_inspect(struct VM *vm, mrbc_value v[], int argc);
+void mrbc_instance_call_initialize(mrbc_vm *vm, mrbc_value v[], int argc);
+void mrbc_object_inspect(mrbc_vm *vm, mrbc_value v[], int argc);
 //@endcond
 
 

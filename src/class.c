@@ -549,8 +549,9 @@ mrbc_value mrbc_send( struct VM *vm, mrbc_value *v, int argc,
 {
   mrbc_method method;
   mrbc_class *cls = find_class_by_object(recv);
+  mrbc_sym sym_id = mrbc_str_to_symid(method_name);
 
-  if( mrbc_find_method( &method, cls, mrbc_str_to_symid(method_name)) == 0 ) {
+  if( mrbc_find_method( &method, cls, sym_id ) == 0 ) {
     mrbc_raisef(vm, MRBC_CLASS(NoMethodError), "undefined method '%s' for %s",
                 method_name, mrbc_symid_to_str(cls->sym_id) );
     goto ERROR;
@@ -576,10 +577,11 @@ mrbc_value mrbc_send( struct VM *vm, mrbc_value *v, int argc,
     regs[i] = *va_arg(ap, mrbc_value *);
   }
   mrbc_decref( &regs[i] );
-  regs[i] = mrbc_nil_value();
+  mrbc_set_nil( &regs[i] );
   va_end(ap);
 
   // call method.
+  vm->callee_sym_id = sym_id;
   method.func(vm, regs, n_params);
   mrbc_value ret = regs[0];
 

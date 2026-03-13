@@ -27,7 +27,7 @@
 /***** Constat values *******************************************************/
 // for mrb file structure.
 static const char RITE[4] = "RITE";
-static const char RITE_VERSION[4] = "0300";
+static const char RITE_VERSION[4] = "0400";
 static const int SIZE_RITE_BINARY_HEADER = 20;
 static const int SIZE_RITE_SECTION_HEADER = 12;
 static const int SIZE_RITE_CATCH_HANDLER = 13;
@@ -37,11 +37,12 @@ static const char END[4] = "END\0";
 
 /*! IREP TT */
 enum irep_pool_type {
-  IREP_TT_STR   = 0,	// string (need free)
-  IREP_TT_SSTR  = 2,	// string (static)
-  IREP_TT_INT32 = 1,	// 32bit integer
-  IREP_TT_INT64 = 3,	// 64bit integer
-  IREP_TT_FLOAT = 5,	// float (double/float)
+  IREP_TT_STR    = 0,	// string (need free)
+  IREP_TT_SSTR   = 2,	// string (static)
+  IREP_TT_INT32  = 1,	// 32bit integer
+  IREP_TT_INT64  = 3,	// 64bit integer
+  IREP_TT_BIGINT = 7,	// big integer
+  IREP_TT_FLOAT  = 5,	// float (double/float)
 };
 
 
@@ -70,7 +71,7 @@ enum irep_pool_type {
    "0000"     compiler version
   </pre>
 */
-static int load_header(struct VM *vm, const uint8_t *bin)
+static int load_header(mrbc_vm *vm, const uint8_t *bin)
 {
   if( memcmp(bin, RITE, sizeof(RITE)) != 0 ) {
     mrbc_raise( vm, MRBC_CLASS(Exception), "Illegal bytecode");
@@ -126,7 +127,7 @@ static int load_header(struct VM *vm, const uint8_t *bin)
      ...	symbol data
   </pre>
 */
-static mrbc_irep * load_irep_1(struct VM *vm, const uint8_t *bin, int *len)
+static mrbc_irep * load_irep_1(mrbc_vm *vm, const uint8_t *bin, int *len)
 {
   mrbc_irep irep;
   const uint8_t *p = bin + 4;	// 4 = skip record size.
@@ -256,7 +257,7 @@ static mrbc_irep * load_irep_1(struct VM *vm, const uint8_t *bin, int *len)
   @param  len	Returns the parsed length.
   @return	Pointer to allocated mrbc_irep or NULL
 */
-static mrbc_irep *load_irep(struct VM *vm, const uint8_t *bin, int *len)
+static mrbc_irep *load_irep(mrbc_vm *vm, const uint8_t *bin, int *len)
 {
   int len1;
   mrbc_irep *irep = load_irep_1(vm, bin, &len1);
@@ -285,11 +286,11 @@ static mrbc_irep *load_irep(struct VM *vm, const uint8_t *bin, int *len)
   @param  bytecode	Pointer to bytecode.
   @return int		zero if no error.
 */
-int mrbc_load_mrb(struct VM *vm, const void *bytecode)
+int mrbc_load_mrb(mrbc_vm *vm, const void *bytecode)
 {
   const uint8_t *bin = bytecode;
 
-  vm->exception = mrbc_nil_value();
+  mrbc_set_nil( &vm->exception );
   if( load_header(vm, bin) != 0 ) return -1;
 
   bin += SIZE_RITE_BINARY_HEADER;
@@ -317,7 +318,7 @@ int mrbc_load_mrb(struct VM *vm, const void *bytecode)
   @param  bytecode	Pointer to IREP section.
   @return int		zero if no error.
 */
-int mrbc_load_irep(struct VM *vm, const void *bytecode)
+int mrbc_load_irep(mrbc_vm *vm, const void *bytecode)
 {
   const uint8_t *bin = bytecode;
 
@@ -333,7 +334,8 @@ int mrbc_load_irep(struct VM *vm, const void *bytecode)
 
   @param  irep	Pointer to allocated mrbc_irep.
 */
-void mrbc_irep_free(struct IREP *irep)
+//void mrbc_irep_free(struct IREP *irep)
+void mrbc_irep_free(mrbc_irep *irep)
 {
   // release child ireps.
   for( int i = 0; i < irep->rlen; i++ ) {
@@ -353,7 +355,7 @@ void mrbc_irep_free(struct IREP *irep)
   @param  n		n'th
   @return mrbc_value	value
 */
-mrbc_value mrbc_irep_pool_value(struct VM *vm, int n)
+mrbc_value mrbc_irep_pool_value(mrbc_vm *vm, int n)
 {
   const uint8_t *p = mrbc_irep_pool_ptr(vm->cur_irep, n);
   mrbc_value obj;

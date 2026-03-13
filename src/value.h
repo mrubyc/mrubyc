@@ -32,6 +32,7 @@ extern "C" {
 /***** Typedefs *************************************************************/
 // pre define of some struct
 struct VM;
+struct RClass;
 struct RObject;
 
 // mrbc types
