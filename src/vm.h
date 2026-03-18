@@ -121,11 +121,11 @@ typedef struct CALLINFO {
   uint8_t obj_mark_[2];		//!< set "CI" for debug.
 #endif
 
-  struct CALLINFO *prev;	//!< previous linked list.
   const mrbc_irep *cur_irep;	//!< copy from mrbc_vm.
-  const uint8_t *inst;		//!< copy from mrbc_vm.
-  mrbc_value *cur_regs;		//!< copy from mrbc_vm.
+  const uint8_t   *inst;	//!< copy from mrbc_vm.
+  mrbc_value      *cur_regs;	//!< copy from mrbc_vm.
   struct RClass *target_class;	//!< copy from mrbc_vm.
+  struct CALLINFO *prev;	//!< previous linked list.
 
   struct RClass *own_class;	//!< class that owns method.
   struct RHash *karg_keep;	//!< keyword argument backup for OP_ARGARY.
@@ -156,15 +156,15 @@ typedef struct VM {
   unsigned int flag_permanence : 1;
 
   mrbc_irep       *top_irep;		//!< IREP tree top.
+
   const mrbc_irep *cur_irep;		//!< IREP currently running.
   const uint8_t   *inst;		//!< Instruction pointer.
   mrbc_value      *cur_regs;		//!< Current register top.
   struct RClass   *target_class;	//!< Target class.
   mrbc_callinfo	  *callinfo_tail;	//!< Last point of CALLINFO link.
+
   struct RProc    *ret_blk;		//!< Return block.
-
   mrbc_value	  exception;		//!< Raised exception or nil.
-
   mrbc_sym        callee_sym_id;	//!< Current called method.
   uint16_t        regs_size;		//!< size of regs[]
   mrbc_value      regs[];

@@ -210,11 +210,11 @@ mrbc_callinfo * mrbc_push_callinfo( mrbc_vm *vm, mrbc_sym method_id, int reg_off
 #if defined(MRBC_DEBUG)
     .obj_mark_ = "CI",
 #endif
-    .prev = vm->callinfo_tail,
     .cur_irep = vm->cur_irep,
     .inst = vm->inst,
     .cur_regs = vm->cur_regs,
     .target_class = vm->target_class,
+    .prev = vm->callinfo_tail,
     .own_class = 0,
     .karg_keep = 0,
     .method_id = method_id,
