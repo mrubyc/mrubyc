@@ -476,11 +476,13 @@ mrbc_method * mrbc_find_method( mrbc_method *r_method, mrbc_class *cls, mrbc_sym
     }
 
     if( c->method_symbols[right] == sym_id ) {
-      r_method->type = 'm';
-      r_method->c_func = 2;
-      r_method->sym_id = sym_id;
-      r_method->func = c->method_functions[right];
-      r_method->cls = cls_save;
+      *r_method = (mrbc_method){
+	.type = 'm',
+	.c_func = 2,
+	.sym_id = sym_id,
+	.func = c->method_functions[right],
+	.cls = cls_save,
+      };
       return r_method;
     }
 
