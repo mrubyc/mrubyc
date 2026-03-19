@@ -1380,6 +1380,10 @@ static inline void op_super( mrbc_vm *vm, mrbc_value *regs EXT )
 
   // find super class
   mrbc_callinfo *callinfo = vm->callinfo_tail;
+  if( callinfo == NULL ) {
+    mrbc_raise(vm, MRBC_CLASS(NoMethodError), "super called outside of method");
+    return;
+  }
   mrbc_class *cls = callinfo->own_class;
   mrbc_method method;
 
