@@ -463,9 +463,9 @@ mrbc_method * mrbc_find_method( mrbc_method *r_method, mrbc_class *cls, mrbc_sym
     struct RBuiltinClass *c = (struct RBuiltinClass *)cls;
     int right = c->num_builtin_method;
     if( right == 0 ) goto next_class;
+    right--;
     int left = 0;
 
-    assert( cls->flag_builtin );
     while( left < right ) {
       int mid = (left + right) / 2;
       if( c->method_symbols[mid] < sym_id ) {
