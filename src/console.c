@@ -348,40 +348,39 @@ void mrbc_p(const mrbc_value *v)
 //================================================================
 /*! convert char to string (escape sequence)
 
-  @param  buf		output buffer. (5bytes at least)
-  @param  ch		character.
+  @param  buf	output buffer. (5bytes at least)
+  @param  src	pointer to input char.
 */
-void mrbc_char_to_s( char *buf, char ch )
+void mrbc_char_to_s( char *buf, const void *src )
 {
-  unsigned char uch = ch;
-  char ch1;
+  unsigned char ch = *((unsigned char *)src);
 
-  if( uch == 0x7f ) goto hex;
-  if( uch < ' ' ) {
-    ch1 = "\0\0\0\0\0\0\0abtnvfr\0\0\0\0\0\0\0\0\0\0\0\0\0e\0\0\0"[ uch ];
+  if( ch == 0x7f ) goto hex;
+  if( ch < ' ' ) {
+    char ch1 = "\0\0\0\0\0\0\0abtnvfr\0\0\0\0\0\0\0\0\0\0\0\0\0e\0\0\0"[ ch ];
     if( ch1 == 0 ) goto hex;
+    ch = ch1;
     goto esc;
   }
-  if( uch == '"' || uch == '#' || uch == '\\' ) {
-    ch1 = uch;
+  if( ch == '"' || ch == '\\' ) {
     goto esc;
   }
 
-  buf[0] = uch;
+  buf[0] = ch;
   buf[1] = 0;
   return;
 
  hex:
   buf[0] = '\\';
   buf[1] = 'x';
-  buf[2] = "0123456789ABCDEF"[uch >> 4];
-  buf[3] = "0123456789ABCDEF"[uch & 0x0f];
+  buf[2] = "0123456789ABCDEF"[ch >> 4];
+  buf[3] = "0123456789ABCDEF"[ch & 0x0f];
   buf[4] = 0;
   return;
 
  esc:
   buf[0] = '\\';
-  buf[1] = ch1;
+  buf[1] = ch;
   buf[2] = 0;
 }
 
@@ -420,7 +419,7 @@ int mrbc_p_sub(const mrbc_value *v)
       unsigned char uch = (unsigned char)s[i];
       if( uch < 0x80 ) {
         char buf[10];
-        mrbc_char_to_s( buf, s[i] );
+        mrbc_char_to_s( buf, s + i );
         mrbc_print( buf );
         i++;
       } else {
@@ -448,7 +447,7 @@ int mrbc_p_sub(const mrbc_value *v)
 #else
     for( int i = 0; i < size; i++ ) {
       char buf[10];
-      mrbc_char_to_s( buf, s[i] );
+      mrbc_char_to_s( buf, s + i );
       mrbc_print( buf );
     }
 #endif

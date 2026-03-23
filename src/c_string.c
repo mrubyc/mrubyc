@@ -1384,7 +1384,7 @@ static void c_string_inspect(mrbc_vm *vm, mrbc_value v[], int argc)
     if( uch < 0x80 ) {
       // ASCII byte: use existing escape logic
       char buf[10];
-      mrbc_char_to_s( buf, s[i] );
+      mrbc_char_to_s( buf, s + i );
       mrbc_string_append_cstr(&ret, buf);
       i++;
     } else {
@@ -1410,7 +1410,7 @@ static void c_string_inspect(mrbc_vm *vm, mrbc_value v[], int argc)
 #else
   for( int i = 0; i < size; i++ ) {
     char buf[10];
-    mrbc_char_to_s( buf, s[i] );
+    mrbc_char_to_s( buf, s + i );
     mrbc_string_append_cstr(&ret, buf);
   }
 #endif
