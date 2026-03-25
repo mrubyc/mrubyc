@@ -42,16 +42,16 @@
 */
 mrbc_value mrbc_range_new(mrbc_vm *vm, mrbc_value *first, mrbc_value *last, int flag_exclude)
 {
-  mrbc_value value = mrbc_immediate_value(MRBC_TT_RANGE);
+  mrbc_range *range = mrbc_alloc(vm, sizeof(mrbc_range));
 
-  value.range = mrbc_alloc(vm, sizeof(mrbc_range));
+  *range = (mrbc_range){
+    MRBC_INIT_OBJECT_HEADER_DI(RA)
+    .flag_exclude = flag_exclude,
+    .first = *first,
+    .last = *last,
+  };
 
-  MRBC_INIT_OBJECT_HEADER( value.range, "RA" );
-  value.range->flag_exclude = flag_exclude;
-  value.range->first = *first;
-  value.range->last = *last;
-
-  return value;
+  return mrbc_immediate_value(MRBC_TT_RANGE, .range = range);
 }
 
 

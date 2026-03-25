@@ -76,21 +76,18 @@
 */
 mrbc_value mrbc_hash_new(mrbc_vm *vm, int size)
 {
-  mrbc_value value = mrbc_immediate_value(MRBC_TT_HASH);
-
-  /*
-    Allocate handle and data buffer.
-  */
-  mrbc_hash *h = mrbc_alloc(vm, sizeof(mrbc_hash));
+  // Allocate handle and data buffer.
+  mrbc_hash *hash = mrbc_alloc(vm, sizeof(mrbc_hash));
   mrbc_value *data = mrbc_alloc(vm, sizeof(mrbc_value) * size * 2);
 
-  MRBC_INIT_OBJECT_HEADER( h, "HA" );
-  h->data_size = size * 2;
-  h->n_stored = 0;
-  h->data = data;
+  *hash = (mrbc_hash){
+    MRBC_INIT_OBJECT_HEADER_DI(HA)
+    .data_size = size * 2,
+    .n_stored = 0,
+    .data = data,
+  };
 
-  value.hash = h;
-  return value;
+  return mrbc_immediate_value(MRBC_TT_HASH, .hash = hash);
 }
 
 

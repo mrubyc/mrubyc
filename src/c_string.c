@@ -62,28 +62,17 @@ static int is_space( int ch )
 */
 mrbc_value mrbc_string_new(mrbc_vm *vm, const void *src, int len)
 {
-  mrbc_value value = mrbc_immediate_value(MRBC_TT_STRING);
+  uint8_t *buf = mrbc_alloc(vm, len+1);
 
-  // Allocate handle and string buffer.
-  mrbc_string *h = mrbc_alloc(vm, sizeof(mrbc_string));
-  uint8_t *str = mrbc_alloc(vm, len+1);
-
-  MRBC_INIT_OBJECT_HEADER( h, "ST" );
-  h->size = len;
-  h->data = str;
-
-  /*
-    Copy a source string.
-  */
+  // Copy a source string.
   if( src == NULL ) {
-    str[0] = '\0';
+    buf[0] = '\0';
   } else {
-    memcpy( str, src, len );
-    str[len] = '\0';
+    memcpy( buf, src, len );
+    buf[len] = '\0';
   }
 
-  value.string = h;
-  return value;
+  return mrbc_string_new_alloc(vm, buf, len);
 }
 
 
@@ -97,15 +86,15 @@ mrbc_value mrbc_string_new(mrbc_vm *vm, const void *src, int len)
 */
 mrbc_value mrbc_string_new_alloc(mrbc_vm *vm, void *buf, int len)
 {
-  mrbc_value value = mrbc_immediate_value(MRBC_TT_STRING);
-  mrbc_string *h = mrbc_alloc(vm, sizeof(mrbc_string));
+  mrbc_string *str = mrbc_alloc(vm, sizeof(mrbc_string));
 
-  MRBC_INIT_OBJECT_HEADER( h, "ST" );
-  h->size = len;
-  h->data = buf;
+  *str = (mrbc_string){
+    MRBC_INIT_OBJECT_HEADER_DI(ST)
+    .size = len,
+    .data = buf,
+  };
 
-  value.string = h;
-  return value;
+  return mrbc_immediate_value(MRBC_TT_STRING, .string = str);
 }
 
 

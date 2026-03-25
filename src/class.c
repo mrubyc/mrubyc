@@ -331,14 +331,13 @@ void mrbc_define_method(struct VM *vm, mrbc_class *cls, const char *name, mrbc_f
 */
 mrbc_value mrbc_instance_new(struct VM *vm, mrbc_class *cls, int size)
 {
-  mrbc_value v = mrbc_immediate_value(MRBC_TT_OBJECT);
+  mrbc_instance *instance = mrbc_alloc(vm, sizeof(mrbc_instance) + size);
 
-  v.instance = mrbc_alloc(vm, sizeof(mrbc_instance) + size);
-  mrbc_kv_init_handle(vm, &v.instance->ivar, 0);
-  MRBC_INIT_OBJECT_HEADER( v.instance, "IN" );
-  v.instance->cls = cls;
+  MRBC_INIT_OBJECT_HEADER( instance, "IN" );
+  instance->cls = cls;
+  mrbc_kv_init_handle(vm, &instance->ivar, 0);
 
-  return v;
+  return mrbc_immediate_value(MRBC_TT_OBJECT, .instance = instance);
 }
 
 

@@ -81,19 +81,18 @@
 */
 mrbc_value mrbc_array_new(mrbc_vm *vm, int size)
 {
-  mrbc_value value = mrbc_immediate_value(MRBC_TT_ARRAY);
-
   // Allocate handle and data buffer.
-  mrbc_array *h = mrbc_alloc(vm, sizeof(mrbc_array));
+  mrbc_array *ary = mrbc_alloc(vm, sizeof(mrbc_array));
   mrbc_value *data = mrbc_alloc(vm, sizeof(mrbc_value) * size);
 
-  MRBC_INIT_OBJECT_HEADER( h, "AR" );
-  h->data_size = size;
-  h->n_stored = 0;
-  h->data = data;
+  *ary = (mrbc_array){
+    MRBC_INIT_OBJECT_HEADER_DI(AR)
+    .data_size = size,
+    .n_stored = 0,
+    .data = data,
+  };
 
-  value.array = h;
-  return value;
+  return mrbc_immediate_value(MRBC_TT_ARRAY, .array = ary);
 }
 
 

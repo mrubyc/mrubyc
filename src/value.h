@@ -136,9 +136,14 @@ typedef enum {
 # define MRBC_INIT_OBJECT_HEADER(p, t)	(p)->obj_mark_[0] = (t)[0]; \
                                         (p)->obj_mark_[1] = (t)[1]; \
                                         (p)->ref_count = 1
+# define MRBC_INIT_OBJECT_HEADER_DI(t) \
+  .obj_mark_ = #t, \
+  .ref_count = 1,
+
 #else
 # define MRBC_OBJECT_HEADER  uint16_t ref_count
 # define MRBC_INIT_OBJECT_HEADER(p, t)  (p)->ref_count = 1
+# define MRBC_INIT_OBJECT_HEADER_DI(t)	.ref_count = 1,
 #endif
 
 
