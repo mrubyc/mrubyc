@@ -50,7 +50,7 @@ RUN useradd -m -u "$USER_ID" mrubyc
 RUN mkdir /work && chown mrubyc /work
 
 USER mrubyc
-RUN git clone --depth 1 --recursive -b master \
+RUN git clone --depth 1 --recursive -b RITE0400 \
     https://github.com/picoruby/picoruby /work/picoruby
 
 WORKDIR /work/picoruby
