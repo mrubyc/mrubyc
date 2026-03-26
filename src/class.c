@@ -434,9 +434,9 @@ int mrbc_obj_is_kind_of( const mrbc_value *obj, const mrbc_class *tcls )
   @param  r_method	pointer to mrbc_method to return values.
   @param  cls		search class or module.
   @param  sym_id	search symbol id.
-  @return		pointer to method or NULL.
+  @return		pointer to method if found, otherwise NULL.
 */
-mrbc_method * mrbc_find_method( mrbc_method *r_method, mrbc_class *cls, mrbc_sym sym_id )
+mrbc_class * mrbc_find_method( mrbc_method *r_method, mrbc_class *cls, mrbc_sym sym_id )
 {
   mrbc_class *nest_buf[MRBC_TRAVERSE_NEST_LEVEL];
   int nest_idx = 0;
@@ -455,9 +455,9 @@ mrbc_method * mrbc_find_method( mrbc_method *r_method, mrbc_class *cls, mrbc_sym
     if( cls->flag_nomethod ) goto next_class;
     for( method = cls->method_link; method != 0; method = method->next ) {
       if( method->sym_id == sym_id ) {
-	*r_method = *method;
-	r_method->cls = cls_save;
-	return r_method;
+        *r_method = *method;
+        r_method->cls = cls_save;
+        return cls_save;
       }
     }
 
@@ -478,13 +478,13 @@ mrbc_method * mrbc_find_method( mrbc_method *r_method, mrbc_class *cls, mrbc_sym
 
     if( c->method_symbols[right] == sym_id ) {
       *r_method = (mrbc_method){
-	.type = 'm',
-	.c_func = 2,
-	.sym_id = sym_id,
-	.func = c->method_functions[right],
-	.cls = cls_save,
+        .type = 'm',
+        .c_func = 2,
+        .sym_id = sym_id,
+        .func = c->method_functions[right],
+        .cls = cls_save,
       };
-      return r_method;
+      return cls_save;
     }
 
   next_class:
