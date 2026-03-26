@@ -37,7 +37,7 @@ extern "C" {
 */
 typedef struct RKeyValue {
 #if defined(MRBC_DEBUG)
-  char obj_mark_[2];
+  char obj_mark_[2];	//!< set "KV" for debug
 #endif
   mrbc_sym sym_id;	//!< symbol ID as key.
   mrbc_value value;	//!< stored value.
@@ -58,6 +58,12 @@ typedef struct RKeyValueHandle {
   };
 
 } mrbc_kv_handle;
+
+#define MRBC_KVH_INITIALIZER(vm) (mrbc_kv_handle){	\
+    .data_size = 0,					\
+    .n_stored = 0,					\
+    .vm = vm,						\
+}
 
 
 //================================================================

@@ -333,9 +333,11 @@ mrbc_value mrbc_instance_new(struct VM *vm, mrbc_class *cls, int size)
 {
   mrbc_instance *instance = mrbc_alloc(vm, sizeof(mrbc_instance) + size);
 
-  MRBC_INIT_OBJECT_HEADER( instance, "IN" );
-  instance->cls = cls;
-  mrbc_kv_init_handle(vm, &instance->ivar, 0);
+  *instance = (mrbc_instance){
+    MRBC_INIT_OBJECT_HEADER_DI(IN)
+    .cls = cls,
+    .ivar = MRBC_KVH_INITIALIZER(vm),
+  };
 
   return mrbc_immediate_value(MRBC_TT_OBJECT, .instance = instance);
 }
