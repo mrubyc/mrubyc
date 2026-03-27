@@ -2912,17 +2912,31 @@ static inline void op_module( mrbc_vm *vm, mrbc_value *regs EXT )
 static inline void op_exec( mrbc_vm *vm, mrbc_value *regs EXT )
 {
   FETCH_BB();
-  assert( mrbc_type(regs[a]) == MRBC_TT_CLASS || mrbc_type(regs[a]) == MRBC_TT_MODULE );
+
+  mrbc_class *target_class;
+
+  switch( mrbc_type(regs[a]) ) {
+  case MRBC_TT_CLASS:
+  case MRBC_TT_MODULE:
+    target_class = regs[a].cls;
+    break;
+
+  case MRBC_TT_OBJECT:
+    target_class = regs[a].instance->cls;
+    break;
+
+  default:
+    assert(!"Illegal type");
+  }
 
   // prepare callinfo
-  mrbc_push_callinfo(vm, regs[a].cls->sym_id, a, 0);
+  mrbc_push_callinfo(vm, target_class->sym_id, a, 0);
 
   // target irep
   vm->cur_irep = mrbc_irep_child_irep(vm->cur_irep, b);
   vm->inst = vm->cur_irep->inst;
   vm->cur_regs += a;
-
-  vm->target_class = regs[a].cls;
+  vm->target_class = target_class;
 }
 
 
@@ -2936,31 +2950,56 @@ static void sub_irep_inc_dec_ref( mrbc_irep *irep, int inc_dec )
   irep->ref_count += inc_dec;
 }
 
-static void sub_newmethod( mrbc_class *cls, mrbc_method *method, mrbc_sym sym_id )
+static void sub_newmethod( mrbc_class *cls, mrbc_method *method )
 {
+  // link new method
   method->next = cls->method_link;
   cls->method_link = method;
-
   if( !method->c_func ) sub_irep_inc_dec_ref( method->irep, +1 );
 
-  // checking same method
-  for( ;method->next != NULL; method = method->next ) {
-    if( method->next->sym_id == sym_id ) {
-      // Found it. Unchain it in linked list and remove.
-      mrbc_method *del_method = method->next;
-
-      method->next = del_method->next;
-      if( del_method->type == 'M' ) {
-        if( !del_method->c_func ) sub_irep_inc_dec_ref( del_method->irep, -1 );
-        mrbc_raw_free( del_method );
-      }
-
-      break;
+  // checking for duplicate method names.
+  mrbc_method *del_method;
+  for( mrbc_method *m = method; m->next != NULL; m = m->next ) {
+    if( m->next->sym_id == method->sym_id ) {
+      // Found it. Unchain it in linked list.
+      del_method = m->next;
+      m->next = del_method->next;
+      goto found;
     }
+  }
+  return;
+
+ found:;
+  // check for conflicts between class and instance methods.
+  int del_method_type;
+  int flag_remove = 0;
+  switch( del_method->type ) {
+  case 'm':
+    del_method_type = 'M';
+    break;
+  case 's':
+    del_method_type = 'S';
+    break;
+  case 'M':
+  case 'S':
+    flag_remove = 1;
+    del_method_type = del_method->type;
+    break;
+  default:
+    assert(!"Illegal type");
+  }
+  if( del_method_type != method->type ) {
+    mrbc_printf("Warning: Method name conflict (class vs instance)\n");
+  }
+
+  // remove it.
+  if( flag_remove ) {
+    if( !del_method->c_func ) sub_irep_inc_dec_ref( del_method->irep, -1 );
+    mrbc_raw_free( del_method );
   }
 }
 
-static void sub_op_def( mrbc_vm *vm, mrbc_class *cls, mrbc_irep *irep, mrbc_sym sym_id )
+static void sub_op_def( mrbc_vm *vm, mrbc_class *cls, mrbc_irep *irep, mrbc_sym sym_id, int flag_singleton )
 {
   if( cls->flag_nomethod ) {
     mrbc_raisef(vm, MRBC_CLASS(NotImplementedError),
@@ -2974,13 +3013,12 @@ static void sub_op_def( mrbc_vm *vm, mrbc_class *cls, mrbc_irep *irep, mrbc_sym 
     mrbc_raw_alloc( sizeof(mrbc_method) );
 
   *method = (mrbc_method){
-    .type = (vm->vm_id == 0) ? 'm' : 'M',
+    .type = "MSms"[((vm->vm_id == 0) << 1) + flag_singleton],
     .c_func = 0,
     .sym_id = sym_id,
     .irep = irep,
   };
-
-  sub_newmethod( cls, method, sym_id );
+  sub_newmethod( cls, method );
 }
 
 //================================================================
@@ -2992,11 +3030,15 @@ static inline void op_def( mrbc_vm *vm, mrbc_value *regs EXT )
 {
   FETCH_BB();
 
+  // check special type singleton class/object
+  int flag_singleton = (mrbc_type(regs[0]) == MRBC_TT_OBJECT &&
+			regs[0].instance->type == 'S');
+
   mrbc_class *cls = regs[a].cls;
   mrbc_irep *irep = regs[a+1].proc->irep;
   mrbc_sym sym_id = mrbc_irep_symbol_id(vm->cur_irep, b);
 
-  sub_op_def( vm, cls, irep, sym_id );
+  sub_op_def( vm, cls, irep, sym_id, flag_singleton );
   mrbc_set_symbol(&regs[a], sym_id);
 }
 
@@ -3010,11 +3052,15 @@ static inline void op_tdef( mrbc_vm *vm, mrbc_value *regs EXT )
 {
   FETCH_BBB();
 
+  // check special type singleton class/object
+  int flag_singleton = (mrbc_type(regs[0]) == MRBC_TT_OBJECT &&
+			regs[0].instance->type == 'S');
+
   mrbc_class *cls = vm->target_class;
   mrbc_irep *irep = mrbc_irep_child_irep(vm->cur_irep, c);
   mrbc_sym sym_id = mrbc_irep_symbol_id(vm->cur_irep, b);
 
-  sub_op_def( vm, cls, irep, sym_id );
+  sub_op_def( vm, cls, irep, sym_id, flag_singleton );
   mrbc_set_symbol(&regs[a], sym_id);
 }
 
@@ -3032,7 +3078,7 @@ static inline void op_sdef( mrbc_vm *vm, mrbc_value *regs EXT )
   mrbc_irep *irep = mrbc_irep_child_irep(vm->cur_irep, c);
   mrbc_sym sym_id = mrbc_irep_symbol_id(vm->cur_irep, b);
 
-  sub_op_def( vm, cls, irep, sym_id );
+  sub_op_def( vm, cls, irep, sym_id, 1 );
   mrbc_set_symbol(&regs[a], sym_id);
 }
 
@@ -3060,10 +3106,15 @@ static inline void op_alias( mrbc_vm *vm, mrbc_value *regs EXT )
     return;
   }
 
-  method->type = (vm->vm_id == 0) ? 'm' : 'M';
+  if( vm->vm_id != 0 ) {
+    switch( method->type ) {
+    case 'm': method->type = 'M'; break;
+    case 's': method->type = 'S'; break;
+    }
+  }
   method->sym_id = sym_id_new;
 
-  sub_newmethod( cls, method, sym_id_new );
+  sub_newmethod( cls, method );
 }
 
 
@@ -3074,8 +3125,10 @@ static inline void op_alias( mrbc_vm *vm, mrbc_value *regs EXT )
 */
 static inline void op_sclass( mrbc_vm *vm, mrbc_value *regs EXT )
 {
-  // currently, not supported
   FETCH_B();
+
+  regs[a] = mrbc_instance_new( vm, regs[a].cls, 0 );
+  regs[a].instance->type = 'S';	// mark singleton.
 }
 
 

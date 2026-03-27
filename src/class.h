@@ -173,6 +173,7 @@ struct RBuiltinNoMethodClass {
 typedef struct RInstance {
   MRBC_OBJECT_HEADER;
 
+  uint8_t type;                 //!< use OP_SCLASS temporarily for singleton class.
   struct RClass *cls;		//!< pointer to class of this object.
   struct RKeyValueHandle ivar;	//!< instance variable.
   uint8_t data[];		//!< extended data
@@ -189,16 +190,20 @@ typedef struct RInstance mrb_instance;
   Method management structure.
 */
 typedef struct RMethod {
-  uint8_t  type;	//!< M:OP_DEF or OP_ALIAS, m:mrblib or define_method()
+  //! * M: via OP_DEF or OP_ALIAS
+  //! * S: via OP_DEF or OP_ALIAS singleton method.
+  //! * m: via define_method() or mrblib
+  //! * s: via define_method() or mrblib singleton method.
+  uint8_t  type;
   uint8_t  c_func;	//!< 0:IREP, 1:C Func, 2:C Func (built-in)
-  mrbc_sym sym_id;	//!< function names symbol ID
+  mrbc_sym sym_id;	//!< method name's symbol ID
   union {
     struct IREP *irep;	//!< to IREP for ruby proc.
     mrbc_func_t func;	//!< to C function.
   };
   union {
     struct RMethod *next;	//!< link to next method.
-    struct RClass  *cls;	//!< return value for mrbc_find_method.
+    struct RClass  *cls;	//!< return value of mrbc_find_method.
   };
 } mrbc_method;
 
