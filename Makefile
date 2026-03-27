@@ -66,9 +66,9 @@ test_all: test_host_gcc test_host_gcc_no_libc test_host_clang test_host_clang_no
 
 test_arm_no_libc:
 	docker run \
-		-e PICORUBY_DEBUG=1 \
+		-e PICORB_DEBUG=1 \
 		-e MRUBY_CONFIG=arm-linux-gnueabihf \
-		-e PICORUBY_NO_LIBC_ALLOC=1 \
+		-e PICORB_NO_LIBC_ALLOC=1 \
 		-e RUBY="qemu-arm -L /usr/arm-linux-gnueabihf build/arm-linux-gnueabihf/bin/picoruby" \
 		--rm -v $(shell pwd):/work/mrubyc mrubyc-test \
 		bash -c \
@@ -76,7 +76,7 @@ test_arm_no_libc:
 
 test_arm:
 	docker run \
-		-e PICORUBY_DEBUG=1 \
+		-e PICORB_DEBUG=1 \
 		-e MRUBY_CONFIG=arm-linux-gnueabihf \
 		-e RUBY="qemu-arm -L /usr/arm-linux-gnueabihf build/arm-linux-gnueabihf/bin/picoruby" \
 		--rm -v $(shell pwd):/work/mrubyc mrubyc-test \
@@ -86,9 +86,9 @@ test_arm:
 test_host_gcc_no_libc:
 	docker run \
 		-e CC=gcc \
-		-e PICORUBY_DEBUG=1 \
+		-e PICORB_DEBUG=1 \
 		-e MRUBY_CONFIG=picoruby-test \
-		-e PICORUBY_NO_LIBC_ALLOC=1 \
+		-e PICORB_NO_LIBC_ALLOC=1 \
 		-e RUBY="build/host/bin/picoruby" \
 		--rm -v $(shell pwd):/work/mrubyc mrubyc-test \
 		bash -c \
@@ -97,7 +97,7 @@ test_host_gcc_no_libc:
 test_host_gcc:
 	docker run \
 		-e CC=gcc \
-		-e PICORUBY_DEBUG=1 \
+		-e PICORB_DEBUG=1 \
 		-e MRUBY_CONFIG=picoruby-test \
 		-e RUBY="build/host/bin/picoruby" \
 		--rm -v $(shell pwd):/work/mrubyc mrubyc-test \
@@ -107,9 +107,9 @@ test_host_gcc:
 test_host_clang_no_libc:
 	docker run \
 		-e CC=clang \
-		-e PICORUBY_DEBUG=1 \
+		-e PICORB_DEBUG=1 \
 		-e MRUBY_CONFIG=picoruby-test \
-		-e PICORUBY_NO_LIBC_ALLOC=1 \
+		-e PICORB_NO_LIBC_ALLOC=1 \
 		-e RUBY="build/host/bin/picoruby" \
 		--rm -v $(shell pwd):/work/mrubyc mrubyc-test \
 		bash -c \
@@ -118,7 +118,7 @@ test_host_clang_no_libc:
 test_host_clang:
 	docker run \
 		-e CC=clang \
-		-e PICORUBY_DEBUG=1 \
+		-e PICORB_DEBUG=1 \
 		-e MRUBY_CONFIG=picoruby-test \
 		-e RUBY="build/host/bin/picoruby" \
 		--rm -v $(shell pwd):/work/mrubyc mrubyc-test \
@@ -127,7 +127,7 @@ test_host_clang:
 
 test_mips:
 	docker run -e QEMU_LD_PREFIX=/usr/mips-linux-gnu \
-		-e PICORUBY_DEBUG=1 \
+		-e PICORB_DEBUG=1 \
 		-e MRUBY_CONFIG=mips-linux-gnu \
 		-e RUBY="qemu-mips -L /usr/mips-linux-gnu build/mips-linux-gnu/bin/picoruby" \
 		--rm -v $(shell pwd):/work/mrubyc mrubyc-test \
@@ -136,9 +136,9 @@ test_mips:
 
 test_mips_no_libc:
 	docker run -e QEMU_LD_PREFIX=/usr/mips-linux-gnu \
-		-e PICORUBY_DEBUG=1 \
+		-e PICORB_DEBUG=1 \
 		-e MRUBY_CONFIG=mips-linux-gnu \
-		-e PICORUBY_NO_LIBC_ALLOC=1 \
+		-e PICORB_NO_LIBC_ALLOC=1 \
 		-e RUBY="qemu-mips -L /usr/mips-linux-gnu build/mips-linux-gnu/bin/picoruby" \
 		--rm -v $(shell pwd):/work/mrubyc mrubyc-test \
 		bash -c \
