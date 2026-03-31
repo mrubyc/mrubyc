@@ -429,7 +429,6 @@ mrbc_class * mrbc_find_method( mrbc_method *r_method, mrbc_class *cls, mrbc_sym 
     for( method = cls->method_link; method != 0; method = method->next ) {
       if( method->sym_id == sym_id ) {
         *r_method = *method;
-        r_method->cls = cls_save;
         return cls_save;
       }
     }
@@ -455,7 +454,6 @@ mrbc_class * mrbc_find_method( mrbc_method *r_method, mrbc_class *cls, mrbc_sym 
         .c_func = 2,
         .sym_id = sym_id,
         .func = c->method_functions[right],
-        .cls = cls_save,
       };
       return cls_save;
     }

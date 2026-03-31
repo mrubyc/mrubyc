@@ -196,10 +196,8 @@ typedef struct RMethod {
     struct IREP *irep;	//!< to IREP for ruby proc.
     mrbc_func_t func;	//!< to C function.
   };
-  union {
-    struct RMethod *next;	//!< link to next method.
-    struct RClass  *cls;	//!< return value for mrbc_find_method.
-  };
+  struct RMethod *next;	//!< link to next method.
+
 } mrbc_method;
 
 

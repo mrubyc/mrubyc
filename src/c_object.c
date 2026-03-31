@@ -55,9 +55,10 @@ void mrbc_instance_call_initialize( mrbc_vm *vm, mrbc_value v[], int argc )
 {
   // call the initialize method.
   mrbc_method method;
-  if( !mrbc_find_method(&method, v[0].instance->cls, MRBC_SYM(initialize))) {
-    return;
-  }
+  mrbc_class *own_cls;
+
+  own_cls = mrbc_find_method(&method, v[0].instance->cls, MRBC_SYM(initialize));
+  if( own_cls == NULL ) return;
 
   if( method.c_func ) {
     method.func(vm, v, argc);
@@ -69,7 +70,7 @@ void mrbc_instance_call_initialize( mrbc_vm *vm, mrbc_value v[], int argc )
 
   mrbc_callinfo *callinfo = mrbc_push_callinfo(vm, MRBC_SYM(initialize),
                                                (v - vm->cur_regs), argc);
-  callinfo->own_class = method.cls;
+  callinfo->own_class = own_cls;
 
   vm->cur_irep = method.irep;
   vm->inst = vm->cur_irep->inst;

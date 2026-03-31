@@ -111,10 +111,14 @@ static void send_by_name( mrbc_vm *vm, mrbc_sym sym_id, int a, int c )
   // find a method
   mrbc_class *cls = find_class_by_object(recv);
   mrbc_method method;
-  if( mrbc_find_method( &method, cls, sym_id ) != 0 ) goto CALL_METHOD;
+  mrbc_class *own_cls;
+
+  own_cls = mrbc_find_method( &method, cls, sym_id );
+  if( own_cls != NULL ) goto CALL_METHOD;
 
   // method missing?
-  if( mrbc_find_method( &method, cls, MRBC_SYM(method_missing) ) == 0 ) {
+  own_cls = mrbc_find_method( &method, cls, MRBC_SYM(method_missing));
+  if( own_cls == NULL ) {
     mrbc_raisef(vm, MRBC_CLASS(NoMethodError),
                 "undefined local variable or method '%s' for %s",
                 mrbc_symid_to_str(sym_id), mrbc_symid_to_str(cls->sym_id));
@@ -153,7 +157,7 @@ static void send_by_name( mrbc_vm *vm, mrbc_sym sym_id, int a, int c )
 
  CALL_RUBY_METHOD:;
   mrbc_callinfo *callinfo = mrbc_push_callinfo(vm, sym_id, a, narg);
-  callinfo->own_class = method.cls;
+  callinfo->own_class = own_cls;
 
   vm->cur_irep = method.irep;
   vm->inst = vm->cur_irep->inst;
@@ -1385,12 +1389,14 @@ static inline void op_super( mrbc_vm *vm, mrbc_value *regs EXT )
     return;
   }
   mrbc_class *cls = callinfo->own_class;
-  mrbc_method method;
-
   assert( cls );
   cls = cls->super;
   assert( cls );
-  if( mrbc_find_method( &method, cls, callinfo->method_id ) == 0 ) {
+
+  mrbc_method method;
+  mrbc_class *own_cls;
+  own_cls = mrbc_find_method( &method, cls, callinfo->method_id );
+  if( own_cls == NULL ) {
     mrbc_raisef( vm, MRBC_CLASS(NoMethodError),
         "no superclass method '%s' for %s",
         mrbc_symid_to_str(callinfo->method_id),
@@ -1409,7 +1415,7 @@ static inline void op_super( mrbc_vm *vm, mrbc_value *regs EXT )
 
   // call Ruby method.
   callinfo = mrbc_push_callinfo(vm, callinfo->method_id, a, narg);
-  callinfo->own_class = method.cls;
+  callinfo->own_class = own_cls;
   callinfo->is_called_super = 1;
 
   vm->cur_irep = method.irep;
