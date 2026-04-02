@@ -2940,6 +2940,8 @@ static void sub_irep_inc_dec_ref( mrbc_irep *irep, int inc_dec )
   }
 
   irep->ref_count += inc_dec;
+
+  assert( irep->ref_count != 0xffff );
 }
 
 //----------------------------------------------------------------
@@ -2955,7 +2957,8 @@ static void sub_op_def( mrbc_vm *vm, mrbc_class *cls, mrbc_irep *irep, mrbc_sym 
   mrbc_method *m = mrbc_method_table_new_entry( vm, cls, sym_id );
 
   if( m->sym_id == sym_id ) {
-    // 重複
+    // Duplicate method name found.
+    if( ! m->c_func ) sub_irep_inc_dec_ref( m->irep, -1 );
   }
 
   *m = (mrbc_method){
@@ -3042,13 +3045,14 @@ static inline void op_alias( mrbc_vm *vm, mrbc_value *regs EXT )
   }
 
   mrbc_method *m = mrbc_method_table_new_entry( vm, cls, sym_id_new );
+
   if( m->sym_id == sym_id_new ) {
-    // 重複
+    // Duplicate method name found.
+    if( ! m->c_func ) sub_irep_inc_dec_ref( m->irep, -1 );
   }
 
   method.sym_id = sym_id_new;
   *m = method;
-
   if( !m->c_func ) sub_irep_inc_dec_ref( m->irep, +1 );
 }
 

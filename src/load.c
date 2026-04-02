@@ -334,7 +334,6 @@ int mrbc_load_irep(mrbc_vm *vm, const void *bytecode)
 
   @param  irep	Pointer to allocated mrbc_irep.
 */
-//void mrbc_irep_free(struct IREP *irep)
 void mrbc_irep_free(mrbc_irep *irep)
 {
   // release child ireps.

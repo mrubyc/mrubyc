@@ -284,7 +284,7 @@ mrbc_method * mrbc_method_table_new_entry( struct VM *vm, mrbc_class *cls, mrbc_
   int i;
   for( i = 0; i < cls->num_methods; i++ ) {
     if( cls->methods[i].sym_id == sym_id ) {
-      return &cls->methods[i];
+      return &cls->methods[i];		// Duplicate method name found.
     }
     if( cls->methods[i].sym_id > sym_id ) break;
   }
