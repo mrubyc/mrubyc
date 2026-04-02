@@ -2942,30 +2942,7 @@ static void sub_irep_inc_dec_ref( mrbc_irep *irep, int inc_dec )
   irep->ref_count += inc_dec;
 }
 
-static void sub_newmethod( mrbc_class *cls, mrbc_method *method, mrbc_sym sym_id )
-{
-  method->next = cls->method_link;
-  cls->method_link = method;
-
-  if( !method->c_func ) sub_irep_inc_dec_ref( method->irep, +1 );
-
-  // checking same method
-  for( ;method->next != NULL; method = method->next ) {
-    if( method->next->sym_id == sym_id ) {
-      // Found it. Unchain it in linked list and remove.
-      mrbc_method *del_method = method->next;
-
-      method->next = del_method->next;
-      if( del_method->type == 'M' ) {
-        if( !del_method->c_func ) sub_irep_inc_dec_ref( del_method->irep, -1 );
-        mrbc_raw_free( del_method );
-      }
-
-      break;
-    }
-  }
-}
-
+//----------------------------------------------------------------
 static void sub_op_def( mrbc_vm *vm, mrbc_class *cls, mrbc_irep *irep, mrbc_sym sym_id )
 {
   if( cls->flag_nomethod ) {
@@ -2975,18 +2952,19 @@ static void sub_op_def( mrbc_vm *vm, mrbc_class *cls, mrbc_irep *irep, mrbc_sym 
     return;
   }
 
-  mrbc_method *method = (vm->vm_id == 0) ?
-    mrbc_raw_alloc_no_free( sizeof(mrbc_method) ) :
-    mrbc_raw_alloc( sizeof(mrbc_method) );
+  mrbc_method *m = mrbc_method_table_new_entry( vm, cls, sym_id );
 
-  *method = (mrbc_method){
+  if( m->sym_id == sym_id ) {
+    // 重複
+  }
+
+  *m = (mrbc_method){
     .type = (vm->vm_id == 0) ? 'm' : 'M',
     .c_func = 0,
     .sym_id = sym_id,
     .irep = irep,
   };
-
-  sub_newmethod( cls, method, sym_id );
+  sub_irep_inc_dec_ref( irep, +1 );
 }
 
 //================================================================
@@ -3055,21 +3033,23 @@ static inline void op_alias( mrbc_vm *vm, mrbc_value *regs EXT )
   mrbc_sym sym_id_new = mrbc_irep_symbol_id(vm->cur_irep, a);
   mrbc_sym sym_id_org = mrbc_irep_symbol_id(vm->cur_irep, b);
   mrbc_class *cls = vm->target_class;
-  mrbc_method *method = (vm->vm_id == 0) ?
-    mrbc_raw_alloc_no_free( sizeof(mrbc_method) ) :
-    mrbc_raw_alloc( sizeof(mrbc_method) );
+  mrbc_method method;
 
-  if( mrbc_find_method( method, cls, sym_id_org ) == 0 ) {
+  if( mrbc_find_method( &method, cls, sym_id_org ) == NULL ) {
     mrbc_raisef(vm, MRBC_CLASS(NameError), "undefined method '%s'",
                 mrbc_symid_to_str(sym_id_org));
-    if(vm->vm_id != 0) mrbc_raw_free( method );
     return;
   }
 
-  method->type = (vm->vm_id == 0) ? 'm' : 'M';
-  method->sym_id = sym_id_new;
+  mrbc_method *m = mrbc_method_table_new_entry( vm, cls, sym_id_new );
+  if( m->sym_id == sym_id_new ) {
+    // 重複
+  }
 
-  sub_newmethod( cls, method, sym_id_new );
+  method.sym_id = sym_id_new;
+  *m = method;
+
+  if( !m->c_func ) sub_irep_inc_dec_ref( m->irep, +1 );
 }
 
 

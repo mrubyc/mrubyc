@@ -1494,12 +1494,10 @@ void mrbc_init(void *heap_ptr, unsigned int size)
   mrbc_value vcls = mrbc_immediate_value(MRBC_TT_CLASS);
 
   for( int i = 0; i < sizeof(rrt0_cls)/sizeof(rrt0_cls[0]); i++ ) {
-    mrbc_class *cls = rrt0_cls[i];
-
-    cls->super = MRBC_CLASS(Object);
-    cls->method_link = 0;
-    vcls.cls = cls;
-
+    vcls.cls = rrt0_cls[i];
+    vcls.cls->super = MRBC_CLASS(Object);
+    vcls.cls->num_methods = 0;
+    vcls.cls->methods = 0;
     mrbc_set_const( vcls.cls->sym_id, &vcls );
   }
 

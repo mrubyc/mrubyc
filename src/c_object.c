@@ -413,10 +413,8 @@ static void c_object_instance_methods(mrbc_vm *vm, mrbc_value v[], int argc)
     }
 
     // no builtin method.
-    const mrbc_method *method = cls->flag_nomethod ? NULL : cls->method_link;
-    while( method ) {
-      mrbc_array_push( &ret, &mrbc_symbol_value(method->sym_id) );
-      method = method->next;
+    for( int i = 0; i < cls->num_methods; i++ ) {
+      mrbc_array_push( &ret, &mrbc_symbol_value(cls->methods[i].sym_id) );
     }
 
     if( !flag_inherit ) break;
