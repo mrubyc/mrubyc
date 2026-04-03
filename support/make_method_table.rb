@@ -79,7 +79,7 @@ EOL
 
     # write class struct.
     struct_name = cls[:methods].empty? ? "RBuiltinNoMethodClass" : "RBuiltinClass"
-    file.puts "struct #{struct_name} mrbc_class_#{cls_name} = {"
+    file.puts "const struct #{struct_name} mrbc_class_#{cls_name}_init = {"
     file.puts "  .sym_id = MRBC_SYM(#{cls_name}),"
     file.puts "  .flag_builtin = 1,"
     file.puts "  .flag_nomethod = 1,"  if struct_name == "RBuiltinNoMethodClass"
@@ -106,6 +106,10 @@ EOL
       file.puts "  .method_functions = method_functions_#{cls_name},"
     end
     file.puts "};"
+    file.puts ""
+
+    # write class struct.
+    file.puts "struct #{struct_name} mrbc_class_#{cls_name};"
   }
 
   file.close  if file != $stdout

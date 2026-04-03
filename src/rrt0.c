@@ -1487,19 +1487,26 @@ void mrbc_init(void *heap_ptr, unsigned int size)
   mrbc_init_global();
   mrbc_init_class();
 
-  // (re) Initialize included classes
-  static mrbc_class * const rrt0_cls[] = {
-    MRBC_CLASS(Task), MRBC_CLASS(Mutex), MRBC_CLASS(VM)
+  // Initialize included classes
+  static const struct {
+    mrbc_class *initial;
+    mrbc_class *target;
+  } rrt0_cls[] = {
+    { MRBC_CLASS(Task_init), MRBC_CLASS(Task) },
+    { MRBC_CLASS(Mutex_init), MRBC_CLASS(Mutex) },
+    { MRBC_CLASS(VM_init), MRBC_CLASS(VM) },
   };
-  mrbc_value vcls = mrbc_immediate_value(MRBC_TT_CLASS);
+
+  mrbc_value vcls;
+  mrbc_set_tt( &vcls, MRBC_TT_CLASS );
 
   for( int i = 0; i < sizeof(rrt0_cls)/sizeof(rrt0_cls[0]); i++ ) {
-    vcls.cls = rrt0_cls[i];
-    vcls.cls->super = MRBC_CLASS(Object);
-    if( !vcls.cls->flag_nomethod ) {
-      vcls.cls->num_methods = 0;
-      vcls.cls->methods = 0;
-    }
+    struct RBuiltinClass *cls_i, *cls_t;
+    cls_i = (struct RBuiltinClass *)rrt0_cls[i].initial;
+    cls_t = (struct RBuiltinClass *)rrt0_cls[i].target;
+    *cls_t = *cls_i;
+
+    vcls.cls = rrt0_cls[i].target;
     mrbc_set_const( vcls.cls->sym_id, &vcls );
   }
 

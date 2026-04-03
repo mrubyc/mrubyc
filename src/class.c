@@ -676,16 +676,23 @@ int mrbc_run_mrblib(const void *bytecode)
 void mrbc_init_class(void)
 {
   // initialize builtin class.
-  mrbc_value vcls;
-
   for( int i = 0; i < sizeof(MRBC_BuiltinClass)/sizeof(struct MRBC_BuiltinClass); i++ ) {
-    vcls.cls = MRBC_BuiltinClass[i].cls;
-    vcls.cls->super = MRBC_BuiltinClass[i].super;
-    if( !vcls.cls->flag_nomethod ) {
-      vcls.cls->num_methods = 0;
-      vcls.cls->methods = 0;
+    if( MRBC_BuiltinClass[i].initial->flag_nomethod ) {
+      struct RBuiltinNoMethodClass *cls_i, *cls_t;
+      cls_i = (struct RBuiltinNoMethodClass *)MRBC_BuiltinClass[i].initial;
+      cls_t = (struct RBuiltinNoMethodClass *)MRBC_BuiltinClass[i].target;
+      *cls_t = *cls_i;
+    } else {
+      struct RBuiltinClass *cls_i, *cls_t;
+      cls_i = (struct RBuiltinClass *)MRBC_BuiltinClass[i].initial;
+      cls_t = (struct RBuiltinClass *)MRBC_BuiltinClass[i].target;
+      *cls_t = *cls_i;
     }
+
+    mrbc_value vcls;
+    vcls.cls = MRBC_BuiltinClass[i].target;
     mrbc_set_tt( &vcls, vcls.cls->flag_module ? MRBC_TT_MODULE : MRBC_TT_CLASS);
+
     mrbc_set_const( vcls.cls->sym_id, &vcls );
   }
 
