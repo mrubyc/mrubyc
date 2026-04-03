@@ -272,6 +272,8 @@ mrbc_class * mrbc_define_module_under(struct VM *vm, const mrbc_class *outer, co
 */
 mrbc_method * mrbc_method_table_new_entry( struct VM *vm, mrbc_class *cls, mrbc_sym sym_id )
 {
+  assert( cls->flag_nomethod == 0 );
+
   // allocate method table, if need.
   if( cls->methods == NULL ) {
     cls->num_methods = 1;
@@ -679,8 +681,10 @@ void mrbc_init_class(void)
   for( int i = 0; i < sizeof(MRBC_BuiltinClass)/sizeof(struct MRBC_BuiltinClass); i++ ) {
     vcls.cls = MRBC_BuiltinClass[i].cls;
     vcls.cls->super = MRBC_BuiltinClass[i].super;
-    vcls.cls->num_methods = 0;
-    vcls.cls->methods = 0;
+    if( !vcls.cls->flag_nomethod ) {
+      vcls.cls->num_methods = 0;
+      vcls.cls->methods = 0;
+    }
     mrbc_set_tt( &vcls, vcls.cls->flag_module ? MRBC_TT_MODULE : MRBC_TT_CLASS);
     mrbc_set_const( vcls.cls->sym_id, &vcls );
   }
