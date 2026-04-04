@@ -1491,7 +1491,8 @@ void mrbc_init(void *heap_ptr, unsigned int size)
   static mrbc_class * const rrt0_cls[] = {
     MRBC_CLASS(Task), MRBC_CLASS(Mutex), MRBC_CLASS(VM)
   };
-  mrbc_value vcls = mrbc_immediate_value(MRBC_TT_CLASS);
+  mrbc_value vcls;
+  mrbc_set_tt( &vcls, MRBC_TT_CLASS );
 
   for( int i = 0; i < sizeof(rrt0_cls)/sizeof(rrt0_cls[0]); i++ ) {
     vcls.cls = rrt0_cls[i];

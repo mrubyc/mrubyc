@@ -86,26 +86,26 @@ typedef struct RClass {
      and RBuiltinNoMethodClass for safe casting.
   */
 #if defined(MRBC_DEBUG)
-  uint8_t obj_mark_[2];           //!< set "CL" or "MO" for debug.
+  uint8_t obj_mark_[2];			//!< set "CL" or "MO" for debug.
   const char *name;
 #endif
 
-  mrbc_sym sym_id;                //!< class name's symbol ID
-  unsigned int flag_builtin : 1;  //!< is built-in class? (= 0)
-  unsigned int flag_nomethod : 1; //!< is built-in no method class? (= 0)
-  unsigned int flag_module : 1;   //!< is module?
-  unsigned int flag_alias : 1;    //!< is module alias?
-  uint8_t num_builtin_method;     //!< num of built-in method.
-  struct RClass *super;           //!< pointer to super class.
+  mrbc_sym sym_id;			//!< class name's symbol ID
+  unsigned int flag_builtin  : 1;	//!< is built-in class? (= 0)
+  unsigned int flag_nomethod : 1;	//!< is built-in no method class? (= 0)
+  unsigned int flag_module   : 1;	//!< is module?
+  unsigned int flag_alias    : 1;	//!< is module alias?
+  uint8_t num_builtin_methods;		//!< num of built-in method.
+  struct RClass *super;			//!< pointer to super class.
 
   // --- Specific members ---
-  uint16_t num_methods;           //!< num of entries in method table.
+  uint16_t num_methods;			//!< num of entries in method table.
   union {
-    struct RMethod *methods;      //!< pointer to method table.
-    struct RClass *aliased;       //!< pointer to aliased module.
+    struct RMethod *methods;		//!< pointer to method table.
+    struct RClass *aliased;		//!< pointer to aliased module.
   };
 
-  void (*destructor)(mrbc_value *); //!< specify a destructor if need.
+  void (*destructor)(mrbc_value *);	//!< specify a destructor if need.
 
 } mrbc_class;
 
@@ -121,23 +121,23 @@ typedef struct RClass mrb_class;
 */
 struct RBuiltinClass {
 #if defined(MRBC_DEBUG)
-  uint8_t obj_mark_[2];           //!< set "CL" or "MO" for debug.
+  uint8_t obj_mark_[2];			//!< set "CL" or "MO" for debug.
   const char *name;
 #endif
 
-  mrbc_sym sym_id;                //!< class name's symbol ID
-  unsigned int flag_builtin : 1;  //!< is built-in class? (= 1)
-  unsigned int flag_nomethod : 1; //!< is built-in no method class? (= 0)
-  unsigned int flag_module : 1;   //!< is module?
-  unsigned int flag_alias : 1;    //!< is module alias?
-  uint8_t num_builtin_method;     //!< num of built-in method.
-  struct RClass *super;           //!< pointer to super class.
+  mrbc_sym sym_id;			//!< class name's symbol ID
+  unsigned int flag_builtin  : 1;	//!< is built-in class? (= 1)
+  unsigned int flag_nomethod : 1;	//!< is built-in no method class? (= 0)
+  unsigned int flag_module   : 1;	//!< is module?
+  unsigned int flag_alias    : 1;	//!< is module alias?
+  uint8_t num_builtin_methods;		//!< num of built-in method.
+  struct RClass *super;			//!< pointer to super class.
 
   // --- Specific members ---
-  uint16_t num_methods;           //!< num of entries in method table.
+  uint16_t num_methods;			//!< num of entries in method table.
   union {
-    struct RMethod *methods;      //!< pointer to method table.
-    struct RClass *aliased;       //!< pointer to aliased module.
+    struct RMethod *methods;		//!< pointer to method table.
+    struct RClass *aliased;		//!< pointer to aliased module.
   };
 
   const mrbc_sym *method_symbols;	//!< built-in method sym-id table.
@@ -152,17 +152,17 @@ struct RBuiltinClass {
 */
 struct RBuiltinNoMethodClass {
 #if defined(MRBC_DEBUG)
-  uint8_t obj_mark_[2];           //!< set "CL" or "MO" for debug.
+  uint8_t obj_mark_[2];			//!< set "CL" or "MO" for debug.
   const char *name;
 #endif
 
-  mrbc_sym sym_id;                //!< class name's symbol ID
-  unsigned int flag_builtin : 1;  //!< is built-in class? (= 1)
-  unsigned int flag_nomethod : 1; //!< is built-in no method class? (= 1)
-  unsigned int flag_module : 1;   //!< is module?
-  unsigned int flag_alias : 1;    //!< is module alias?
-  uint8_t num_builtin_method;     //!< num of built-in method.
-  struct RClass *super;           //!< pointer to super class.
+  mrbc_sym sym_id;			//!< class name's symbol ID
+  unsigned int flag_builtin  : 1;	//!< is built-in class? (= 1)
+  unsigned int flag_nomethod : 1;	//!< is built-in no method class? (= 1)
+  unsigned int flag_module   : 1;	//!< is module?
+  unsigned int flag_alias    : 1;	//!< is module alias?
+  uint8_t num_builtin_methods;		//!< num of built-in method.
+  struct RClass *super;			//!< pointer to super class.
 };
 
 

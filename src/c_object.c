@@ -407,7 +407,7 @@ static void c_object_instance_methods(mrbc_vm *vm, mrbc_value v[], int argc)
 
   while( 1 ) {
     // builtin method.
-    for( int i = 0; i < cls->num_builtin_method; i++ ) {
+    for( int i = 0; i < cls->num_builtin_methods; i++ ) {
       mrbc_array_push( &ret,
 	&mrbc_symbol_value(((struct RBuiltinClass *)cls)->method_symbols[i]) );
     }

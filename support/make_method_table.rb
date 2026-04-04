@@ -86,7 +86,7 @@ EOL
     file.puts "  .flag_module = 1,"  if type == :module
 
     n = cls[:methods].empty? ? "0" : "sizeof(method_symbols_#{cls_name}) / sizeof(mrbc_sym)"
-    file.puts "  .num_builtin_method = #{n},"
+    file.puts "  .num_builtin_methods = #{n},"
     sp = case cls[:super]
          when nil
            raise "SUPER isn't specified."

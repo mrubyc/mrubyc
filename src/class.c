@@ -494,8 +494,8 @@ mrbc_class * mrbc_find_method( mrbc_method *r_method, mrbc_class *cls, mrbc_sym 
 
   search_builtin_class:;
     struct RBuiltinClass *c = (struct RBuiltinClass *)cls;
-    if( c->num_builtin_method == 0 ) goto next_class;
-    right = c->num_builtin_method - 1;
+    if( c->num_builtin_methods == 0 ) goto next_class;
+    right = c->num_builtin_methods - 1;
     left = 0;
 
     while( left < right ) {
