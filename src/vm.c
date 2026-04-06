@@ -1430,15 +1430,12 @@ static inline void op_argary( mrbc_vm *vm, mrbc_value *regs EXT )
   FETCH_BS();
 
   int m1 = (b >> 11) & 0x3f;
+  int r  = (b >> 10) & 0x01;
+  int m2 = (b >>  5) & 0x1f;
   int d  = (b >>  4) & 0x01;
   int lv = b & 0x0f;
 
-  if( b & 0x400 ) {	// check REST parameter.
-    // TODO: want to support.
-    mrbc_raise( vm, MRBC_CLASS(NotImplementedError), "Not support rest parameter by super");
-    return;
-  }
-  if( b & 0x3e0 ) {	// check m2 parameter.
+  if( m2 ) {
     mrbc_raise( vm, MRBC_CLASS(NotImplementedError), "not support m2 argument");
     return;
   }
@@ -1463,13 +1460,26 @@ static inline void op_argary( mrbc_vm *vm, mrbc_value *regs EXT )
   }
 
   // create argument array.
-  int array_size = m1 + d;
-  mrbc_value argary = mrbc_array_new( vm, array_size );
+  int rest_len = 0;
+  mrbc_value *rest_data = NULL;
+  if( r && mrbc_type(reg0[m1+1]) == MRBC_TT_ARRAY ) {
+    rest_len = mrbc_array_size(&reg0[m1+1]);
+    rest_data = reg0[m1+1].array->data;
+  }
+
+  mrbc_value argary = mrbc_array_new( vm, m1 + rest_len + m2 );
 
   for( int i = 1; i <= m1; i++ ) {
     mrbc_incref( &reg0[i] );
     mrbc_array_push( &argary, &reg0[i] );
   }
+
+  for( int i = 0; i < rest_len; i++ ) {
+    mrbc_incref( &rest_data[i] );
+    mrbc_array_push( &argary, &rest_data[i] );
+  }
+
+  int block_reg = m1 + r + m2;
 
   if( d ) {
     if( !callinfo ) callinfo = vm->callinfo_tail;
@@ -1477,6 +1487,7 @@ static inline void op_argary( mrbc_vm *vm, mrbc_value *regs EXT )
     mrbc_value karg = mrbc_immediate_value(MRBC_TT_HASH, .hash = callinfo->karg_keep);
     karg = mrbc_hash_dup(vm, &karg);
     mrbc_array_push( &argary, &karg );
+    block_reg++;
   }
 
   mrbc_decref( &regs[a] );
@@ -1484,7 +1495,7 @@ static inline void op_argary( mrbc_vm *vm, mrbc_value *regs EXT )
 
   // copy a block object
   mrbc_decref( &regs[a+1] );
-  regs[a+1] = reg0[array_size+1];
+  regs[a+1] = reg0[block_reg+1];
   mrbc_incref( &regs[a+1] );
 }
 
