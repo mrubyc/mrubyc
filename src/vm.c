@@ -1429,11 +1429,11 @@ static inline void op_argary( mrbc_vm *vm, mrbc_value *regs EXT )
 {
   FETCH_BS();
 
-  int m1 = (b >> 11) & 0x3f;
+  int m1 = (b >> 11) & 0x1f;
   int r  = (b >> 10) & 0x01;
   int m2 = (b >>  5) & 0x1f;
   int d  = (b >>  4) & 0x01;
-  int lv = b & 0x0f;
+  int lv = (b      ) & 0x0f;
 
   if( m2 ) {
     mrbc_raise( vm, MRBC_CLASS(NotImplementedError), "not support m2 argument");
@@ -1503,9 +1503,9 @@ static inline void op_argary( mrbc_vm *vm, mrbc_value *regs EXT )
 //================================================================
 /*! OP_ENTER
 
-  arg setup according to flags (23=m5:o5:r1:m5:k5:d1:b1)
+  arg setup according to flags (24=n1:m5:o5:r1:m5:k5:d1:b1)
 
-  flags: 0mmm_mmoo_ooor_mmmm_mkkk_kkdb
+  flags: nmmm_mmoo_ooor_mmmm_mkkk_kkdb
 */
 static inline void op_enter( mrbc_vm *vm, mrbc_value *regs EXT )
 {
@@ -1955,7 +1955,7 @@ static inline void op_blkpush( mrbc_vm *vm, mrbc_value *regs EXT )
 {
   FETCH_BS();
 
-  int m1 = (b >> 11) & 0x3f;
+  int m1 = (b >> 11) & 0x1f;
   int r  = (b >> 10) & 0x01;
   int m2 = (b >>  5) & 0x1f;
   int d  = (b >>  4) & 0x01;
