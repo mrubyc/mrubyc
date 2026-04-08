@@ -128,13 +128,13 @@ void mrbc_putchar(char c)
 #if defined(MRBC_CONVERT_CRLF)
   static const char CRLF[2] = "\r\n";
   if( c == '\n' ) {
-    hal_write(1, CRLF, 2);
+    mrbc_hal_write(1, CRLF, 2);
   } else {
-    hal_write(1, &c, 1);
+    mrbc_hal_write(1, &c, 1);
   }
 
 #else
-    hal_write(1, &c, 1);
+    mrbc_hal_write(1, &c, 1);
 #endif
 }
 
@@ -177,17 +177,17 @@ void mrbc_nprint(const char *str, int size)
 
   for( int i = 0; i < size; i++ ) {
     if( *p1++ == '\n' ) {
-      hal_write(1, p2, p1 - p2 - 1);
-      hal_write(1, CRLF, 2);
+      mrbc_hal_write(1, p2, p1 - p2 - 1);
+      mrbc_hal_write(1, CRLF, 2);
       p2 = p1;
     }
   }
   if( p1 != p2 ) {
-    hal_write(1, p2, p1 - p2);
+    mrbc_hal_write(1, p2, p1 - p2);
   }
 
 #else
-  hal_write(1, str, size);
+  mrbc_hal_write(1, str, size);
 #endif
 }
 

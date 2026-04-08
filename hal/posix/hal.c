@@ -60,7 +60,7 @@ static void sig_alarm(int dummy)
   initialize
 
 */
-void hal_init(void)
+void mrbc_hal_init(void)
 {
   sigemptyset(&sigset_);
   sigaddset(&sigset_, SIGALRM);
@@ -120,7 +120,7 @@ void hal_init(void)
   enable interrupt
 
 */
-void hal_enable_irq(void)
+void mrbc_hal_enable_irq(void)
 {
   sigprocmask(SIG_UNBLOCK, &sigset_, 0);
 }
@@ -131,7 +131,7 @@ void hal_enable_irq(void)
   disable interrupt
 
 */
-void hal_disable_irq(void)
+void mrbc_hal_disable_irq(void)
 {
   sigprocmask(SIG_BLOCK, &sigset_, 0);
 }
@@ -144,11 +144,12 @@ void hal_disable_irq(void)
 /*!@brief
   abort program
 
+  @param s	additional message.
 */
-void hal_abort( const char *s )
+void mrbc_hal_abort(const char *s)
 {
   if( s ) {
-    hal_write(1, s, strlen(s));
+    mrbc_hal_write(2, s, strlen(s));
   }
   exit( 1 );
 }
@@ -162,12 +163,12 @@ void hal_abort( const char *s )
 void mrbc_out_of_memory_posix( void )
 {
   static const char msg[] = "Fatal error: Out of memory.\n";
-  hal_write(2, msg, sizeof(msg)-1);
+  mrbc_hal_write(2, msg, sizeof(msg)-1);
 
 #if 0
   void mrbc_alloc_print_memory_pool(void);
   mrbc_alloc_print_memory_pool();
 #endif
 
-  hal_abort(0);
+  mrbc_hal_abort(0);
 }

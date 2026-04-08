@@ -34,11 +34,11 @@
 /*!@brief
   Write
 
-  @param  fd		dummy, but 1.
+  @param  fd		dummy.
   @param  buf		pointer to buffer.
   @param  nbytes	output byte length.
 */
-int hal_write(int fd, const void *buf, int nbytes)
+int mrbc_hal_write(int fd, const void *buf, int nbytes)
 {
   UART_1_PutArray( buf, nbytes );
   return nbytes;
@@ -48,9 +48,9 @@ int hal_write(int fd, const void *buf, int nbytes)
 /*!@brief
   Flush write buffer
 
-  @param  fd	dummy, but 1.
+  @param  fd	dummy.
 */
-int hal_flush(int fd)
+int mrbc_hal_flush(int fd)
 {
   return 0;
 }
@@ -61,7 +61,7 @@ int hal_flush(int fd)
 
   @param s	additional message.
 */
-void hal_abort(const char *s)
+void mrbc_hal_abort(const char *s)
 {
   if( s ) {
     UART_1_PutString(s);

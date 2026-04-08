@@ -25,7 +25,7 @@
   @param  buf		pointer to buffer.
   @param  nbytes	output byte length.
 */
-int hal_write(int fd, const void *buf, int nbytes)
+int mrbc_hal_write(int fd, const void *buf, int nbytes)
 {
   extern UART_HandleTypeDef UART_HANDLETYPEDEF_CONSOLE;
   HAL_UART_Transmit(&UART_HANDLETYPEDEF_CONSOLE, buf, nbytes, HAL_MAX_DELAY);
@@ -40,7 +40,7 @@ int hal_write(int fd, const void *buf, int nbytes)
 
   @param  fd	dummy, but 1.
 */
-int hal_flush(int fd)
+int mrbc_hal_flush(int fd)
 {
   return 0;
 }
@@ -51,9 +51,9 @@ int hal_flush(int fd)
 
   @param s	additional message.
 */
-void hal_abort(const char *s)
+void mrbc_hal_abort(const char *s)
 {
-  hal_write(2, s, strlen(s));
+  if( s ) mrbc_hal_write(2, s, strlen(s));
 
   HAL_Delay(10000);
   HAL_NVIC_SystemReset();
