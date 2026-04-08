@@ -32,6 +32,9 @@ extern "C" {
 
 /***** Constant values ******************************************************/
 #define MRBC_TRAVERSE_NEST_LEVEL 3
+#if !defined(MRBC_INSTANCE_DESTRUCTOR)
+# define MRBC_INSTANCE_DESTRUCTOR 1
+#endif
 
 
 /***** Macros ***************************************************************/
@@ -104,7 +107,9 @@ typedef struct RClass {
     struct RClass *aliased;       //!< aliased class or module.
   };
 
-  void (*destructor)( mrbc_value * );	//!< specify a destructor if need.
+#if MRBC_INSTANCE_DESTRUCTOR
+  void (*destructor)(mrbc_value *);	//!< specify a destructor if need.
+#endif
 
 } mrbc_class;
 
@@ -274,6 +279,7 @@ static inline mrbc_class *find_class_by_object(const mrbc_value *obj)
 }
 
 
+#if MRBC_INSTANCE_DESTRUCTOR
 //================================================================
 /*! Define the destructor
 
@@ -290,6 +296,7 @@ static inline void mrbc_define_destructor( mrbc_class *cls, void (*destructor)(m
 
   cls->destructor = destructor;
 }
+#endif
 
 
 //================================================================

@@ -324,9 +324,11 @@ mrbc_value mrbc_instance_new(struct VM *vm, mrbc_class *cls, int size)
 void mrbc_instance_delete(mrbc_value *v)
 {
   assert( mrbc_type(*v) == MRBC_TT_OBJECT );
-  mrbc_class *cls = v->instance->cls;
 
+#if MRBC_INSTANCE_DESTRUCTOR
+  mrbc_class *cls = v->instance->cls;
   if( !cls->flag_builtin && cls->destructor ) cls->destructor( v );
+#endif
 
   mrbc_kv_delete_data( &v->instance->ivar );
   mrbc_raw_free( v->instance );
