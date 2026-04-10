@@ -64,14 +64,6 @@ MAKE_CLASS_TABLE ?= ../support/make_class_table.rb
 MAKE_METHOD_TABLE ?= ../support/make_method_table.rb
 GENERATE_UNICODE_CASE ?= ../support/generate_unicode_case_tables.rb
 
-# To upgrade Unicode, update UNICODE_VERSION and replace UnicodeData.txt in the
-# repository with the new version from:
-#   https://www.unicode.org/Public/<version>/ucd/UnicodeData.txt
-# See doc/compile.md for the upgrade procedure.
-UNICODE_VERSION = 16.0.0
-UNICODE_DATA ?= UnicodeData.txt
-AUTOGEN_UNICODE_CASE = _autogen_unicode_case.h
-
 AUTOGEN_SYMBOL_TABLE = _autogen_builtin_symbol.h
 AUTOGEN_CLASS_TABLE = _autogen_builtin_class.h
 AUTOGEN_METHOD_TABLE = _autogen_class_array.h _autogen_class_exception.h \
@@ -84,9 +76,6 @@ AUTOGEN_METHOD_TABLE = _autogen_class_array.h _autogen_class_exception.h \
 # un-comment below, if you need add and/or delete method in builtin class.
 #
 #AUTOGEN_METHOD_SRCS = c_object.c symbol.c c_numeric.c c_string.c c_proc.c c_range.c c_array.c c_hash.c error.c c_math.c rrt0.c
-
-$(AUTOGEN_UNICODE_CASE): $(UNICODE_DATA)
-	ruby $(GENERATE_UNICODE_CASE) $(UNICODE_DATA) $@
 
 $(AUTOGEN_SYMBOL_TABLE): $(AUTOGEN_CLASS_TABLE)
 	$(MAKE_SYMBOL_TABLE) --path-c . --path-rb ../mrblib -o $@
@@ -118,6 +107,19 @@ _autogen_class_exception.h:	$(AUTOGEN_METHOD_SRCS)
 	$(MAKE_METHOD_TABLE) error.c
 _autogen_class_rrt0.h:		$(AUTOGEN_METHOD_SRCS)
 	$(MAKE_METHOD_TABLE) rrt0.c
+
+
+# To upgrade Unicode, update UNICODE_VERSION and replace UnicodeData.txt in the
+# repository with the new version from:
+#   https://www.unicode.org/Public/<version>/ucd/UnicodeData.txt
+# See doc/compile.md for the upgrade procedure.
+UNICODE_VERSION = 16.0.0
+UNICODE_DATA ?= UnicodeData.txt
+AUTOGEN_UNICODE_CASE = _autogen_unicode_case.h
+
+$(AUTOGEN_UNICODE_CASE): $(UNICODE_DATA)
+	$(GENERATE_UNICODE_CASE) $(UNICODE_DATA) $@
+
 
 # HAL
 $(BUILD_DIR)/hal.o: $(HAL_DIR)/hal.c $(HAL_DIR)/hal.h
