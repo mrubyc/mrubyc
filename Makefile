@@ -11,35 +11,44 @@
 
 USER_ID = $(shell id -u)
 
-.PHONY: all mrblib mrubyc_lib mrubyc_bin
-all: mrubyc_lib mrubyc_bin
+#
+# Targets
+#
+.PHONY: default all clean clean_all autogen
 
-mrblib:
-	cd mrblib   ; $(MAKE) all
+## Default target
+default:
+	@cd mrblib;	$(MAKE)
+	@cd src;	$(MAKE)
+	@cd sample_c;	$(MAKE)
 
-mrubyc_lib: mrblib
-	cd src      ; $(MAKE) all
+## Rebuild auto-generated files and build target
+all:
+	@cd mrblib;	$(MAKE) all
+	@cd src;	$(MAKE) all
+	@cd sample_c;	$(MAKE)
 
-mrubyc_bin: mrubyc_lib
-	cd sample_c ; $(MAKE) all
-
-
-.PHONY: autogen
-autogen:
-	cd src && $(MAKE) autogen
-
-.PHONY: clean clean_all
+## Clean up object files and editor backups.
 clean:
-	cd src      ; $(MAKE) clean
-	cd sample_c ; $(MAKE) clean
+	@cd src;	$(MAKE) clean
+	@cd mrblib;	$(MAKE) clean
+	@cd sample_c;	$(MAKE) clean
 
-# clean including auto generated files.
+## Remove auto-generated files and intermediate files
 clean_all:
-	cd mrblib   ; $(MAKE) clean_all
-	cd src      ; $(MAKE) clean_all
-	cd sample_c ; $(MAKE) clean
+	@cd src;	$(MAKE) clean_all
+	@cd mrblib;	$(MAKE) clean_all
+	@cd sample_c;	$(MAKE) clean
+
+## auto generated files
+autogen:
+	@cd src;	$(MAKE) autogen
+	@cd mrblib;	$(MAKE) all
 
 
+#
+# Tests
+#
 .PHONY: docker_build delete_docker docker_bash
 
 docker_build:
