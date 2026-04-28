@@ -41,12 +41,11 @@ BUILD_DIR = ../build
 default: $(TARGET)
 
 ## Rebuild auto-generated files and build target
-ifdef RUBY_INSTALLED
 all:
+ifdef RUBY_INSTALLED
 	@$(MAKE) clean_all
 	@$(MAKE) $(TARGET)
 else
-all:
 	@echo "Ruby is required to generate _autogen* files. Please install it."
 endif
 

@@ -9,7 +9,8 @@
 #  This file is distributed under BSD 3-Clause License.
 #
 
-TARGET = ../src/mrblib.c
+TARGETS = $(MRBLIB_C) $(VERSIONFILE)
+MRBLIB_C = ../src/mrblib.c
 VERSIONFILE =  ../src/VERSION
 SRCS = enum.rb array.rb global.rb hash.rb numeric.rb object.rb range.rb string.rb
 MRBC ?= mrbc
@@ -21,30 +22,28 @@ MRBC ?= mrbc
 .PHONY: default all clean clean_all autogen
 
 ## Default target
-default: $(TARGET) $(VERSIONFILE)
+default: $(TARGETS)
 
 ## (re)Build all targets
-all: remove_targets $(TARGET) $(VERSIONFILE)
+all: clean_all
+	@$(MAKE) $(TARGETS)
 
 ## Remove editor backup files
 clean:
-	@rm -f *~
+	rm -f *~
 
 ## Remove intermediate files
-clean_all: clean remove_targets
+clean_all: clean
+	rm -f $(TARGETS)
 
 ## dummy
 autogen:
-
-## remove output files
-remove_targets:
-	rm -f $(TARGET) $(VERSIONFILE)
 
 
 #
 # How to build each file
 #
-$(TARGET): $(SRCS)
+$(MRBLIB_C): $(SRCS)
 	$(MRBC) -Bmrblib_bytecode --remove-lv -o$@ $(SRCS)
 
 $(VERSIONFILE): global.rb
