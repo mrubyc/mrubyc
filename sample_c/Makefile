@@ -27,7 +27,7 @@ sample_concurrent: sample_concurrent.c $(LIBMRUBYC)
 sample_myclass: sample_myclass.c $(LIBMRUBYC)
 
 clean:
-	@rm -rf $(TARGETS) *.o *.dSYM *~
+	rm -rf $(TARGETS) *.o *.dSYM *~
 
 strip:
 	strip $(TARGETS)

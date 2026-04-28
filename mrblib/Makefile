@@ -1,5 +1,6 @@
 #
-# mruby/c  Makefile
+# mruby/c mrblib/Makefile
+# Compile Ruby files into RITE bytecode and outputs them as a C-lang array.
 #
 # Copyright (C) 2015-      Kyushu Institute of Technology.
 # Copyright (C) 2015-2026  Shimane IT Open-Innovation Center.
@@ -8,25 +9,42 @@
 #  This file is distributed under BSD 3-Clause License.
 #
 
-TARGET = ../src/mrblib.c
+TARGETS = $(MRBLIB_C) $(VERSIONFILE)
+MRBLIB_C = ../src/mrblib.c
 VERSIONFILE =  ../src/VERSION
-SRC = enum.rb array.rb global.rb hash.rb numeric.rb object.rb range.rb string.rb
+SRCS = enum.rb array.rb global.rb hash.rb numeric.rb object.rb range.rb string.rb
 MRBC ?= mrbc
 
 
-all: $(TARGET) $(VERSIONFILE)
+#
+# Targets
+#
+.PHONY: default all clean clean_all autogen
 
-$(TARGET): $(SRC)
-	$(MRBC) -Bmrblib_bytecode --remove-lv -o$(TARGET) $(SRC)
+## Default target
+default: $(TARGETS)
+
+## (re)Build all targets
+all: clean_all
+	@$(MAKE) $(TARGETS)
+
+## Remove editor backup files
+clean:
+	rm -f *~
+
+## Remove intermediate files
+clean_all: clean
+	rm -f $(TARGETS)
+
+## dummy
+autogen:
+
+
+#
+# How to build each file
+#
+$(MRBLIB_C): $(SRCS)
+	$(MRBC) -Bmrblib_bytecode --remove-lv -o$@ $(SRCS)
 
 $(VERSIONFILE): global.rb
 	sed -E -e '/^[A-Z]+_VERSION/!d' $? > $@
-
-.PHONY: clean distclean clean_all
-clean:
-	@rm -f *~
-
-distclean:
-	rm -f $(TARGET) $(VERSIONFILE) *~
-
-clean_all: distclean
