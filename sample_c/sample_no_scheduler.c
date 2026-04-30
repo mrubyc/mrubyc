@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
   /*
     start mruby/c with LOW LEVEL functions.
   */
-  hal_init();
+  mrbc_hal_init();
   mrbc_init_alloc(memory_pool, MRBC_MEMORY_SIZE);
   mrbc_init_global();
   mrbc_init_class();

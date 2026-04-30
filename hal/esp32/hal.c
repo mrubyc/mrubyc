@@ -71,7 +71,7 @@ static bool on_timer(gptimer_handle_t timer, const gptimer_alarm_event_data_t *e
   initialize
 
 */
-void hal_init(void)
+void mrbc_hal_init(void)
 {
   gptimer_handle_t gptimer = NULL;
   gptimer_config_t timer_config = {
@@ -100,7 +100,7 @@ void hal_init(void)
   enable interrupt
 
 */
-void hal_enable_irq(void)
+void mrbc_hal_enable_irq(void)
 {
   portEXIT_CRITICAL(&mux);
 }
@@ -111,7 +111,7 @@ void hal_enable_irq(void)
   disable interrupt
 
 */
-void hal_disable_irq(void)
+void mrbc_hal_disable_irq(void)
 {
   portENTER_CRITICAL(&mux);
 }
@@ -126,10 +126,10 @@ void hal_disable_irq(void)
 
   @param s	additional message.
 */
-void hal_abort(const char *s)
+void mrbc_hal_abort(const char *s)
 {
   if( s ) {
-    write(1, s, strlen(s));
+    write(2, s, strlen(s));
   }
 
   abort();

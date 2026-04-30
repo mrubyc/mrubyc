@@ -48,7 +48,7 @@ bool alarm_irq(struct repeating_timer *t) {
   initialize
 
 */
-void hal_init(void){
+void mrbc_hal_init(void){
   add_repeating_timer_ms(1, alarm_irq, NULL, &timer);
   clocks_hw->sleep_en0 = 0;
   clocks_hw->sleep_en1 = CLOCKS_SLEEP_EN1_CLK_SYS_TIMER_BITS
@@ -65,20 +65,20 @@ void hal_init(void){
 /*!@brief
   Write
 
-  @param  fd    dummy, but 1.
+  @param  fd    dummy.
   @param  buf   pointer of buffer.
   @param  nbytes        output byte length.
 
-  Memo: Steps to use uart_putc_raw() with hal_write.
+  Memo: Steps to use uart_putc_raw() with mrbc_hal_write.
   1. Write in main function↓
     uart_init(uart0,115200);
     gpio_set_function(0,GPIO_FUNC_UART);
     gpio_set_function(1,GPIO_FUNC_UART);
 
-  2. Comment out the putchar for hal_write.
-  3. Uncomment uart_putc_raw for hal_write.
+  2. Comment out the putchar for mrbc_hal_write.
+  3. Uncomment uart_putc_raw for mrbc_hal_write.
 */
-int hal_write(int fd, const void *buf, int nbytes)
+int mrbc_hal_write(int fd, const void *buf, int nbytes)
 {
   int i = nbytes;
   const uint8_t *p = buf;
@@ -95,9 +95,10 @@ int hal_write(int fd, const void *buf, int nbytes)
 /*!@brief
   Flush write buffer
 
-  @param  fd    dummy, but 1.
+  @param  fd    dummy.
 */
-int hal_flush(int fd) {
+int mrbc_hal_flush(int fd)
+{
   return 0;
 }
 
@@ -107,10 +108,10 @@ int hal_flush(int fd) {
 
   @param s	additional message.
 */
-void hal_abort(const char *s)
+void mrbc_hal_abort(const char *s)
 {
   if( s ) {
-    hal_write(1, s, strlen(s));
+    mrbc_hal_write(1, s, strlen(s));
   }
 
   abort();

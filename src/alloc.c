@@ -572,10 +572,10 @@ void * mrbc_raw_alloc(unsigned int size)
   MRBC_OUT_OF_MEMORY();
 #else
   static const char msg[] = "Fatal error: Out of memory.\n";
-  hal_write(2, msg, sizeof(msg)-1);
-  hal_abort(0);
+  mrbc_hal_write(2, msg, sizeof(msg)-1);
+  mrbc_hal_abort(0);
 #endif
-  return NULL;  // ENOMEM (unreachable if hal_abort doesn't return)
+  return NULL;  // ENOMEM (unreachable if mrbc_hal_abort doesn't return)
 
 
  FOUND_FLI_SLI:
@@ -712,7 +712,7 @@ void mrbc_raw_free(void *ptr)
   {
     if( ptr == NULL ) {
       static const char msg[] = "mrbc_raw_free(): NULL pointer was given.\n";
-      hal_write(2, msg, sizeof(msg)-1);
+      mrbc_hal_write(2, msg, sizeof(msg)-1);
       return;
     }
 
@@ -720,7 +720,7 @@ void mrbc_raw_free(void *ptr)
     if( target < (FREE_BLOCK *)BPOOL_TOP(pool) ||
         target > (FREE_BLOCK *)BPOOL_END(pool) ) {
       static const char msg[] = "mrbc_raw_free(): Outside memory pool address was specified.\n";
-      hal_write(2, msg, sizeof(msg)-1);
+      mrbc_hal_write(2, msg, sizeof(msg)-1);
       return;
     }
 
@@ -735,13 +735,13 @@ void mrbc_raw_free(void *ptr)
       // found target block.
       if( IS_FREE_BLOCK(block) ) {  // is Free block?
         static const char msg[] = "mrbc_raw_free(): double free detected.\n";
-        hal_write(2, msg, sizeof(msg)-1);
+        mrbc_hal_write(2, msg, sizeof(msg)-1);
         return;
       }
 
       if( PHYS_NEXT(block) >= BPOOL_END(pool) ) {  // Is this a sentinel?
         static const char msg[] = "mrbc_raw_free(): no_free address was specified.\n";
-        hal_write(2, msg, sizeof(msg)-1);
+        mrbc_hal_write(2, msg, sizeof(msg)-1);
         return;
       }
 
@@ -749,12 +749,12 @@ void mrbc_raw_free(void *ptr)
       // not found target block.
       if( block < target ) {
         static const char msg[] = "mrbc_raw_free(): no_free address was specified.\n";
-        hal_write(2, msg, sizeof(msg)-1);
+        mrbc_hal_write(2, msg, sizeof(msg)-1);
         return;
       }
 
       static const char msg[] = "mrbc_raw_free(): Illegal address.\n";
-      hal_write(2, msg, sizeof(msg)-1);
+      mrbc_hal_write(2, msg, sizeof(msg)-1);
       return;
     }
 

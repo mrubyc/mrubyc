@@ -43,15 +43,15 @@
 #endif
 
 #ifndef MRBC_NO_TIMER
-void hal_init(void);
-# define hal_enable_irq()  irq_set_enabled(ALARM_IRQ, true)
-# define hal_disable_irq() irq_set_enabled(ALARM_IRQ, false)
-# define hal_idle_cpu()    __wfi()
+void mrbc_hal_init(void);
+# define mrbc_hal_enable_irq()  irq_set_enabled(ALARM_IRQ, true)
+# define mrbc_hal_disable_irq() irq_set_enabled(ALARM_IRQ, false)
+# define mrbc_hal_idle_cpu()    __wfi()
 #else // MRBC_NO_TIMER
-# define hal_init()        ((void)0)
-# define hal_enable_irq()  ((void)0)
-# define hal_disable_irq() ((void)0)
-# define hal_idle_cpu()    (sleep_ms(1), mrbc_tick())
+# define mrbc_hal_init()        ((void)0)
+# define mrbc_hal_enable_irq()  ((void)0)
+# define mrbc_hal_disable_irq() ((void)0)
+# define mrbc_hal_idle_cpu()    (sleep_ms(1), mrbc_tick())
 
 #endif
 
@@ -62,15 +62,25 @@ void hal_init(void);
 extern "C" {
 #endif
 
-int hal_write(int fd, const void *buf, int nbytes);
-int hal_flush(int fd);
-void hal_abort(const char *s);
+int mrbc_hal_write(int fd, const void *buf, int nbytes);
+int mrbc_hal_flush(int fd);
+void mrbc_hal_abort(const char *s);
 void alarm_init();
 
 
 
 /***** Inline functions *****************************************************/
 
+/*
+  for legacy compatibility.
+*/
+#define hal_init()               mrbc_hal_init()
+#define hal_enable_irq()         mrbc_hal_enable_irq()
+#define hal_disable_irq()        mrbc_hal_disable_irq()
+#define hal_idle_cpu()           mrbc_hal_idle_cpu()
+#define hal_write(fd,buf,nbytes) mrbc_hal_write(fd,buf,nbytes)
+#define hal_flush(fd)            mrbc_hal_flush(fd)
+#define hal_abort(s)             mrbc_hal_abort(s)
 
 #ifdef __cplusplus
 }
