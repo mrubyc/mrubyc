@@ -140,10 +140,14 @@
 // Nesting level for exception printing (default 8)
 // #define MRBC_EXCEPTION_CALL_NEST_LEVEL 8
 
+// Set the following constant to 1 to enable user-defined destructors;
+// otherwise, set it to 0. The default is 1.
+// #define MRBC_INSTANCE_DESTRUCTOR 0
+
 // Override actions when some fatal errors.
-// Default behavior for MRBC_OUT_OF_MEMORY is to print error and call hal_abort().
+// Default behavior for MRBC_OUT_OF_MEMORY is to print error and call mrbc_hal_abort().
 // Uncomment and customize if you need different behavior:
-// #define MRBC_OUT_OF_MEMORY() mrbc_alloc_print_memory_pool(); hal_abort(0)
-// #define MRBC_ABORT_BY_EXCEPTION(vm) mrbc_p( &vm->exception ); hal_abort(0)
+// #define MRBC_OUT_OF_MEMORY() mrbc_alloc_print_memory_pool(); mrbc_hal_abort(0)
+// #define MRBC_ABORT_BY_EXCEPTION(vm) mrbc_p( &vm->exception ); mrbc_hal_abort(0)
 
 #endif // MRBC_SRC_VM_CONFIG_H_
