@@ -548,7 +548,7 @@ static inline void mrbc_incref(mrbc_value *v)
   if( mrbc_type(*v) <= MRBC_TT_INC_DEC_THRESHOLD ) return;
 
   assert( v->obj->ref_count != 0 );
-  assert( v->obj->ref_count != 0xff );	// check max value.
+  assert( v->obj->ref_count != 0xffff );	// check max value.
   v->obj->ref_count++;
 }
 
