@@ -25,7 +25,8 @@ MRBC ?= mrbc
 default: $(TARGETS)
 
 ## (re)Build all targets
-all: clean_all
+all:
+	rm -f $(TARGETS)
 	@$(MAKE) $(TARGETS)
 
 ## Remove editor backup files

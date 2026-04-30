@@ -43,7 +43,8 @@ default: $(TARGET)
 ## Rebuild auto-generated files and build target
 all:
 ifdef RUBY_INSTALLED
-	@$(MAKE) clean_all
+	rm -f $(AUTOGEN_SYMBOL_TABLE) $(AUTOGEN_CLASS_TABLE) \
+		$(AUTOGEN_METHOD_TABLE) $(AUTOGEN_UNICODE_CASE)
 	@$(MAKE) $(TARGET)
 else
 	@echo "Ruby is required to generate _autogen* files. Please install it."

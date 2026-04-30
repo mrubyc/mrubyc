@@ -30,20 +30,20 @@ all:
 
 ## Clean up object files and editor backups.
 clean:
-	@cd src;	$(MAKE) clean
 	@cd mrblib;	$(MAKE) clean
+	@cd src;	$(MAKE) clean
 	@cd sample_c;	$(MAKE) clean
 
 ## Remove auto-generated files and intermediate files
 clean_all:
-	@cd src;	$(MAKE) clean_all
 	@cd mrblib;	$(MAKE) clean_all
+	@cd src;	$(MAKE) clean_all
 	@cd sample_c;	$(MAKE) clean
 
 ## auto generated files
 autogen:
-	@cd src;	$(MAKE) autogen
 	@cd mrblib;	$(MAKE) all
+	@cd src;	$(MAKE) autogen
 
 
 #
