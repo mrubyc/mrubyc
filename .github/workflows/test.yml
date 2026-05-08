@@ -69,8 +69,8 @@ jobs:
             docker run \
               -e CC=gcc \
               -e PICORB_DEBUG=1 \
-              -e MRUBY_CONFIG=picoruby-test \
-              -e RUBY="bin/picoruby" \
+              -e MRUBY_CONFIG=femtoruby-test \
+              -e RUBY="bin/femtoruby" \
               --rm -v ${{ github.workspace }}:/work/mrubyc mrubyc-test \
               bash -c "rake clean && rake && ruby /work/mrubyc/test/0_runner.rb"
             ;;
@@ -78,8 +78,8 @@ jobs:
             docker run \
               -e CC=gcc \
               -e PICORB_DEBUG=1 \
-              -e MRUBY_CONFIG=picoruby-test \
-              -e RUBY="bin/picoruby" \
+              -e MRUBY_CONFIG=femtoruby-test \
+              -e RUBY="bin/femtoruby" \
               -e PICORB_NO_LIBC_ALLOC=1 \
               --rm -v ${{ github.workspace }}:/work/mrubyc mrubyc-test \
               bash -c "rake clean && rake && ruby /work/mrubyc/test/0_runner.rb"
@@ -88,8 +88,8 @@ jobs:
             docker run \
               -e CC=clang \
               -e PICORB_DEBUG=1 \
-              -e MRUBY_CONFIG=picoruby-test \
-              -e RUBY="bin/picoruby" \
+              -e MRUBY_CONFIG=femtoruby-test \
+              -e RUBY="bin/femtoruby" \
               --rm -v ${{ github.workspace }}:/work/mrubyc mrubyc-test \
               bash -c "rake clean && rake && ruby /work/mrubyc/test/0_runner.rb"
             ;;
@@ -97,8 +97,8 @@ jobs:
             docker run \
               -e CC=clang \
               -e PICORB_DEBUG=1 \
-              -e MRUBY_CONFIG=picoruby-test \
-              -e RUBY="bin/picoruby" \
+              -e MRUBY_CONFIG=femtoruby-test \
+              -e RUBY="bin/femtoruby" \
               -e PICORB_NO_LIBC_ALLOC=1 \
               --rm -v ${{ github.workspace }}:/work/mrubyc mrubyc-test \
               bash -c "rake clean && rake && ruby /work/mrubyc/test/0_runner.rb"
@@ -107,7 +107,7 @@ jobs:
             docker run \
               -e PICORB_DEBUG=1 \
               -e MRUBY_CONFIG=arm-linux-gnueabihf \
-              -e RUBY="qemu-arm -L /usr/arm-linux-gnueabihf build/arm-linux-gnueabihf/bin/picoruby" \
+              -e RUBY="qemu-arm -L /usr/arm-linux-gnueabihf build/arm-linux-gnueabihf/bin/femtoruby" \
               --rm -v ${{ github.workspace }}:/work/mrubyc mrubyc-test \
               bash -c "rake clean && rake && ruby /work/mrubyc/test/0_runner.rb"
             ;;
@@ -115,7 +115,7 @@ jobs:
             docker run \
               -e PICORB_DEBUG=1 \
               -e MRUBY_CONFIG=arm-linux-gnueabihf \
-              -e RUBY="qemu-arm -L /usr/arm-linux-gnueabihf build/arm-linux-gnueabihf/bin/picoruby" \
+              -e RUBY="qemu-arm -L /usr/arm-linux-gnueabihf build/arm-linux-gnueabihf/bin/femtoruby" \
               -e PICORB_NO_LIBC_ALLOC=1 \
               --rm -v ${{ github.workspace }}:/work/mrubyc mrubyc-test \
               bash -c "rake clean && rake && ruby /work/mrubyc/test/0_runner.rb"
@@ -124,7 +124,7 @@ jobs:
             docker run \
               -e PICORB_DEBUG=1 \
               -e MRUBY_CONFIG=mips-linux-gnu \
-              -e RUBY="qemu-mips -L /usr/mips-linux-gnu build/mips-linux-gnu/bin/picoruby" \
+              -e RUBY="qemu-mips -L /usr/mips-linux-gnu build/mips-linux-gnu/bin/femtoruby" \
               --rm -v ${{ github.workspace }}:/work/mrubyc mrubyc-test \
               bash -c "rake clean && rake && ruby /work/mrubyc/test/0_runner.rb"
             ;;
@@ -132,7 +132,7 @@ jobs:
             docker run \
               -e PICORB_DEBUG=1 \
               -e MRUBY_CONFIG=mips-linux-gnu \
-              -e RUBY="qemu-mips -L /usr/mips-linux-gnu build/mips-linux-gnu/bin/picoruby" \
+              -e RUBY="qemu-mips -L /usr/mips-linux-gnu build/mips-linux-gnu/bin/femtoruby" \
               -e PICORB_NO_LIBC_ALLOC=1 \
               --rm -v ${{ github.workspace }}:/work/mrubyc mrubyc-test \
               bash -c "rake clean && rake && ruby /work/mrubyc/test/0_runner.rb"

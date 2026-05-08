@@ -79,7 +79,7 @@ test_arm_no_libc:
 		-e PICORB_DEBUG=1 \
 		-e MRUBY_CONFIG=arm-linux-gnueabihf \
 		-e PICORB_NO_LIBC_ALLOC=1 \
-		-e RUBY="qemu-arm -L /usr/arm-linux-gnueabihf build/arm-linux-gnueabihf/bin/picoruby" \
+		-e RUBY="qemu-arm -L /usr/arm-linux-gnueabihf build/arm-linux-gnueabihf/bin/femtoruby" \
 		--rm -v $(shell pwd):/work/mrubyc mrubyc-test \
 		bash -c \
 		"rake clean && rake && ruby /work/mrubyc/test/0_runner.rb"
@@ -88,7 +88,7 @@ test_arm:
 	docker run \
 		-e PICORB_DEBUG=1 \
 		-e MRUBY_CONFIG=arm-linux-gnueabihf \
-		-e RUBY="qemu-arm -L /usr/arm-linux-gnueabihf build/arm-linux-gnueabihf/bin/picoruby" \
+		-e RUBY="qemu-arm -L /usr/arm-linux-gnueabihf build/arm-linux-gnueabihf/bin/femtoruby" \
 		--rm -v $(shell pwd):/work/mrubyc mrubyc-test \
 		bash -c \
 		"rake clean && rake && ruby /work/mrubyc/test/0_runner.rb"
@@ -97,9 +97,9 @@ test_host_gcc_no_libc:
 	docker run \
 		-e CC=gcc \
 		-e PICORB_DEBUG=1 \
-		-e MRUBY_CONFIG=picoruby-test \
+		-e MRUBY_CONFIG=femtoruby-test \
 		-e PICORB_NO_LIBC_ALLOC=1 \
-		-e RUBY="build/host/bin/picoruby" \
+		-e RUBY="build/host/bin/femtoruby" \
 		--rm -v $(shell pwd):/work/mrubyc mrubyc-test \
 		bash -c \
 		"rake clean && rake && ruby /work/mrubyc/test/0_runner.rb"
@@ -108,8 +108,8 @@ test_host_gcc:
 	docker run \
 		-e CC=gcc \
 		-e PICORB_DEBUG=1 \
-		-e MRUBY_CONFIG=picoruby-test \
-		-e RUBY="build/host/bin/picoruby" \
+		-e MRUBY_CONFIG=femtoruby-test \
+		-e RUBY="build/host/bin/femtoruby" \
 		--rm -v $(shell pwd):/work/mrubyc mrubyc-test \
 		bash -c \
 		"rake clean && rake && ruby /work/mrubyc/test/0_runner.rb"
@@ -118,9 +118,9 @@ test_host_clang_no_libc:
 	docker run \
 		-e CC=clang \
 		-e PICORB_DEBUG=1 \
-		-e MRUBY_CONFIG=picoruby-test \
+		-e MRUBY_CONFIG=femtoruby-test \
 		-e PICORB_NO_LIBC_ALLOC=1 \
-		-e RUBY="build/host/bin/picoruby" \
+		-e RUBY="build/host/bin/femtoruby" \
 		--rm -v $(shell pwd):/work/mrubyc mrubyc-test \
 		bash -c \
 		"rake clean && rake && ruby /work/mrubyc/test/0_runner.rb"
@@ -129,8 +129,8 @@ test_host_clang:
 	docker run \
 		-e CC=clang \
 		-e PICORB_DEBUG=1 \
-		-e MRUBY_CONFIG=picoruby-test \
-		-e RUBY="build/host/bin/picoruby" \
+		-e MRUBY_CONFIG=femtoruby-test \
+		-e RUBY="build/host/bin/femtoruby" \
 		--rm -v $(shell pwd):/work/mrubyc mrubyc-test \
 		bash -c \
 		"rake clean && rake && ruby /work/mrubyc/test/0_runner.rb"
@@ -139,7 +139,7 @@ test_mips:
 	docker run -e QEMU_LD_PREFIX=/usr/mips-linux-gnu \
 		-e PICORB_DEBUG=1 \
 		-e MRUBY_CONFIG=mips-linux-gnu \
-		-e RUBY="qemu-mips -L /usr/mips-linux-gnu build/mips-linux-gnu/bin/picoruby" \
+		-e RUBY="qemu-mips -L /usr/mips-linux-gnu build/mips-linux-gnu/bin/femtoruby" \
 		--rm -v $(shell pwd):/work/mrubyc mrubyc-test \
 		bash -c \
 		"rake clean && rake && ruby /work/mrubyc/test/0_runner.rb"
@@ -149,7 +149,7 @@ test_mips_no_libc:
 		-e PICORB_DEBUG=1 \
 		-e MRUBY_CONFIG=mips-linux-gnu \
 		-e PICORB_NO_LIBC_ALLOC=1 \
-		-e RUBY="qemu-mips -L /usr/mips-linux-gnu build/mips-linux-gnu/bin/picoruby" \
+		-e RUBY="qemu-mips -L /usr/mips-linux-gnu build/mips-linux-gnu/bin/femtoruby" \
 		--rm -v $(shell pwd):/work/mrubyc mrubyc-test \
 		bash -c \
 		"rake clean && rake && ruby /work/mrubyc/test/0_runner.rb"
