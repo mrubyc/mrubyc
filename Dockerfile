@@ -54,13 +54,13 @@ RUN git clone --depth 1 --recursive -b master \
     https://github.com/picoruby/picoruby /work/picoruby
 
 WORKDIR /work/picoruby
-ENV MRUBY_CONFIG=picoruby-test
+ENV MRUBY_CONFIG=femtoruby-test
 RUN rake --trace
 ENV MRUBY_CONFIG=arm-linux-gnueabihf
 RUN rake --trace
 ENV MRUBY_CONFIG=mips-linux-gnu
 RUN rake --trace
-ENV MRUBY_CONFIG=picoruby-test
+ENV MRUBY_CONFIG=femtoruby-test
 
 VOLUME /work/mrubyc
 
