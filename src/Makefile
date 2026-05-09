@@ -129,15 +129,16 @@ AUTOGEN_METHOD_TABLE = _autogen_class_array.h _autogen_class_exception.h \
 	_autogen_module_math.h _autogen_class_object.h _autogen_class_proc.h \
 	_autogen_class_range.h _autogen_class_string.h _autogen_class_symbol.h \
 	_autogen_class_rrt0.h
-AUTOGEN_METHOD_SRCS = c_array.c c_hash.c c_math.c c_numeric.c c_object.c \
-	c_proc.c c_range.c c_string.c symbol.c error.c rrt0.c
+AUTOGEN_METHOD_SRCS1 = c_array.c c_hash.c c_math.c c_numeric.c c_object.c \
+	c_proc.c c_range.c c_string.c symbol.c error.c
+AUTOGEN_METHOD_SRCS2 = $(AUTOGEN_METHOD_SRCS1) rrt0.c
 
 ifdef RUBY_INSTALLED
-$(AUTOGEN_SYMBOL_TABLE): $(AUTOGEN_METHOD_SRCS) ../mrblib/*
+$(AUTOGEN_SYMBOL_TABLE): $(AUTOGEN_METHOD_SRCS2) ../mrblib/*
 	$(MAKE_SYMBOL_TABLE) --path-c . --path-rb ../mrblib -o $@
 
-$(AUTOGEN_CLASS_TABLE): $(AUTOGEN_METHOD_SRCS)
-	$(MAKE_CLASS_TABLE) -o $@ $(AUTOGEN_METHOD_SRCS)
+$(AUTOGEN_CLASS_TABLE): $(AUTOGEN_METHOD_SRCS1)
+	$(MAKE_CLASS_TABLE) -o $@ $(AUTOGEN_METHOD_SRCS1)
 
 _autogen_class_array.h:		c_array.c
 	$(MAKE_METHOD_TABLE) $<
