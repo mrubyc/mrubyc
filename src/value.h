@@ -280,7 +280,7 @@ typedef struct RObject mrb_value;	// not recommended.
   (val).tt == MRBC_TT_FLOAT ? (mrbc_int_t)(val).d : 0
 #define MRBC_TO_FLOAT(val) \
   (val).tt == MRBC_TT_FLOAT ? (val).d : \
-  (val).tt == MRBC_TT_INTEGER ? (mrbc_float_t)(val).i : 0.0
+  (val).tt == MRBC_TT_INTEGER ? (mrbc_float_t)(val).i : (mrbc_float_t)0
 
 #endif  // !defined(MRBC_NOT_RECOMMEND_TO_USE)
 

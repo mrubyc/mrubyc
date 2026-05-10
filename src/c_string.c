@@ -900,7 +900,11 @@ static void c_string_to_i(mrbc_vm *vm, mrbc_value v[], int argc)
 */
 static void c_string_to_f(mrbc_vm *vm, mrbc_value v[], int argc)
 {
-  mrbc_float_t d = atof(mrbc_string_cstr(v));
+#if MRBC_USE_FLOAT == 1
+  mrbc_float_t d = strtof(mrbc_string_cstr(v), NULL);
+#else
+  mrbc_float_t d = strtod(mrbc_string_cstr(v), NULL);
+#endif
 
   SET_FLOAT_RETURN( d );
 }
