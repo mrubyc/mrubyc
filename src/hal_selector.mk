@@ -27,6 +27,9 @@ endif
 ifdef MRBC_USE_HAL_RP2040
   MRBC_USE_HAL = ../hal/rp2040
 endif
+ifdef MRBC_USE_HAL_ZEPHYR
+  MRBC_USE_HAL = ../hal/zephyr
+endif
 
 ifdef MRBC_USE_HAL
   HAL_DIR = $(MRBC_USE_HAL)
