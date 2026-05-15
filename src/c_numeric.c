@@ -28,6 +28,11 @@
 
 /***** Constat values *******************************************************/
 /***** Macros ***************************************************************/
+#if MRBC_USE_FLOAT == 1
+#define MRBC_POW powf
+#else
+#define MRBC_POW pow
+#endif
 /***** Typedefs *************************************************************/
 /***** Function prototypes **************************************************/
 /***** Local variables ******************************************************/
@@ -86,7 +91,7 @@ static void c_integer_power(mrbc_vm *vm, mrbc_value v[], int argc)
 
 #if MRBC_USE_FLOAT && MRBC_USE_MATH
   else if( mrbc_type(v[1]) == MRBC_TT_FLOAT ) {
-    SET_FLOAT_RETURN( pow( mrbc_integer(v[0]), mrbc_float(v[1])));
+    SET_FLOAT_RETURN( MRBC_POW( mrbc_integer(v[0]), mrbc_float(v[1])));
   }
 #endif
 }
@@ -430,7 +435,7 @@ static void c_float_power(mrbc_vm *vm, mrbc_value v[], int argc)
   default:					break;
   }
 
-  SET_FLOAT_RETURN( pow( mrbc_float(v[0]), n ));
+  SET_FLOAT_RETURN( MRBC_POW( mrbc_float(v[0]), n ));
 }
 #endif
 
