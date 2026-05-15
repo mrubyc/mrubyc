@@ -825,21 +825,26 @@ static inline void op_getupvar( mrbc_vm *vm, mrbc_value *regs EXT )
   FETCH_BBB();
 
   assert( mrbc_type(regs[0]) == MRBC_TT_PROC );
-  mrbc_callinfo *callinfo = regs[0].proc->callinfo;
 
+  /* Read upvalues from the proc's captured-regs snapshot (taken at
+   * proc-creation time in mrbc_proc_new). The previous implementation
+   * walked proc->callinfo->cur_regs directly, but that callinfo is
+   * freed when the parent function returns -- causing a use-after-free
+   * crash, or (after slab reuse) silently returning a value from an
+   * unrelated frame. */
+  mrbc_proc *proc = regs[0].proc;
   for( int i = 0; i < c; i++ ) {
-    assert( callinfo );
-    mrbc_value *reg0 = callinfo->cur_regs + callinfo->reg_offset;
-
-    if( mrbc_type(*reg0) != MRBC_TT_PROC ) break;	// What to do?
-    callinfo = reg0->proc->callinfo;
+    if( !proc->captured_regs ) break;
+    mrbc_value *reg0 = &proc->captured_regs[0];
+    if( mrbc_type(*reg0) != MRBC_TT_PROC ) break;
+    proc = reg0->proc;
   }
 
   mrbc_value *p_val;
-  if( callinfo == 0 ) {
+  if( !proc->captured_regs || b >= proc->captured_regs_size ) {
     p_val = vm->regs + b;
   } else {
-    p_val = callinfo->cur_regs + callinfo->reg_offset + b;
+    p_val = &proc->captured_regs[b];
   }
   mrbc_incref( p_val );
 
@@ -853,30 +858,72 @@ static inline void op_getupvar( mrbc_vm *vm, mrbc_value *regs EXT )
 
   uvset(b,c,R[a])
 */
+/*! Is `target` still on the active callinfo chain?
+ *
+ * Used by op_setupvar to mirror the snapshot write back to the parent's
+ * live regs while the parent is still executing. We can only walk the
+ * chain by pointer; a slab-reused successor at the same address would
+ * also be reported as live. That's acceptable for a *write* path,
+ * because while the parent is still on the stack its callinfo cannot
+ * have been freed/reused yet. The only ambiguous case is "block
+ * already returned, parent already returned, slab got reused, async
+ * call writes back" -- a write to the wrong frame in that scenario,
+ * but reads still come from the proc's own snapshot (op_getupvar) so
+ * read paths remain correct.
+ */
+static int callinfo_is_live( const mrbc_vm *vm, const mrbc_callinfo *target )
+{
+  if( !target ) return 0;
+  for( const mrbc_callinfo *c = vm->callinfo_tail; c; c = c->prev ) {
+    if( c == target ) return 1;
+  }
+  return 0;
+}
+
 static inline void op_setupvar( mrbc_vm *vm, mrbc_value *regs EXT )
 {
   FETCH_BBB();
 
   assert( mrbc_type(regs[0]) == MRBC_TT_PROC );
-  mrbc_callinfo *callinfo = regs[0].proc->callinfo;
 
+  /* Writes go into the proc's snapshot AND, if the parent's callinfo
+   * is still on the active chain, into the live parent regs as well.
+   * The snapshot keeps async-closure reads (op_getupvar) safe; the
+   * write-through restores MRI semantics for synchronous blocks
+   * (`loop do clocks += x end`, `n.times do total += ... end`) where
+   * the parent expects to see the block's mutations after the block
+   * returns. */
+  mrbc_proc *proc = regs[0].proc;
   for( int i = 0; i < c; i++ ) {
-    assert( callinfo );
-    mrbc_value *reg0 = callinfo->cur_regs + callinfo->reg_offset;
-    assert( mrbc_type(*reg0) == MRBC_TT_PROC );
-    callinfo = reg0->proc->callinfo;
+    if( !proc->captured_regs ) break;
+    mrbc_value *reg0 = &proc->captured_regs[0];
+    if( mrbc_type(*reg0) != MRBC_TT_PROC ) break;
+    proc = reg0->proc;
   }
 
   mrbc_value *p_val;
-  if( callinfo == 0 ) {
+  if( !proc->captured_regs || b >= proc->captured_regs_size ) {
     p_val = vm->regs + b;
   } else {
-    p_val = callinfo->cur_regs + callinfo->reg_offset + b;
+    p_val = &proc->captured_regs[b];
   }
   mrbc_decref( p_val );
-
   mrbc_incref( &regs[a] );
   *p_val = regs[a];
+
+  /* Mirror to live parent regs while the parent is still on the chain
+   * so subsequent op_move / op_getupvar reads from the parent's frame
+   * see the block's update. (op_getupvar still reads from the snapshot
+   * which we already updated above, so no extra write-back needed for
+   * that path.) Skip when proc->callinfo is missing or already dead. */
+  if( callinfo_is_live(vm, proc->callinfo) ) {
+    mrbc_value *p_live = proc->callinfo->cur_regs + proc->callinfo->reg_offset + b;
+    if( p_live != p_val ) {
+      mrbc_decref( p_live );
+      mrbc_incref( &regs[a] );
+      *p_live = regs[a];
+    }
+  }
 }
 
 

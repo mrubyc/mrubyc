@@ -44,11 +44,16 @@ typedef struct RProc {
   MRBC_OBJECT_HEADER;
 
   uint8_t          block_or_method;	//!< 'B' or 'M' char code
-  struct CALLINFO *callinfo;		//!< callinfo when proc was created.
-  struct CALLINFO *callinfo_self;	//!< callinfo of self object. Valid when 'B'.
+  struct CALLINFO *callinfo;		//!< callinfo when proc was created (legacy; may dangle after parent returns).
+  struct CALLINFO *callinfo_self;	//!< callinfo of self object. Valid when 'B' (legacy; may dangle).
   struct IREP     *irep;		//!< Target IREP.
   mrbc_value       self;		//!< Copy of self object. Valid when 'B'.
   mrbc_value       ret_val;		//!< Return value of this block.
+
+  uint16_t         captured_regs_size;	//!< Number of entries in captured_regs.
+  mrbc_value      *captured_regs;	//!< Snapshot of the parent scope's regs at proc-creation time.
+					//!< OP_GETUPVAR / OP_SETUPVAR read/write through this so the
+					//!< capture survives the parent's return. Owned by the proc.
 
 } mrbc_proc;
 //@cond
