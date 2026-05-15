@@ -864,7 +864,8 @@ void * mrbc_raw_realloc(void *ptr, unsigned int size)
     void *new_ptr = mrbc_raw_alloc(size);
     RETURN_IF_NULL( new_ptr );		// ENOMEM
 
-    memcpy(new_ptr, ptr, BLOCK_SIZE(target) - sizeof(USED_BLOCK));
+    size_t copy_size = BLOCK_SIZE(target) - sizeof(USED_BLOCK);
+    memcpy(new_ptr, ptr, copy_size < size ? copy_size : size);
     mrbc_set_vm_id(new_ptr, target->vm_id);
 
     mrbc_raw_free(ptr);
