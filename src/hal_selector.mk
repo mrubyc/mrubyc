@@ -30,6 +30,9 @@ endif
 ifdef MRBC_USE_HAL_ZEPHYR
   MRBC_USE_HAL = ../hal/zephyr
 endif
+ifdef MRBC_USE_HAL_EMSCRIPTEN
+  MRBC_USE_HAL = ../hal/emscripten
+endif
 
 ifdef MRBC_USE_HAL
   HAL_DIR = $(MRBC_USE_HAL)
