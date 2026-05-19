@@ -378,6 +378,91 @@ static void c_hash_clear(mrbc_vm *vm, mrbc_value v[], int argc)
 
 
 //================================================================
+/*! (method) deconstruct_keys
+*/
+static void c_hash_deconstruct_keys(mrbc_vm *vm, mrbc_value v[], int argc)
+{
+  if (argc != 1) {
+    mrbc_raise(vm, MRBC_CLASS(ArgumentError), "wrong number of arguments");
+    return;
+  }
+  // For pattern matching - return self (not a copy)
+}
+
+
+//================================================================
+/*! (method) __pat_values
+  Returns array of values for given keys if all keys exist, false otherwise.
+*/
+static void c_hash_pat_values(mrbc_vm *vm, mrbc_value v[], int argc)
+{
+  if( argc != 1 ) {
+    mrbc_raise(vm, MRBC_CLASS(ArgumentError), "wrong number of arguments");
+    return;
+  }
+
+  mrbc_value *keys = &v[1];
+  int klen = mrbc_array_size(keys);
+
+  for( int i = 0; i < klen; i++ ) {
+    mrbc_value key = mrbc_array_get(keys, i);
+    if( mrbc_hash_search(&v[0], &key) == NULL ) {
+      SET_FALSE_RETURN();
+      return;
+    }
+  }
+
+  mrbc_value result = mrbc_array_new(vm, klen);
+  for( int i = 0; i < klen; i++ ) {
+    mrbc_value key = mrbc_array_get(keys, i);
+    mrbc_value *found = mrbc_hash_search(&v[0], &key);
+    mrbc_value val = found[1];
+    mrbc_incref(&val);
+    mrbc_array_push(&result, &val);
+  }
+
+  SET_RETURN(result);
+}
+
+
+//================================================================
+/*! (method) __except
+  Returns a new hash excluding the given keys.
+*/
+static void c_hash_except_keys(mrbc_vm *vm, mrbc_value v[], int argc)
+{
+  if( argc != 1 ) {
+    mrbc_raise(vm, MRBC_CLASS(ArgumentError), "wrong number of arguments");
+    return;
+  }
+
+  mrbc_value *excl_keys = &v[1];
+  int klen = mrbc_array_size(excl_keys);
+  mrbc_value result = mrbc_hash_new(vm, mrbc_hash_size(&v[0]));
+  mrbc_hash_iterator ite = mrbc_hash_iterator_new(&v[0]);
+
+  while( mrbc_hash_i_has_next(&ite) ) {
+    mrbc_value *kv = mrbc_hash_i_next(&ite);
+    int found = 0;
+    for( int i = 0; i < klen; i++ ) {
+      mrbc_value excl_key = mrbc_array_get(excl_keys, i);
+      if( mrbc_compare(&kv[0], &excl_key) == 0 ) {
+        found = 1;
+        break;
+      }
+    }
+    if( !found ) {
+      mrbc_hash_set(&result, &kv[0], &kv[1]);
+      mrbc_incref(&kv[0]);
+      mrbc_incref(&kv[1]);
+    }
+  }
+
+  SET_RETURN(result);
+}
+
+
+//================================================================
 /*! (method) dup
 */
 static void c_hash_dup(mrbc_vm *vm, mrbc_value v[], int argc)
@@ -635,7 +720,10 @@ static void c_hash_inspect(mrbc_vm *vm, mrbc_value v[], int argc)
   METHOD( "new",	c_hash_new )
   METHOD( "[]",		c_hash_get )
   METHOD( "[]=",	c_hash_set )
+  METHOD( "__except",	c_hash_except_keys )
+  METHOD( "__pat_values", c_hash_pat_values )
   METHOD( "clear",	c_hash_clear )
+  METHOD( "deconstruct_keys", c_hash_deconstruct_keys )
   METHOD( "dup",	c_hash_dup )
   METHOD( "delete",	c_hash_delete )
   METHOD( "empty?",	c_hash_empty )
