@@ -33,6 +33,7 @@
 #else
 #define MRBC_POW pow
 #endif
+
 /***** Typedefs *************************************************************/
 /***** Function prototypes **************************************************/
 /***** Local variables ******************************************************/
@@ -162,7 +163,7 @@ static void c_integer_not(mrbc_vm *vm, mrbc_value v[], int argc)
 }
 
 
-//================================================================
+//----------------------------------------------------------------
 /*! x-bit left shift for x
  */
 static mrbc_int_t shift(mrbc_int_t x, mrbc_int_t y)
@@ -182,7 +183,7 @@ static mrbc_int_t shift(mrbc_int_t x, mrbc_int_t y)
  */
 static void c_integer_lshift(mrbc_vm *vm, mrbc_value v[], int argc)
 {
-  int num = mrbc_integer(v[1]);
+  mrbc_int_t num = mrbc_integer(v[1]);
   SET_INT_RETURN( shift(v->i, num) );
 }
 
@@ -192,8 +193,41 @@ static void c_integer_lshift(mrbc_vm *vm, mrbc_value v[], int argc)
  */
 static void c_integer_rshift(mrbc_vm *vm, mrbc_value v[], int argc)
 {
-  int num = mrbc_integer(v[1]);
+  mrbc_int_t num = mrbc_integer(v[1]);
   SET_INT_RETURN( shift(v->i, -num) );
+}
+
+
+//================================================================
+/*! (operator) + plus
+ */
+static void c_integer_plus(mrbc_vm *vm, mrbc_value v[], int argc)
+{
+  assert( mrbc_type(v[1]) == MRBC_TT_INTEGER );
+
+  SET_INT_RETURN( mrbc_integer(v[0]) + mrbc_integer(v[1]) );
+}
+
+
+//================================================================
+/*! (operator) - minus
+ */
+static void c_integer_minus(mrbc_vm *vm, mrbc_value v[], int argc)
+{
+  assert( mrbc_type(v[1]) == MRBC_TT_INTEGER );
+
+  SET_INT_RETURN( mrbc_integer(v[0]) - mrbc_integer(v[1]) );
+}
+
+
+//================================================================
+/*! (operator) >= Greater than or equal
+ */
+static void c_integer_gt_eq(mrbc_vm *vm, mrbc_value v[], int argc)
+{
+  assert( mrbc_type(v[1]) == MRBC_TT_INTEGER );
+
+  SET_BOOL_RETURN( mrbc_integer(v[0]) >= mrbc_integer(v[1]) );
 }
 
 
@@ -384,6 +418,9 @@ static void c_integer_inspect(mrbc_vm *vm, mrbc_value v[], int argc)
   METHOD( "~",		c_integer_not )
   METHOD( "<<",		c_integer_lshift )
   METHOD( ">>",		c_integer_rshift )
+  METHOD( "+",		c_integer_plus )
+  METHOD( "-",		c_integer_minus )
+  METHOD( ">=",		c_integer_gt_eq )
   METHOD( "abs",	c_integer_abs )
   METHOD( "to_i",	c_ineffect )
   METHOD( "clamp",	c_numeric_clamp )
