@@ -27,6 +27,7 @@
 
 /***** Local headers ********************************************************/
 #include "value.h"
+#include "symbol.h"
 #include "c_proc.h"
 
 #ifdef __cplusplus
