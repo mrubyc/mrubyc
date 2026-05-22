@@ -196,7 +196,7 @@ void mrbc_debug_dump_const( void )
     const mrbc_kv *kv = mrbc_kv_i_next( &ite );
     const char *s = mrbc_symid_to_str(kv->sym_id);
 
-    if( kv->sym_id < 0x100 ) continue;
+    if( kv->sym_id < 0x100 ) continue;	// OFFSET_BUILTIN_SYMBOL in symbol.c
 
     mrbc_printf(" %04x:\"%s\"", kv->sym_id, s );
     if( mrbc_is_nested_symid(kv->sym_id) ) {
