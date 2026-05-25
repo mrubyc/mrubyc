@@ -90,15 +90,16 @@ class PatternMatchTest < Picotest::Test
     assert_equal :other, result
   end
 
-  description "no match returns nil"
-  def test_no_match_returns_nil
-    result = case 99
-    in 1
-      :one
-    in 2
-      :two
+  description "no match raises"
+  def test_no_match_raises
+    assert_raise(NoMatchingPatternError) do
+      case 99
+      in 1
+        :one
+      in 2
+        :two
+      end
     end
-    assert_equal nil, result
   end
 
   description "alternative pattern"
@@ -496,11 +497,12 @@ class PatternMatchTest < Picotest::Test
 
   description "find pattern no match"
   def test_find_pattern_no_match
-    result = case [1, 2, 3]
-    in [*, 5, 6, *]
-      :match
+    assert_raise(NoMatchingPatternError) do
+      case [1, 2, 3]
+      in [*, 5, 6, *]
+        :match
+      end
     end
-    assert_equal nil, result
   end
 
   description "find pattern at beginning"
