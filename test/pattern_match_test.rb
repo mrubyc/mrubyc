@@ -90,7 +90,7 @@ class PatternMatchTest < Picotest::Test
     assert_equal :other, result
   end
 
-  description "no match returns nil"
+  description "no match raises"
   def test_no_match_raises
     assert_raise(NoMatchingPatternError) do
       case 99
