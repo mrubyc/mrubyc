@@ -62,6 +62,8 @@ void mrbc_hal_init(void);
 extern "C" {
 #endif
 
+void mrbc_tick(void);
+
 int mrbc_hal_write(int fd, const void *buf, int nbytes);
 int mrbc_hal_flush(int fd);
 void mrbc_hal_abort(const char *s);
