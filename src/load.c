@@ -65,7 +65,7 @@ enum irep_pool_type {
   <pre>
   Structure
    "RITE"     identifier
-   "03"       major version
+   "04"       major version
    "00"       minor version
    0000_0000  total size
    "MATZ"     compiler name
@@ -164,13 +164,20 @@ static mrbc_irep * load_irep_1(mrbc_vm *vm, const uint8_t *bin, int *len)
 
     switch( tt ) {
     case IREP_TT_STR:
-    case IREP_TT_SSTR:	siz = bin_to_uint16(p) + 3;	break;
-    case IREP_TT_INT32:	siz = 4;	break;
+    case IREP_TT_SSTR:   siz = bin_to_uint16(p) + 3; break;
+    case IREP_TT_INT32:  siz = 4; break;
+
+#if defined(MRBC_INT64)
+    case IREP_TT_INT64:  siz = 8; break;
+    case IREP_TT_BIGINT: siz = *p + 2; break;
+#else
     case IREP_TT_INT64:
-#if !defined(MRBC_INT64)
-      mrbc_raise(vm, MRBC_CLASS(NotImplementedError), "Unsupported int64 (set MRBC_INT64 in vm_config)");
+    case IREP_TT_BIGINT:
+       mrbc_raise(vm, MRBC_CLASS(NotImplementedError), "Unsupported int64 (set MRBC_INT64 in vm_config)");
+       return NULL;
 #endif
-    case IREP_TT_FLOAT:	siz = 8;	break;
+
+    case IREP_TT_FLOAT: siz = 8; break;
     default:
       mrbc_raisef(vm, MRBC_CLASS(Exception), "Not support such type (IREP_TT=%d)", tt);
       return NULL;
@@ -204,19 +211,22 @@ static mrbc_irep * load_irep_1(mrbc_vm *vm, const uint8_t *bin, int *len)
   for( int i = 0; i < slen; i++ ) {
     int siz = bin_to_uint16(p) + 1;	p += 2;
     char *sym_str;
+
     if (vm->flag_permanence == 1) {
       sym_str = mrbc_raw_alloc_no_free(siz);
       memcpy(sym_str, p, siz);
     } else {
       sym_str = (char *)p;
     }
+
     mrbc_sym sym = mrbc_str_to_symid( sym_str );
     if( sym < 0 ) {
       mrbc_raise(vm, MRBC_CLASS(Exception), "Overflow MAX_SYMBOLS_COUNT");
       return NULL;
     }
+
     *tbl_syms++ = sym;
-    p += (siz);
+    p += siz;
   }
 
   // make a pool data's offset table. (tbl_pools[plen])
@@ -231,9 +241,12 @@ static mrbc_irep * load_irep_1(mrbc_vm *vm, const uint8_t *bin, int *len)
     *ofs_pools++ = (uint16_t)(p - irep.pool);
     switch( *p++ ) {
     case IREP_TT_STR:
-    case IREP_TT_SSTR:	siz = bin_to_uint16(p) + 3;  break;
-    case IREP_TT_INT32:	siz = 4;  break;
-    case IREP_TT_INT64:
+    case IREP_TT_SSTR:   siz = bin_to_uint16(p) + 3; break;
+    case IREP_TT_INT32:  siz = 4; break;
+#if defined(MRBC_INT64)
+    case IREP_TT_INT64:  siz = 8; break;
+    case IREP_TT_BIGINT: siz = *p + 2; break;
+#endif
     case IREP_TT_FLOAT:	siz = 8;  break;
     }
     p += siz;
@@ -348,6 +361,32 @@ void mrbc_irep_free(mrbc_irep *irep)
   }
 }
 
+#if defined(MRBC_INT64)
+//----------------------------------------------------------------
+static mrbc_int_t conv_bigint( const uint8_t *p )
+{
+  int len = *p++;
+  int base = *(const int8_t *)p++;
+  int sign = base;
+  if( base < 0 ) base = -base;
+  mrbc_int_t ret = 0;
+
+  if( base <= 10 ) {
+    for( int i = 0; i < len; i++ ) {
+      ret = (ret * base) + (*p++ - '0');
+    }
+  } else {
+    for( int i = 0; i < len; i++ ) {
+      int n = *p++ - '0';
+      if( n > 9 ) n += ('9' - 'a' + 1);
+      ret = (ret * base) + n;
+    }
+  }
+
+  return (sign < 0) ? ret : ret;
+}
+#endif
+
 
 //================================================================
 /*! get a mrbc_value in irep pool.
@@ -385,6 +424,10 @@ mrbc_value mrbc_irep_pool_value(mrbc_vm *vm, int n)
 #if defined(MRBC_INT64)
   case IREP_TT_INT64:
     mrbc_set_integer(&obj, bin_to_int64(p));
+    break;
+
+  case IREP_TT_BIGINT:
+    mrbc_set_integer(&obj, conv_bigint(p));
     break;
 #endif
 
