@@ -43,8 +43,6 @@
 #define MRBC_TIMESLICE_TICK_COUNT 3
 #endif
 
-#define MRBC_OUT_OF_MEMORY() mrbc_out_of_memory_posix()
-
 
 /***** Typedefs *************************************************************/
 /***** Global variables *****************************************************/
@@ -55,21 +53,22 @@ extern "C" {
 
 void mrbc_tick(void);
 
+// When using a hardware timer (but using a POSIX timer here instead)
 #if !defined(MRBC_NO_TIMER)
 void mrbc_hal_init(void);
 void mrbc_hal_enable_irq(void);
 void mrbc_hal_disable_irq(void);
-# define mrbc_hal_idle_cpu()    sleep(1) // maybe interrupt by SIGINT
+#define mrbc_hal_idle_cpu()    sleep(1) // maybe interrupt by SIGINT
 
-#else // MRBC_NO_TIMER
-#define mrbc_hal_init()	  ((void)0)
+// or without a hardware timer.
+#else
+#define mrbc_hal_init()        ((void)0)
 #define mrbc_hal_enable_irq()  ((void)0)
 #define mrbc_hal_disable_irq() ((void)0)
 #define mrbc_hal_idle_cpu()    (usleep(MRBC_TICK_UNIT * 1000), mrbc_tick())
 #endif
 
 void mrbc_hal_abort(const char *s);
-void mrbc_out_of_memory_posix( void );
 
 
 /***** Inline functions *****************************************************/

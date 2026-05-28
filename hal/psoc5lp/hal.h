@@ -46,6 +46,9 @@
 extern "C" {
 #endif
 
+void mrbc_tick(void);
+
+
 #if !defined(MRBC_NO_TIMER)
 # define mrbc_hal_init()        ((void)0)
 # define mrbc_hal_enable_irq()  CyGlobalIntEnable

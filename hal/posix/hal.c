@@ -154,22 +154,3 @@ void mrbc_hal_abort(const char *s)
   }
   exit( 1 );
 }
-
-
-//================================================================
-/*!@brief
-  out of memory
-
-*/
-void mrbc_out_of_memory_posix( void )
-{
-  static const char msg[] = "Fatal error: Out of memory.\n";
-  mrbc_hal_write(2, msg, sizeof(msg)-1);
-
-#if 0
-  void mrbc_alloc_print_memory_pool(void);
-  mrbc_alloc_print_memory_pool();
-#endif
-
-  mrbc_hal_abort(0);
-}
