@@ -383,7 +383,7 @@ static mrbc_int_t conv_bigint( const uint8_t *p )
     }
   }
 
-  return (sign < 0) ? ret : ret;
+  return (sign < 0) ? -ret : ret;
 }
 #endif
 
