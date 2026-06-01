@@ -95,7 +95,7 @@ MRUBYC_H = vm_config.h \
 $(BUILD_DIR)/alloc.o: alloc.c $(MRUBYC_H) $(HAL_DIR)/hal.h
 $(BUILD_DIR)/c_array.o: c_array.c $(MRUBYC_H) _autogen_class_array.h
 $(BUILD_DIR)/c_hash.o: c_hash.c $(MRUBYC_H) _autogen_class_hash.h
-$(BUILD_DIR)/c_math.o: c_math.c $(MRUBYC_H)
+$(BUILD_DIR)/c_math.o: c_math.c $(MRUBYC_H) _autogen_module_math.h
 $(BUILD_DIR)/c_numeric.o: c_numeric.c $(MRUBYC_H) _autogen_class_integer.h _autogen_class_float.h
 $(BUILD_DIR)/c_object.o: c_object.c $(MRUBYC_H) _autogen_class_object.h
 $(BUILD_DIR)/c_proc.o: c_proc.c $(MRUBYC_H) _autogen_class_proc.h
