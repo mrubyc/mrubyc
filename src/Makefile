@@ -27,8 +27,8 @@ ifdef MRBC_USE_UNICODE_CASE
 CFLAGS += -DMRBC_USE_UNICODE_CASE=$(MRBC_USE_UNICODE_CASE)
 endif
 SRCS = alloc.c c_array.c c_hash.c c_math.c c_numeric.c c_object.c c_proc.c \
-       c_range.c c_string.c class.c console.c error.c global.c keyvalue.c \
-       load.c mrblib.c rrt0.c symbol.c value.c vm.c hal.c
+       c_range.c c_string.c c_task_queue.c class.c console.c error.c global.c \
+       keyvalue.c load.c mrblib.c rrt0.c symbol.c value.c vm.c hal.c
 OBJS = $(addprefix $(BUILD_DIR)/, $(SRCS:.c=.o))
 BUILD_DIR = ../build
 
@@ -101,6 +101,7 @@ $(BUILD_DIR)/c_object.o: c_object.c $(MRUBYC_H) _autogen_class_object.h
 $(BUILD_DIR)/c_proc.o: c_proc.c $(MRUBYC_H) _autogen_class_proc.h
 $(BUILD_DIR)/c_range.o: c_range.c $(MRUBYC_H) _autogen_class_range.h
 $(BUILD_DIR)/c_string.o: c_string.c $(MRUBYC_H) _autogen_class_string.h _autogen_unicode_case.h
+$(BUILD_DIR)/c_task_queue.o: c_task_queue.c $(MRUBYC_H) rrt0.h c_task_queue.h _autogen_class_task_queue.h
 $(BUILD_DIR)/class.o: class.c $(MRUBYC_H)
 $(BUILD_DIR)/console.o: console.c $(MRUBYC_H) $(HAL_DIR)/hal.h
 $(BUILD_DIR)/error.o: error.c $(MRUBYC_H) _autogen_class_exception.h
@@ -128,10 +129,10 @@ AUTOGEN_METHOD_TABLE = _autogen_class_array.h _autogen_class_exception.h \
 	_autogen_class_float.h _autogen_class_hash.h _autogen_class_integer.h \
 	_autogen_module_math.h _autogen_class_object.h _autogen_class_proc.h \
 	_autogen_class_range.h _autogen_class_string.h _autogen_class_symbol.h \
-	_autogen_class_rrt0.h
+	_autogen_class_rrt0.h _autogen_class_task_queue.h
 AUTOGEN_METHOD_SRCS1 = c_array.c c_hash.c c_math.c c_numeric.c c_object.c \
-	c_proc.c c_range.c c_string.c symbol.c error.c
-AUTOGEN_METHOD_SRCS2 = $(AUTOGEN_METHOD_SRCS1) rrt0.c
+	c_proc.c c_range.c c_string.c c_task_queue.c symbol.c error.c rrt0.c
+AUTOGEN_METHOD_SRCS2 = $(AUTOGEN_METHOD_SRCS1)
 
 ifdef RUBY_INSTALLED
 $(AUTOGEN_SYMBOL_TABLE): $(AUTOGEN_METHOD_SRCS2) ../mrblib/*
@@ -157,6 +158,8 @@ _autogen_class_proc.h:		c_proc.c
 _autogen_class_range.h:		c_range.c
 	$(MAKE_METHOD_TABLE) $<
 _autogen_class_string.h:	c_string.c
+	$(MAKE_METHOD_TABLE) $<
+_autogen_class_task_queue.h:	c_task_queue.c
 	$(MAKE_METHOD_TABLE) $<
 _autogen_class_symbol.h:	symbol.c
 	$(MAKE_METHOD_TABLE) $<
