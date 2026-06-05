@@ -11,6 +11,8 @@
   </pre>
 */
 
+#include <string.h>
+#include "hal.h"
 
 #if !defined(UART_HANDLETYPEDEF_CONSOLE)
 #define UART_HANDLETYPEDEF_CONSOLE huart2
