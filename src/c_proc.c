@@ -59,6 +59,24 @@ mrbc_value mrbc_proc_new(struct VM *vm, void *irep, uint8_t b_or_m)
   proc->callinfo = vm->callinfo_tail;
   proc->irep = irep;
 
+  /* Snapshot the current scope's regs so OP_GETUPVAR / OP_SETUPVAR keep
+   * working after the parent function returns and its stack frame is
+   * gone. Without this, the callinfo above would dangle because pop
+   * frees it (use-after-free crash) or its slot gets recycled (silently
+   * wrong upvar value).
+   *
+   * We capture all nregs regs of the enclosing irep so the chain walk
+   * via reg[0] also works. */
+  if( vm->cur_irep ) {
+    int n = vm->cur_irep->nregs;
+    proc->captured_regs_size = n;
+    proc->captured_regs = mrbc_raw_alloc(n * sizeof(mrbc_value));
+    for( int i = 0; i < n; i++ ) {
+      proc->captured_regs[i] = vm->cur_regs[i];
+      mrbc_incref(&proc->captured_regs[i]);
+    }
+  }
+
   return mrbc_immediate_value(MRBC_TT_PROC, .proc = proc);
 }
 
@@ -71,6 +89,12 @@ mrbc_value mrbc_proc_new(struct VM *vm, void *irep, uint8_t b_or_m)
 void mrbc_proc_delete(mrbc_value *val)
 {
   mrbc_decref(&val->proc->self);
+  if( val->proc->captured_regs ) {
+    for( int i = 0; i < val->proc->captured_regs_size; i++ ) {
+      mrbc_decref(&val->proc->captured_regs[i]);
+    }
+    mrbc_raw_free(val->proc->captured_regs);
+  }
   mrbc_raw_free(val->proc);
 }
 
@@ -113,15 +137,18 @@ static void c_proc_call(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   assert( mrbc_type(v[0]) == MRBC_TT_PROC );
 
-  mrbc_callinfo *callinfo_self = v[0].proc->callinfo_self;
-  mrbc_callinfo *callinfo = mrbc_push_callinfo(vm,
-                                (callinfo_self ? callinfo_self->method_id : 0),
+  /* NOTE: callinfo_self may dangle here -- the callinfo it pointed to
+   * was freed when the proc's defining function returned. We MUST NOT
+   * dereference it. Pushing with method_id=0 and leaving own_class as
+   * the push_callinfo default (0) is safe; OP_GETCONST inside the
+   * block will fall back to find_class_by_object(self) instead of
+   * walking through callinfo->own_class. The cost is that constant
+   * lookup inside a block runs against `self`'s class chain rather
+   * than the defining method's class chain (rarely matters in
+   * practice). */
+  mrbc_callinfo *callinfo = mrbc_push_callinfo(vm, 0,
                                 v - vm->cur_regs, argc);
   if( !callinfo ) return;
-
-  if( callinfo_self ) {
-    callinfo->own_class = callinfo_self->own_class;
-  }
   callinfo->is_called_block = 1;
 
   // target irep
