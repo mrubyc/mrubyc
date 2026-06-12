@@ -15,9 +15,9 @@ jobs:
     steps:
     - uses: actions/checkout@v6
 
-    - name: Generate autogen files
+    - name: Generate release autogen files
       run: |
-        make autogen
+        make -C src autogen
         sed -E -e '/^[A-Z]+_VERSION/!d' mrblib/global.rb > src/VERSION
 
     - name: Create release archive with autogen files
