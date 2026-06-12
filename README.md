@@ -4,7 +4,7 @@
 
 [![Join the chat at https://gitter.im/mrubyc/mrubyc](https://badges.gitter.im/mrubyc/mrubyc.svg)](https://gitter.im/mrubyc/mrubyc?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-mruby/c is another implementation of mruby.
+mruby/c is another implementation of mruby VM.
 
 - Small memory consumption
 - Limited class libraries
@@ -27,7 +27,7 @@ mruby/c is another implementation of mruby.
 
 ## Developer team
 
-- [Shimane IT Open-Innovation Center](http://www.s-itoc.jp/)
+- [Shimane Institute for Industrial Technology](https://www.shimane-iit.jp/)
 - [Kyushu Institute of Technology](http://www.kyutech.ac.jp/)
 
 ## License
