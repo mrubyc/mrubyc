@@ -18,6 +18,7 @@ RENAME_CHAR = {
   "+"=>"PLUS",
   "-"=>"MINUS",
   "/"=>"DIV",
+  ":"=>"COLON",
   "<"=>"LT",
   "="=>"EQ",
   ">"=>"GT",
@@ -46,6 +47,14 @@ def rename_for_symbol(s)
     end
   }
   return r
+end
+
+
+##
+# sanitize for C variable name
+#
+def sanitize_var_name(s)
+  s.gsub("::", "_")
 end
 
 

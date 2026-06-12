@@ -612,6 +612,8 @@ int mrbc_run_mrblib(const void *bytecode)
   return ret;
 }
 
+#include "c_task_queue.h"
+
 #define MRBC_DEFINE_BUILTIN_CLASS_TABLE
 #include "_autogen_builtin_class.h"
 #undef MRBC_DEFINE_BUILTIN_CLASS_TABLE
@@ -637,6 +639,8 @@ void mrbc_init_class(void)
 #if MRBC_USE_MATH
   mrbc_init_module_math();
 #endif
+
+  mrbc_init_task_queue(MRBC_CLASS(Task));
 
   extern const uint8_t mrblib_bytecode[];
   mrbc_run_mrblib(mrblib_bytecode);

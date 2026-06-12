@@ -62,7 +62,7 @@ static volatile uint32_t wakeup_tick_ = (1 << 16); // no significant meaning.
   If the same priority_preemption value is in the TCB and queue,
   it will be inserted at the end of the same value in queue.
 */
-static void q_insert_task(mrbc_tcb *p_tcb)
+void mrbc_task_q_insert(mrbc_tcb *p_tcb)
 {
   // select target queue pointer.
   //                    state value = 0  1  2  3  4  5  6  7  8
@@ -96,9 +96,9 @@ static void q_insert_task(mrbc_tcb *p_tcb)
 
   @param  p_tcb	Pointer to target TCB
 */
-static void q_delete_task(mrbc_tcb *p_tcb)
+void mrbc_task_q_delete(mrbc_tcb *p_tcb)
 {
-  // select target queue pointer. (same as q_insert_task)
+  // select target queue pointer. (same as mrbc_task_q_insert)
   static const uint8_t conv_tbl[] = { 0,    1,    2,    0,    3 };
   mrbc_tcb **pp_q = &task_queue_[ conv_tbl[ p_tcb->state / 2 ]];
 
@@ -120,6 +120,20 @@ static void q_delete_task(mrbc_tcb *p_tcb)
   }
 
   assert(!"Not found target task in queue.");
+}
+
+
+//================================================================
+/*! get the head of the WAITING task queue.
+
+  Provided so that out-of-file features (e.g. Task::Queue) can scan the
+  tasks that are currently in the WAITING state.
+
+  @return	Pointer to the first TCB in the waiting queue, or NULL.
+*/
+mrbc_tcb *mrbc_task_q_waiting_head(void)
+{
+  return q_waiting_;
 }
 
 
@@ -166,10 +180,10 @@ void mrbc_tick(void)
       if( t->reason != TASKREASON_SLEEP ) continue;
 
       if( (int32_t)(t->wakeup_tick - tick_) < 0 ) {
-        q_delete_task(t);
+        mrbc_task_q_delete(t);
         t->state  = TASKSTATE_READY;
         t->reason = 0;
-        q_insert_task(t);
+        mrbc_task_q_insert(t);
         flag_preemption = 1;
       } else if( (int32_t)(t->wakeup_tick - wakeup_tick_) < 0 ) {
         wakeup_tick_ = t->wakeup_tick;
@@ -245,7 +259,7 @@ mrbc_tcb * mrbc_create_task(const void *byte_code, mrbc_tcb *tcb)
   mrbc_vm_begin( &tcb->vm );
 
   mrbc_hal_disable_irq();
-  q_insert_task(tcb);
+  mrbc_task_q_insert(tcb);
   if( tcb->state & TASKSTATE_READY ) preempt_running_task();
   mrbc_hal_enable_irq();
 
@@ -264,7 +278,7 @@ int mrbc_delete_task(mrbc_tcb *tcb)
   if( tcb->state != TASKSTATE_DORMANT )  return -1;
 
   mrbc_hal_disable_irq();
-  q_delete_task(tcb);
+  mrbc_task_q_delete(tcb);
   mrbc_hal_enable_irq();
 
   mrbc_vm_close( &tcb->vm );
@@ -328,11 +342,11 @@ int mrbc_start_task(mrbc_tcb *tcb)
 
   preempt_running_task();
 
-  q_delete_task(tcb);
+  mrbc_task_q_delete(tcb);
   tcb->state = TASKSTATE_READY;
   tcb->reason = 0;
   tcb->priority_preemption = tcb->priority;
-  q_insert_task(tcb);
+  mrbc_task_q_insert(tcb);
 
   mrbc_hal_enable_irq();
 
@@ -390,9 +404,9 @@ int mrbc_run(void)
     */
     if( ret_vm_run != 0 ) {
       mrbc_hal_disable_irq();
-      q_delete_task(tcb);
+      mrbc_task_q_delete(tcb);
       tcb->state = TASKSTATE_DORMANT;
-      q_insert_task(tcb);
+      mrbc_task_q_insert(tcb);
       mrbc_hal_enable_irq();
 
       if( ! tcb->vm.flag_permanence ) mrbc_vm_end( &tcb->vm );
@@ -402,10 +416,10 @@ int mrbc_run(void)
       for( mrbc_tcb *tcb1 = q_waiting_; tcb1 != NULL; tcb1 = tcb1->next ) {
         if( tcb1->reason == TASKREASON_JOIN && tcb1->tcb_join == tcb ) {
           mrbc_hal_disable_irq();
-          q_delete_task(tcb1);
+          mrbc_task_q_delete(tcb1);
           tcb1->state = TASKSTATE_READY;
           tcb1->reason = 0;
-          q_insert_task(tcb1);
+          mrbc_task_q_insert(tcb1);
           mrbc_hal_enable_irq();
         }
       }
@@ -424,8 +438,8 @@ int mrbc_run(void)
       tcb->state = TASKSTATE_READY;
 
       mrbc_hal_disable_irq();
-      q_delete_task(tcb);       // insert task on queue last.
-      q_insert_task(tcb);
+      mrbc_task_q_delete(tcb);       // insert task on queue last.
+      mrbc_task_q_insert(tcb);
       mrbc_hal_enable_irq();
     }
 
@@ -458,9 +472,9 @@ mrbc_run_step(void)
 
   if (ret_vm_run != 0) {
     mrbc_hal_disable_irq();
-    q_delete_task(tcb);
+    mrbc_task_q_delete(tcb);
     tcb->state = TASKSTATE_DORMANT;
-    q_insert_task(tcb);
+    mrbc_task_q_insert(tcb);
     mrbc_hal_enable_irq();
 
     if (!tcb->vm.flag_permanence) {
@@ -470,10 +484,10 @@ mrbc_run_step(void)
     for (mrbc_tcb *tcb1 = q_waiting_; tcb1 != NULL; tcb1 = tcb1->next) {
       if (tcb1->reason == TASKREASON_JOIN && tcb1->tcb_join == tcb) {
         mrbc_hal_disable_irq();
-        q_delete_task(tcb1);
+        mrbc_task_q_delete(tcb1);
         tcb1->state = TASKSTATE_READY;
         tcb1->reason = 0;
-        q_insert_task(tcb1);
+        mrbc_task_q_insert(tcb1);
         mrbc_hal_enable_irq();
       }
     }
@@ -490,8 +504,8 @@ mrbc_run_step(void)
   if (tcb->state == TASKSTATE_RUNNING) {
     tcb->state = TASKSTATE_READY;
     mrbc_hal_disable_irq();
-    q_delete_task(tcb);
-    q_insert_task(tcb);
+    mrbc_task_q_delete(tcb);
+    mrbc_task_q_insert(tcb);
     mrbc_hal_enable_irq();
   }
 
@@ -509,7 +523,7 @@ mrbc_run_step(void)
 void mrbc_sleep_ms(mrbc_tcb *tcb, uint32_t ms)
 {
   mrbc_hal_disable_irq();
-  q_delete_task(tcb);
+  mrbc_task_q_delete(tcb);
   tcb->state       = TASKSTATE_WAITING;
   tcb->reason      = TASKREASON_SLEEP;
   tcb->wakeup_tick = tick_ + (ms / MRBC_TICK_UNIT) + !!(ms % MRBC_TICK_UNIT);
@@ -518,7 +532,7 @@ void mrbc_sleep_ms(mrbc_tcb *tcb, uint32_t ms)
     wakeup_tick_ = tcb->wakeup_tick;
   }
 
-  q_insert_task(tcb);
+  mrbc_task_q_insert(tcb);
   mrbc_hal_enable_irq();
 
   tcb->vm.flag_preemption = 1;
@@ -541,10 +555,10 @@ void mrbc_wakeup_task(mrbc_tcb *tcb)
     if( tcb->reason != TASKREASON_SLEEP ) break;
 
     mrbc_hal_disable_irq();
-    q_delete_task(tcb);
+    mrbc_task_q_delete(tcb);
     tcb->state = TASKSTATE_READY;
     tcb->reason = 0;
-    q_insert_task(tcb);
+    mrbc_task_q_insert(tcb);
 
     for( mrbc_tcb *t = q_waiting_; t != NULL; t = t->next ) {
       if( t->reason != TASKREASON_SLEEP ) continue;
@@ -585,8 +599,8 @@ void mrbc_change_priority(mrbc_tcb *tcb, int priority)
   tcb->priority_preemption = priority;
 
   mrbc_hal_disable_irq();
-  q_delete_task(tcb);       // reorder task queue according to priority.
-  q_insert_task(tcb);
+  mrbc_task_q_delete(tcb);       // reorder task queue according to priority.
+  mrbc_task_q_insert(tcb);
 
   if( tcb->state & TASKSTATE_READY ) preempt_running_task();
 
@@ -604,9 +618,9 @@ void mrbc_suspend_task(mrbc_tcb *tcb)
   if( tcb->state == TASKSTATE_SUSPENDED ) return;
 
   mrbc_hal_disable_irq();
-  q_delete_task(tcb);
+  mrbc_task_q_delete(tcb);
   tcb->state = TASKSTATE_SUSPENDED;
-  q_insert_task(tcb);
+  mrbc_task_q_insert(tcb);
   mrbc_hal_enable_irq();
 
   tcb->vm.flag_preemption = 1;
@@ -628,9 +642,9 @@ void mrbc_resume_task(mrbc_tcb *tcb)
 
   if( flag_to_ready_state ) preempt_running_task();
 
-  q_delete_task(tcb);
+  mrbc_task_q_delete(tcb);
   tcb->state = flag_to_ready_state ? TASKSTATE_READY : TASKSTATE_WAITING;
-  q_insert_task(tcb);
+  mrbc_task_q_insert(tcb);
 
   mrbc_hal_enable_irq();
 
@@ -655,9 +669,9 @@ void mrbc_terminate_task(mrbc_tcb *tcb)
   if( tcb->state == TASKSTATE_DORMANT ) return;
 
   mrbc_hal_disable_irq();
-  q_delete_task(tcb);
+  mrbc_task_q_delete(tcb);
   tcb->state = TASKSTATE_DORMANT;
-  q_insert_task(tcb);
+  mrbc_task_q_insert(tcb);
   mrbc_hal_enable_irq();
 
   tcb->vm.flag_preemption = 1;
@@ -676,13 +690,13 @@ void mrbc_join_task(mrbc_tcb *tcb, const mrbc_tcb *tcb_join)
   if( tcb_join->state == TASKSTATE_DORMANT ) return;
 
   mrbc_hal_disable_irq();
-  q_delete_task(tcb);
+  mrbc_task_q_delete(tcb);
 
   tcb->state    = TASKSTATE_WAITING;
   tcb->reason   = TASKREASON_JOIN;
   tcb->tcb_join = tcb_join;
 
-  q_insert_task(tcb);
+  mrbc_task_q_insert(tcb);
   mrbc_hal_enable_irq();
 
   tcb->vm.flag_preemption = 1;
@@ -738,11 +752,11 @@ int mrbc_mutex_lock( mrbc_mutex *mutex, mrbc_tcb *tcb )
   }
 
   // To WAITING state.
-  q_delete_task(tcb);
+  mrbc_task_q_delete(tcb);
   tcb->state  = TASKSTATE_WAITING;
   tcb->reason = TASKREASON_MUTEX;
   tcb->mutex = mutex;
-  q_insert_task(tcb);
+  mrbc_task_q_insert(tcb);
   tcb->vm.flag_preemption = 1;
 
  DONE:
@@ -777,10 +791,10 @@ int mrbc_mutex_unlock( mrbc_mutex *mutex, mrbc_tcb *tcb )
     MRBC_MUTEX_TRACE("SW1: TCB: %p\n", tcb1 );
     mutex->tcb = tcb1;
 
-    q_delete_task(tcb1);
+    mrbc_task_q_delete(tcb1);
     tcb1->state = TASKSTATE_READY;
     tcb1->reason = 0;
-    q_insert_task(tcb1);
+    mrbc_task_q_insert(tcb1);
 
     preempt_running_task();
     goto DONE;
@@ -1488,22 +1502,6 @@ void mrbc_init(void *heap_ptr, unsigned int size)
   mrbc_init_alloc(heap_ptr, size);
   mrbc_init_global();
   mrbc_init_class();
-
-  // (re) Initialize included classes
-  static mrbc_class * const rrt0_cls[] = {
-    MRBC_CLASS(Task), MRBC_CLASS(Mutex), MRBC_CLASS(VM)
-  };
-  mrbc_value vcls = mrbc_immediate_value(MRBC_TT_CLASS);
-
-  for( int i = 0; i < sizeof(rrt0_cls)/sizeof(rrt0_cls[0]); i++ ) {
-    mrbc_class *cls = rrt0_cls[i];
-
-    cls->super = MRBC_CLASS(Object);
-    cls->method_link = 0;
-    vcls.cls = cls;
-
-    mrbc_set_const( vcls.cls->sym_id, &vcls );
-  }
 
   mrbc_define_method(0, 0, "sleep", c_sleep);
   mrbc_define_method(0, 0, "sleep_ms", c_sleep_ms);

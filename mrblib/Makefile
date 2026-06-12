@@ -12,7 +12,7 @@
 TARGETS = $(MRBLIB_C) $(VERSIONFILE)
 MRBLIB_C = ../src/mrblib.c
 VERSIONFILE =  ../src/VERSION
-SRCS = enum.rb array.rb global.rb hash.rb numeric.rb object.rb range.rb string.rb
+SRCS = enum.rb array.rb global.rb hash.rb numeric.rb object.rb range.rb string.rb task_queue.rb
 MRBC ?= mrbc
 
 
