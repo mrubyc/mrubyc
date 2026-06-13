@@ -24,6 +24,9 @@ endif
 ifdef MRBC_USE_HAL_PIC24
   MRBC_USE_HAL = ../hal/pic24
 endif
+ifdef MRBC_USE_HAL_AVR
+  MRBC_USE_HAL = ../hal/avr
+endif
 ifdef MRBC_USE_HAL_RP2040
   MRBC_USE_HAL = ../hal/rp2040
 endif
