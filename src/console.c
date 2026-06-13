@@ -62,7 +62,11 @@ static int mrbc_printf_sub_output_arg( mrbc_printf_t *pf, va_list *ap )
     break;
 
   case 'D':	// for mrbc_int_t (see mrbc_print_sub)
+#if defined(MRBC_INT16)
+    ret = mrbc_printf_int( pf, (mrbc_int_t)va_arg(*ap, int), 10);
+#else
     ret = mrbc_printf_int( pf, va_arg(*ap, mrbc_int_t), 10);
+#endif
     break;
 
   case 'b':
