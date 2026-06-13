@@ -293,9 +293,9 @@ static inline int nlz8(uint8_t x)
 static inline unsigned int calc_index(MRBC_ALLOC_MEMSIZE_T alloc_size)
 {
   // check overflow
-  if( (alloc_size >> (MRBC_ALLOC_FLI_BIT_WIDTH
-                      + MRBC_ALLOC_SLI_BIT_WIDTH
-                      + MRBC_ALLOC_IGNORE_LSBS)) != 0) {
+  if( ((uint32_t)alloc_size >> (MRBC_ALLOC_FLI_BIT_WIDTH
+                                + MRBC_ALLOC_SLI_BIT_WIDTH
+                                + MRBC_ALLOC_IGNORE_LSBS)) != 0) {
     return SIZE_FREE_BLOCKS - 1;
   }
 
