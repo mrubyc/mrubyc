@@ -54,6 +54,7 @@
 #if !defined(MRBC_ALLOC_LIBC)
 /***** Local headers ********************************************************/
 #include "alloc.h"
+#include "vm.h"
 #include "hal.h"
 #if defined(MRBC_DEBUG)
 #include "console.h"
