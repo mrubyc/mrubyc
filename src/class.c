@@ -48,7 +48,11 @@ mrbc_class * const mrbc_class_tbl[MRBC_TT_MAXVAL+1] = {
   0,                            // MRBC_TT_OBJECT    = 9,
   MRBC_CLASS(Proc),             // MRBC_TT_PROC      = 10,
   MRBC_CLASS(Array),            // MRBC_TT_ARRAY     = 11,
+#if MRBC_USE_STRING
   MRBC_CLASS(String),           // MRBC_TT_STRING    = 12,
+#else
+  0,                            // MRBC_TT_STRING    = 12,
+#endif
   MRBC_CLASS(Range),            // MRBC_TT_RANGE     = 13,
   MRBC_CLASS(Hash),             // MRBC_TT_HASH      = 14,
   0,                            // MRBC_TT_EXCEPTION = 15,

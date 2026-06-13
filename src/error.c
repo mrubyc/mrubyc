@@ -260,16 +260,21 @@ static void c_exception_new(struct VM *vm, mrbc_value v[], int argc)
   assert( mrbc_type(v[0]) == MRBC_TT_CLASS );
 
   mrbc_value value;
+#if MRBC_USE_STRING
   if( argc == 1 && mrbc_type(v[1]) == MRBC_TT_STRING ) {
     value = mrbc_exception_new(vm, v[0].cls, mrbc_string_cstr(&v[1]), mrbc_string_size(&v[1]));
   } else {
+#endif
     value = mrbc_exception_new(vm, v[0].cls, NULL, 0);
+#if MRBC_USE_STRING
   }
+#endif
 
   SET_RETURN(value);
 }
 
 
+#if MRBC_USE_STRING
 //================================================================
 /*! (method) message
  */
@@ -286,6 +291,7 @@ static void c_exception_message(struct VM *vm, mrbc_value v[], int argc)
   mrbc_decref( &v[0] );
   v[0] = value;
 }
+#endif
 
 
 /* mruby/c Exception class hierarchy.
@@ -311,7 +317,9 @@ static void c_exception_message(struct VM *vm, mrbc_value v[], int argc)
 
   CLASS("Exception")
   METHOD("new", c_exception_new )
+#if MRBC_USE_STRING
   METHOD("message", c_exception_message )
+#endif
 
   CLASS("NoMemoryError")
   SUPER("Exception")

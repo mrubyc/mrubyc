@@ -26,6 +26,7 @@
 #include "mrubyc.h"
 
 /***** Local functions ******************************************************/
+#if MRBC_USE_STRING
 //================================================================
 /*! set symbol name by symbol ID
  */
@@ -45,6 +46,7 @@ static int set_sym_name_by_id( char *buf, int bufsiz, mrbc_sym sym_id )
 
   return n;
 }
+#endif
 
 
 /***** global functions *****************************************************/
@@ -77,6 +79,7 @@ void mrbc_instance_call_initialize( mrbc_vm *vm, mrbc_value v[], int argc )
 }
 
 
+#if MRBC_USE_STRING
 //================================================================
 /*! Object#inspect, Object.inspect method main routine.
  */
@@ -101,6 +104,7 @@ void mrbc_object_inspect(mrbc_vm *vm, mrbc_value v[], int argc)
 
   SET_RETURN( mrbc_string_new_cstr( vm, buf ));
 }
+#endif
 
 
 /***** Object class *********************************************************/
