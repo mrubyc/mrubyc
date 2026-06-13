@@ -56,13 +56,17 @@ typedef struct RObject {
 */
 #define mrbc_type(o)		((o).tt)
 #define mrbc_integer(o)		((o).i)
+#if MRBC_USE_FLOAT
 #define mrbc_float(o)		((o).d)
+#endif
 #define mrbc_symbol(o)		((o).sym_id)
 
 
 // make immediate values.
 #define mrbc_integer_value(n)	((mrbc_value){.tt = MRBC_TT_INTEGER, .i=(n)})
+#if MRBC_USE_FLOAT
 #define mrbc_float_value(vm,n)	((mrbc_value){.tt = MRBC_TT_FLOAT, .d=(n)})
+#endif
 #define mrbc_nil_value()	((mrbc_value){.tt = MRBC_TT_NIL})
 #define mrbc_true_value()	((mrbc_value){.tt = MRBC_TT_TRUE})
 #define mrbc_false_value()	((mrbc_value){.tt = MRBC_TT_FALSE})
@@ -84,11 +88,13 @@ static inline void mrbc_set_integer(mrbc_value *p, mrbc_int_t n)
   p->i = n;
 }
 
+#if MRBC_USE_FLOAT
 static inline void mrbc_set_float(mrbc_value *p, mrbc_float_t d)
 {
   p->tt = MRBC_TT_FLOAT;
   p->d = d;
 }
+#endif
 
 static inline void mrbc_set_nil(mrbc_value *p)
 {

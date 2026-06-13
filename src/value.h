@@ -273,6 +273,7 @@ typedef struct RObject mrb_value;	// not recommended.
   @def MRBC_TO_FLOAT(val)
   Convert mrbc_value to C-lang double.
 */
+#if MRBC_USE_FLOAT
 #define MRBC_ISNUMERIC(val) \
   ((val).tt == MRBC_TT_INTEGER || (val).tt == MRBC_TT_FLOAT)
 #define MRBC_TO_INT(val) \
@@ -281,6 +282,14 @@ typedef struct RObject mrb_value;	// not recommended.
 #define MRBC_TO_FLOAT(val) \
   (val).tt == MRBC_TT_FLOAT ? (val).d : \
   (val).tt == MRBC_TT_INTEGER ? (mrbc_float_t)(val).i : (mrbc_float_t)0
+#else
+#define MRBC_ISNUMERIC(val) \
+  ((val).tt == MRBC_TT_INTEGER)
+#define MRBC_TO_INT(val) \
+  (val).tt == MRBC_TT_INTEGER ? (val).i : 0
+#define MRBC_TO_FLOAT(val) \
+  (val).tt == MRBC_TT_INTEGER ? (mrbc_float_t)(val).i : (mrbc_float_t)0
+#endif
 
 #endif  // !defined(MRBC_NOT_RECOMMEND_TO_USE)
 

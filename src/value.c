@@ -288,8 +288,10 @@ mrbc_int_t mrbc_val_i(struct VM *vm, const mrbc_value *val)
   case MRBC_TT_INTEGER:
     return val->i;
 
+#if MRBC_USE_FLOAT
   case MRBC_TT_FLOAT:
     return val->d;
+#endif
 
   default:
     ;
@@ -337,8 +339,10 @@ double mrbc_val_f(struct VM *vm, const mrbc_value *val)
   case MRBC_TT_INTEGER:
     return val->i;
 
+#if MRBC_USE_FLOAT
   case MRBC_TT_FLOAT:
     return val->d;
+#endif
 
   default:
     ;
@@ -438,9 +442,11 @@ mrbc_int_t mrbc_to_i(struct VM *vm, mrbc_value v[], int argc, mrbc_value *val)
   case MRBC_TT_INTEGER:
     break;
 
+#if MRBC_USE_FLOAT
   case MRBC_TT_FLOAT:
     mrbc_set_integer(val, val->d);
     break;
+#endif
 
   default:{
     mrbc_value ret = mrbc_send( vm, v, argc, val, "to_i", 0 );
@@ -455,6 +461,7 @@ mrbc_int_t mrbc_to_i(struct VM *vm, mrbc_value v[], int argc, mrbc_value *val)
 }
 
 
+#if MRBC_USE_FLOAT
 //================================================================
 /*! (beta) Convert mrbc_value type to Float.
 
@@ -494,6 +501,7 @@ mrbc_float_t mrbc_to_f(struct VM *vm, mrbc_value v[], int argc, mrbc_value *val)
 
   return val->d;
 }
+#endif
 
 
 //================================================================
@@ -582,8 +590,10 @@ mrbc_int_t mrbc_arg_i(struct VM *vm, mrbc_value v[], int argc, int n)
   case MRBC_TT_INTEGER:
     return v[n].i;
 
+#if MRBC_USE_FLOAT
   case MRBC_TT_FLOAT:
     return v[n].d;
+#endif
 
   default:
     ;
@@ -639,8 +649,10 @@ mrbc_float_t mrbc_arg_f(struct VM *vm, mrbc_value v[], int argc, int n)
   case MRBC_TT_INTEGER:
     return v[n].i;
 
+#if MRBC_USE_FLOAT
   case MRBC_TT_FLOAT:
     return v[n].d;
+#endif
 
   default:
     ;
