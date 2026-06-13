@@ -47,11 +47,16 @@
  */
 static void c_integer_bitref(mrbc_vm *vm, mrbc_value v[], int argc)
 {
-  if( mrbc_integer(v[1]) < 0 ) {
+  const int INT_BITS = sizeof(mrbc_int_t) * CHAR_BIT;
+
+  if( mrbc_integer(v[1]) < 0 || mrbc_integer(v[1]) >= INT_BITS ||
+      (argc != 1 && mrbc_integer(v[2]) <= 0) ) {
     SET_INT_RETURN( 0 );
   } else {
-    mrbc_int_t mask = (argc == 1) ? 1 : (1 << mrbc_integer(v[2])) - 1;
-    SET_INT_RETURN( (mrbc_integer(v[0]) >> mrbc_integer(v[1])) & mask );
+    mrbc_uint_t mask = (argc == 1) ? 1 :
+      (mrbc_integer(v[2]) >= INT_BITS) ? (mrbc_uint_t)-1 : ((mrbc_uint_t)1 << mrbc_integer(v[2])) - 1;
+    mrbc_uint_t ret = (mrbc_uint_t)(mrbc_integer(v[0]) >> mrbc_integer(v[1]));
+    SET_INT_RETURN( (mrbc_int_t)(ret & mask) );
   }
 }
 
