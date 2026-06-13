@@ -253,6 +253,7 @@ int mrbc_strcpy( char *dest, int destsize, const char *src )
 }
 
 
+#if MRBC_USE_FLOAT
 //================================================================
 /*! format float value to string
 
@@ -268,6 +269,7 @@ void mrbc_format_float(char *buf, int bufsiz, mrbc_float_t flo)
   int len = strlen(buf);
   mrbc_strcpy( buf + len,  bufsiz - len, ".0" );
 }
+#endif
 
 
 //================================================================
