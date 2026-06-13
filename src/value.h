@@ -533,6 +533,9 @@ const char *mrbc_arg_s(struct VM *vm, mrbc_value v[], int argc, int n);
 const char *mrbc_arg_s2(struct VM *vm, mrbc_value v[], int argc, int n, const char *default_value);
 int mrbc_arg_b(struct VM *vm, mrbc_value v[], int argc, int n);
 int mrbc_arg_b2(struct VM *vm, mrbc_value v[], int argc, int n, int default_value);
+#if defined(MRBC_ALLOC_VMID)
+void mrbc_clear_vm_id(mrbc_value *v);
+#endif
 //@endcond
 
 
