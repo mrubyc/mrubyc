@@ -32,7 +32,9 @@ extern "C" {
 /***** Function prototypes **************************************************/
 //@cond
 void mrbc_instance_call_initialize(mrbc_vm *vm, mrbc_value v[], int argc);
+#if MRBC_USE_STRING
 void mrbc_object_inspect(mrbc_vm *vm, mrbc_value v[], int argc);
+#endif
 //@endcond
 
 
