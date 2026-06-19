@@ -93,7 +93,9 @@ int mrbc_printf_char(mrbc_printf_t *pf, int ch);
 int mrbc_printf_bstr(mrbc_printf_t *pf, const char *str, int len, int pad);
 int mrbc_printf_int(mrbc_printf_t *pf, mrbc_int_t value, unsigned int base);
 int mrbc_printf_bit(mrbc_printf_t *pf, mrbc_int_t value, int bit);
+#if MRBC_USE_FLOAT
 int mrbc_printf_float(mrbc_printf_t *pf, double value);
+#endif
 int mrbc_printf_pointer(mrbc_printf_t *pf, void *ptr);
 //@endcond
 
