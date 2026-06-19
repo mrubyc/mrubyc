@@ -54,6 +54,7 @@ enum MrbcTaskReason {
   TASKREASON_SLEEP = 0x01,
   TASKREASON_MUTEX = 0x02,
   TASKREASON_JOIN  = 0x04,
+  TASKREASON_QUEUE = 0x08,
 };
 
 static const int MRBC_TASK_DEFAULT_PRIORITY = 128;
@@ -88,6 +89,7 @@ typedef struct RTcb {
   union {
     uint32_t wakeup_tick;	//!< wakeup time for sleep state.
     struct RMutex *mutex;
+    void *queue;		//!< Task::Queue instance waited on (TASKREASON_QUEUE).
   };
   const struct RTcb *tcb_join;  //!< joined task.
 
@@ -134,6 +136,9 @@ void mrbc_cleanup(void);
 void mrbc_init(void *heap_ptr, unsigned int size);
 void pq(const mrbc_tcb *p_tcb);
 void pqall(void);
+void mrbc_task_q_insert(mrbc_tcb *p_tcb);
+void mrbc_task_q_delete(mrbc_tcb *p_tcb);
+mrbc_tcb *mrbc_task_q_waiting_head(void);
 //@endcond
 
 

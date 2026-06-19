@@ -54,13 +54,14 @@ EOL
       raise
     end
     cls_name = cls[type]
+    var_name = sanitize_var_name(cls_name)
 
     file.puts "\n/*===== #{cls_name} #{type} =====*/"
     if !cls[:methods].empty?
       cls[:methods].sort_by! {|m| m[:name] }    # sort by method name
 
       # write method symbol table.
-      file.puts "static const mrbc_sym method_symbols_#{cls_name}[] = {"
+      file.puts "static const mrbc_sym method_symbols_#{var_name}[] = {"
       cls[:methods].each {|m|
         file.puts m[:if_exp].join("\n")  if m[:if_exp]
         file.puts "  MRBC_SYM(#{rename_for_symbol(m[:name])}),"
@@ -69,7 +70,7 @@ EOL
       file.puts "};\n\n"
 
       # write method function table.
-      file.puts "static const mrbc_func_t method_functions_#{cls_name}[] = {"
+      file.puts "static const mrbc_func_t method_functions_#{var_name}[] = {"
       cls[:methods].each {|m|
         file.puts m[:if_exp].join("\n")  if m[:if_exp]
         file.puts "  #{m[:func]},"
@@ -80,19 +81,19 @@ EOL
 
     # write class struct.
     struct_name = cls[:methods].empty? ? "RBuiltinNoMethodClass" : "RBuiltinClass"
-    file.puts "struct #{struct_name} mrbc_class_#{cls_name} = {"
-    file.puts "  .sym_id = MRBC_SYM(#{cls_name}),"
+    file.puts "struct #{struct_name} mrbc_class_#{var_name} = {"
+    file.puts "  .sym_id = MRBC_SYM(#{rename_for_symbol(cls_name)}),"
     file.puts "  .flag_builtin = 1,"
     file.puts "  .flag_nomethod = 1,"  if struct_name == "RBuiltinNoMethodClass"
     file.puts "  .flag_module = 1,"  if type == :module
 
-    n = cls[:methods].empty? ? "0" : "sizeof(method_symbols_#{cls_name}) / sizeof(mrbc_sym)"
+    n = cls[:methods].empty? ? "0" : "sizeof(method_symbols_#{var_name}) / sizeof(mrbc_sym)"
     file.puts "  .num_builtin_method = #{n},"
     sp = case cls[:super]
          when nil
            raise "SUPER isn't specified."
-         when /^[A-Z][A-Za-z0-9]+$/
-           "MRBC_CLASS(#{cls[:super]})"
+         when /^[A-Z][A-Za-z0-9:]+$/
+           "MRBC_CLASS(#{sanitize_var_name(cls[:super])})"
          else
            cls[:super]
          end
@@ -103,8 +104,8 @@ EOL
     file.puts "#endif"
 
     if !cls[:methods].empty?
-      file.puts "  .method_symbols = method_symbols_#{cls_name},"
-      file.puts "  .method_functions = method_functions_#{cls_name},"
+      file.puts "  .method_symbols = method_symbols_#{var_name},"
+      file.puts "  .method_functions = method_functions_#{var_name},"
     end
     file.puts "};"
   }
