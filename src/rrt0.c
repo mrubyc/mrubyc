@@ -942,9 +942,11 @@ static void c_task_get(mrbc_vm *vm, mrbc_value v[], int argc)
   }
 
   // in case of Task.get("TasName")
+#if MRBC_USE_STRING
   else if( mrbc_type(v[1]) == MRBC_TT_STRING ) {
     tcb = mrbc_find_task( mrbc_string_cstr( &v[1] ) );
   }
+#endif
 
   if( tcb ) {
     mrbc_value ret = mrbc_instance_new(vm, v->cls, sizeof(mrbc_tcb *));
@@ -983,6 +985,7 @@ static void c_task_list(mrbc_vm *vm, mrbc_value v[], int argc)
 }
 
 
+#if MRBC_USE_STRING
 //================================================================
 /*! (method) task name list
 
@@ -1052,6 +1055,7 @@ static void c_task_name(mrbc_vm *vm, mrbc_value v[], int argc)
 
   SET_RETURN(ret);
 }
+#endif
 
 
 //================================================================
@@ -1110,6 +1114,7 @@ static void c_task_priority(mrbc_vm *vm, mrbc_value v[], int argc)
 
   task.status() -> String
 */
+#if MRBC_USE_STRING
 static void c_task_status(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   static const char *status_name[] =
@@ -1128,6 +1133,7 @@ static void c_task_status(mrbc_vm *vm, mrbc_value v[], int argc)
 
   SET_RETURN(ret);
 }
+#endif
 
 
 //================================================================
@@ -1274,6 +1280,7 @@ static void c_task_pass(mrbc_vm *vm, mrbc_value v[], int argc)
 
   Task.create( byte_code, regs_size = nil ) -> Task
 */
+#if MRBC_USE_STRING
 static void c_task_create(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   const char *byte_code;
@@ -1310,6 +1317,7 @@ static void c_task_create(mrbc_vm *vm, mrbc_value v[], int argc)
  ERROR_ARGUMENT:
   mrbc_raise( vm, MRBC_CLASS(ArgumentError), 0 );
 }
+#endif
 
 
 //================================================================
@@ -1352,12 +1360,16 @@ static void c_task_rewind(mrbc_vm *vm, mrbc_value v[], int argc)
   METHOD( "get", c_task_get )
   METHOD( "current", c_task_get )
   METHOD( "list", c_task_list )
+#if MRBC_USE_STRING
   METHOD( "name_list", c_task_name_list )
   METHOD( "name=", c_task_set_name )
   METHOD( "name", c_task_name )
+#endif
   METHOD( "priority=", c_task_set_priority )
   METHOD( "priority", c_task_priority )
+#if MRBC_USE_STRING
   METHOD( "status", c_task_status )
+#endif
 
   METHOD( "suspend", c_task_suspend )
   METHOD( "resume", c_task_resume )
@@ -1368,7 +1380,9 @@ static void c_task_rewind(mrbc_vm *vm, mrbc_value v[], int argc)
   METHOD( "value", c_task_value )
   METHOD( "pass", c_task_pass )
 
+#if MRBC_USE_STRING
   METHOD( "create", c_task_create )
+#endif
   METHOD( "run", c_task_run )
   METHOD( "rewind", c_task_rewind )
 */
