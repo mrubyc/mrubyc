@@ -941,16 +941,26 @@ static void c_task_get(mrbc_vm *vm, mrbc_value v[], int argc)
     tcb = mrbc_get_tcb(vm);
   }
 
-  // in case of Task.get("TasName")
 #if MRBC_USE_STRING
+  // in case of Task.get("TaskName")
   else if( mrbc_type(v[1]) == MRBC_TT_STRING ) {
     tcb = mrbc_find_task( mrbc_string_cstr( &v[1] ) );
   }
 #endif
 
   if( tcb ) {
-    mrbc_value ret = mrbc_instance_new(vm, v->cls, sizeof(mrbc_tcb *));
-    *(mrbc_tcb **)ret.instance->data = tcb;
+    mrbc_value ret;
+
+    // Only one instance is allocated.
+    if( tcb->task_instance ) {
+      ret = mrbc_immediate_value(MRBC_TT_OBJECT, .instance = tcb->task_instance );
+    } else {
+      ret = mrbc_instance_new(vm, v->cls, sizeof(mrbc_tcb *));
+      *MRBC_INSTANCE_DATA_PTR( &ret, mrbc_tcb *) = tcb;
+      tcb->task_instance = ret.instance;
+    }
+
+    mrbc_incref(&ret);
     SET_RETURN(ret);
     return;             // normal return.
   }

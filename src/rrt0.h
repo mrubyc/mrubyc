@@ -92,6 +92,7 @@ typedef struct RTcb {
     void *queue;		//!< Task::Queue instance waited on (TASKREASON_QUEUE).
   };
   const struct RTcb *tcb_join;  //!< joined task.
+  mrbc_instance *task_instance;	//!< Task instance or NULL.
 
   struct VM vm;
 
