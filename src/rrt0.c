@@ -201,7 +201,7 @@ void mrbc_tick(void)
   @param  regs_size	num of allocated registers.
   @param  task_state	task initial state.
   @param  priority	task priority.
-  @return pointer to TCB or NULL.
+  @return pointer to TCB.
 
 <b>Code example</b>
 @code
@@ -270,8 +270,8 @@ mrbc_tcb * mrbc_create_task(const void *byte_code, mrbc_tcb *tcb)
 //================================================================
 /*! Delete a task.
 
-  @param  tcb		Task control block.
-  @return Pointer to mrbc_tcb or NULL.
+  @param  tcb	target task.
+  @return	0 on success, or a negative value on error.
 */
 int mrbc_delete_task(mrbc_tcb *tcb)
 {
@@ -313,7 +313,7 @@ void mrbc_set_task_name(mrbc_tcb *tcb, const char *name)
 */
 mrbc_tcb * mrbc_find_task(const char *name)
 {
-  mrbc_tcb *tcb = 0;
+  mrbc_tcb *tcb = NULL;
   mrbc_hal_disable_irq();
 
   for( int i = 0; i < NUM_TASK_QUEUE; i++ ) {
@@ -332,7 +332,7 @@ mrbc_tcb * mrbc_find_task(const char *name)
 /*! Start execution of dormant task.
 
   @param  tcb	target task.
-  @retval int	zero / no error.
+  @return	0 on success, or a negative value on error.
 */
 int mrbc_start_task(mrbc_tcb *tcb)
 {
@@ -914,9 +914,9 @@ static void c_sleep_ms(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   mrbc_tcb *tcb = mrbc_get_tcb(vm);
 
-  mrbc_int_t sec = mrbc_integer(v[1]);
-  SET_INT_RETURN(sec);
-  mrbc_sleep_ms(tcb, sec);
+  mrbc_int_t msec = mrbc_integer(v[1]);
+  SET_INT_RETURN(msec);
+  mrbc_sleep_ms(tcb, msec);
 }
 
 
@@ -924,6 +924,25 @@ static void c_sleep_ms(mrbc_vm *vm, mrbc_value v[], int argc)
 /*
   Task class
 */
+//----------------------------------------------------------------
+static mrbc_value sub_task_get(mrbc_vm *vm, mrbc_tcb *tcb)
+{
+  mrbc_value ret;
+
+  // Only one instance is allocated.
+  if( tcb->task_instance ) {
+    ret = mrbc_immediate_value(MRBC_TT_OBJECT, .instance = tcb->task_instance );
+  } else {
+    ret = mrbc_instance_new(vm, MRBC_CLASS(Task), sizeof(mrbc_tcb *));
+    *MRBC_INSTANCE_DATA_PTR( &ret, mrbc_tcb *) = tcb;
+    tcb->task_instance = ret.instance;
+  }
+
+  mrbc_incref(&ret);
+  return ret;
+}
+
+
 //================================================================
 /*! (method) get task
 
@@ -949,18 +968,7 @@ static void c_task_get(mrbc_vm *vm, mrbc_value v[], int argc)
 #endif
 
   if( tcb ) {
-    mrbc_value ret;
-
-    // Only one instance is allocated.
-    if( tcb->task_instance ) {
-      ret = mrbc_immediate_value(MRBC_TT_OBJECT, .instance = tcb->task_instance );
-    } else {
-      ret = mrbc_instance_new(vm, v->cls, sizeof(mrbc_tcb *));
-      *MRBC_INSTANCE_DATA_PTR( &ret, mrbc_tcb *) = tcb;
-      tcb->task_instance = ret.instance;
-    }
-
-    mrbc_incref(&ret);
+    mrbc_value ret = sub_task_get(vm, tcb);
     SET_RETURN(ret);
     return;             // normal return.
   }
@@ -983,8 +991,7 @@ static void c_task_list(mrbc_vm *vm, mrbc_value v[], int argc)
 
   for( int i = 0; i < NUM_TASK_QUEUE; i++ ) {
     for( mrbc_tcb *tcb = task_queue_[i]; tcb != NULL; tcb = tcb->next ) {
-      mrbc_value task = mrbc_instance_new(vm, v->cls, sizeof(mrbc_tcb *));
-      *(mrbc_tcb **)task.instance->data = tcb;
+      mrbc_value task = sub_task_get(vm, tcb);
       mrbc_array_push( &ret, &task );
     }
   }
@@ -1037,7 +1044,7 @@ static void c_task_set_name(mrbc_vm *vm, mrbc_value v[], int argc)
   if( mrbc_type(v[0]) == MRBC_TT_CLASS ) {
     tcb = mrbc_get_tcb(vm);
   } else {
-    tcb = *(mrbc_tcb **)v[0].instance->data;
+    tcb = *MRBC_INSTANCE_DATA_PTR(&v[0], mrbc_tcb *);
   }
   mrbc_set_task_name( tcb, mrbc_string_cstr(&v[1]) );
 
@@ -1059,7 +1066,7 @@ static void c_task_name(mrbc_vm *vm, mrbc_value v[], int argc)
   if( mrbc_type(v[0]) == MRBC_TT_CLASS ) {
     ret = mrbc_string_new_cstr( vm, mrbc_get_tcb(vm)->name );
   } else {
-    mrbc_tcb *tcb = *(mrbc_tcb **)v[0].instance->data;
+    mrbc_tcb *tcb = *MRBC_INSTANCE_DATA_PTR(&v[0], mrbc_tcb *);
     ret = mrbc_string_new_cstr(vm, tcb->name );
   }
 
@@ -1081,7 +1088,7 @@ static void c_task_set_priority(mrbc_vm *vm, mrbc_value v[], int argc)
   if( mrbc_type(v[0]) == MRBC_TT_CLASS ) {
     tcb = mrbc_get_tcb(vm);
   } else {
-    tcb = *(mrbc_tcb **)v[0].instance->data;
+    tcb = *MRBC_INSTANCE_DATA_PTR(&v[0], mrbc_tcb *);
   }
 
   if( mrbc_type(v[1]) != MRBC_TT_INTEGER ) {
@@ -1112,7 +1119,7 @@ static void c_task_priority(mrbc_vm *vm, mrbc_value v[], int argc)
   if( mrbc_type(v[0]) == MRBC_TT_CLASS ) {
     tcb = mrbc_get_tcb(vm);
   } else {
-    tcb = *(mrbc_tcb **)v[0].instance->data;
+    tcb = *MRBC_INSTANCE_DATA_PTR(&v[0], mrbc_tcb *);
   }
 
   SET_INT_RETURN( tcb->priority );
@@ -1134,7 +1141,7 @@ static void c_task_status(mrbc_vm *vm, mrbc_value v[], int argc)
 
   if( mrbc_type(v[0]) == MRBC_TT_CLASS ) return;
 
-  const mrbc_tcb *tcb = *(mrbc_tcb **)v[0].instance->data;
+  const mrbc_tcb *tcb = *MRBC_INSTANCE_DATA_PTR(&v[0], mrbc_tcb *);
   mrbc_value ret = mrbc_string_new_cstr( vm, status_name[tcb->state / 2] );
 
   if( tcb->state == TASKSTATE_WAITING ) {
@@ -1159,7 +1166,7 @@ static void c_task_suspend(mrbc_vm *vm, mrbc_value v[], int argc)
   if( mrbc_type(v[0]) == MRBC_TT_CLASS ) {
     tcb = mrbc_get_tcb(vm);
   } else {
-    tcb = *(mrbc_tcb **)v[0].instance->data;
+    tcb = *MRBC_INSTANCE_DATA_PTR(&v[0], mrbc_tcb *);
   }
 
   mrbc_suspend_task(tcb);
@@ -1175,7 +1182,7 @@ static void c_task_resume(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   if( mrbc_type(v[0]) == MRBC_TT_CLASS ) return;
 
-  mrbc_tcb *tcb = *(mrbc_tcb **)v[0].instance->data;
+  mrbc_tcb *tcb = *MRBC_INSTANCE_DATA_PTR(&v[0], mrbc_tcb *);
 
   mrbc_resume_task(tcb);
 }
@@ -1193,7 +1200,7 @@ static void c_task_terminate(mrbc_vm *vm, mrbc_value v[], int argc)
   if( mrbc_type(v[0]) == MRBC_TT_CLASS ) {
     tcb = mrbc_get_tcb(vm);
   } else {
-    tcb = *(mrbc_tcb **)v[0].instance->data;
+    tcb = *MRBC_INSTANCE_DATA_PTR(&v[0], mrbc_tcb *);
   }
 
   mrbc_terminate_task(tcb);
@@ -1209,7 +1216,8 @@ static void c_task_terminate(mrbc_vm *vm, mrbc_value v[], int argc)
 static void c_task_raise(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   if( mrbc_type(v[0]) == MRBC_TT_CLASS ) return;
-  mrbc_tcb *tcb = *(mrbc_tcb **)v[0].instance->data;
+  mrbc_tcb *tcb = *MRBC_INSTANCE_DATA_PTR(&v[0], mrbc_tcb *);
+
   mrbc_vm *vm1 = &tcb->vm;
   mrbc_value exc;
 
@@ -1244,7 +1252,7 @@ static void c_task_join(mrbc_vm *vm, mrbc_value v[], int argc)
   if( mrbc_type(v[0]) == MRBC_TT_CLASS ) return;
 
   mrbc_tcb *tcb_me = mrbc_get_tcb(vm);
-  mrbc_tcb *tcb_join = *(mrbc_tcb **)v[0].instance->data;
+  mrbc_tcb *tcb_join = *MRBC_INSTANCE_DATA_PTR(&v[0], mrbc_tcb *);
 
   mrbc_join_task(tcb_me, tcb_join);
 }
@@ -1259,7 +1267,7 @@ static void c_task_value(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   if( mrbc_type(v[0]) == MRBC_TT_CLASS ) return;
 
-  mrbc_tcb *tcb = *(mrbc_tcb **)v[0].instance->data;
+  mrbc_tcb *tcb = *MRBC_INSTANCE_DATA_PTR(&v[0], mrbc_tcb *);
 
   if( tcb->state != TASKSTATE_DORMANT ) {
     mrbc_raise(vm, 0, "task must be end");
@@ -1310,17 +1318,13 @@ static void c_task_create(mrbc_vm *vm, mrbc_value v[], int argc)
 
   // create TCB
   mrbc_tcb *tcb = mrbc_tcb_new( regs_size, TASKSTATE_DORMANT, MRBC_TASK_DEFAULT_PRIORITY );
-  if( !tcb ) {
-    mrbc_raise( vm, MRBC_CLASS(NoMemoryError), 0 );
-    return;
-  }
   tcb->vm.flag_permanence = 1;
 
   if( !mrbc_create_task( byte_code, tcb ) ) return;
 
   // create Instance
-  mrbc_value ret = mrbc_instance_new(vm, v->cls, sizeof(mrbc_tcb *));
-  *(mrbc_tcb **)ret.instance->data = tcb;
+  mrbc_value ret = mrbc_instance_new(vm, v[0].cls, sizeof(mrbc_tcb *));
+  *MRBC_INSTANCE_DATA_PTR( &ret, mrbc_tcb *) = tcb;
   SET_RETURN( ret );
   return;
 
@@ -1339,7 +1343,7 @@ static void c_task_run(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   if( mrbc_type(v[0]) == MRBC_TT_CLASS ) return;
 
-  mrbc_tcb *tcb = *(mrbc_tcb **)v[0].instance->data;
+  mrbc_tcb *tcb = *MRBC_INSTANCE_DATA_PTR(&v[0], mrbc_tcb *);
   if( tcb->state != TASKSTATE_DORMANT ) return;
 
   mrbc_start_task(tcb);
@@ -1355,7 +1359,7 @@ static void c_task_rewind(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   if( mrbc_type(v[0]) == MRBC_TT_CLASS ) return;
 
-  mrbc_tcb *tcb = *(mrbc_tcb **)v[0].instance->data;
+  mrbc_tcb *tcb = *MRBC_INSTANCE_DATA_PTR(&v[0], mrbc_tcb *);
   if( tcb->state != TASKSTATE_DORMANT ) return;
 
   mrbc_vm_begin( &tcb->vm );
@@ -1407,9 +1411,11 @@ static void c_task_rewind(mrbc_vm *vm, mrbc_value v[], int argc)
 */
 static void c_mutex_new(mrbc_vm *vm, mrbc_value v[], int argc)
 {
-  *v = mrbc_instance_new(vm, v->cls, sizeof(mrbc_mutex));
+  v[0] = mrbc_instance_new(vm, v[0].cls, sizeof(mrbc_mutex));
 
-  mrbc_mutex_init( (mrbc_mutex *)(v->instance->data) );
+  mrbc_mutex *mutex = MRBC_INSTANCE_DATA_PTR(&v[0], mrbc_mutex);
+
+  mrbc_mutex_init( mutex );
 }
 
 
@@ -1419,8 +1425,9 @@ static void c_mutex_new(mrbc_vm *vm, mrbc_value v[], int argc)
 */
 static void c_mutex_lock(mrbc_vm *vm, mrbc_value v[], int argc)
 {
-  int r = mrbc_mutex_lock( (mrbc_mutex *)v->instance->data, mrbc_get_tcb(vm) );
-  if( r == 0 ) return;  // return self
+  mrbc_mutex *mutex = MRBC_INSTANCE_DATA_PTR(&v[0], mrbc_mutex);
+  int res = mrbc_mutex_lock(mutex, mrbc_get_tcb(vm));
+  if( res == 0 ) return;  // return self
 
   // raise ThreadError
   assert(!"Mutex recursive lock.");
@@ -1433,8 +1440,9 @@ static void c_mutex_lock(mrbc_vm *vm, mrbc_value v[], int argc)
 */
 static void c_mutex_unlock(mrbc_vm *vm, mrbc_value v[], int argc)
 {
-  int r = mrbc_mutex_unlock( (mrbc_mutex *)v->instance->data, mrbc_get_tcb(vm));
-  if( r == 0 ) return;  // return self
+  mrbc_mutex *mutex = MRBC_INSTANCE_DATA_PTR(&v[0], mrbc_mutex);
+  int res = mrbc_mutex_unlock( mutex, mrbc_get_tcb(vm));
+  if( res == 0 ) return;  // return self
 
   // raise ThreadError
   assert(!"Mutex unlock error. not owner or not locked.");
@@ -1447,8 +1455,9 @@ static void c_mutex_unlock(mrbc_vm *vm, mrbc_value v[], int argc)
 */
 static void c_mutex_trylock(mrbc_vm *vm, mrbc_value v[], int argc)
 {
-  int r = mrbc_mutex_trylock( (mrbc_mutex *)v->instance->data, mrbc_get_tcb(vm));
-  SET_BOOL_RETURN( r == 0 );
+  mrbc_mutex *mutex = MRBC_INSTANCE_DATA_PTR(&v[0], mrbc_mutex);
+  int res = mrbc_mutex_trylock( mutex, mrbc_get_tcb(vm));
+  SET_BOOL_RETURN( res == 0 );
 }
 
 
@@ -1458,7 +1467,7 @@ static void c_mutex_trylock(mrbc_vm *vm, mrbc_value v[], int argc)
 */
 static void c_mutex_locked(mrbc_vm *vm, mrbc_value v[], int argc)
 {
-  mrbc_mutex *mutex = (mrbc_mutex *)v->instance->data;
+  mrbc_mutex *mutex = MRBC_INSTANCE_DATA_PTR(&v[0], mrbc_mutex);
   SET_BOOL_RETURN( mutex->lock != 0 );
 }
 
@@ -1469,7 +1478,7 @@ static void c_mutex_locked(mrbc_vm *vm, mrbc_value v[], int argc)
 */
 static void c_mutex_owned(mrbc_vm *vm, mrbc_value v[], int argc)
 {
-  mrbc_mutex *mutex = (mrbc_mutex *)v->instance->data;
+  mrbc_mutex *mutex = MRBC_INSTANCE_DATA_PTR(&v[0], mrbc_mutex);
   SET_BOOL_RETURN( mutex->lock != 0 && mutex->tcb == mrbc_get_tcb(vm) );
 }
 
