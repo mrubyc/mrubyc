@@ -130,4 +130,35 @@ class TaskQueueTest < Picotest::Test
     q = Task::Queue.new
     assert_equal 0, q.num_waiting
   end
+
+  # The blocking timeout_ms behaviour (returning nil after the deadline, or the
+  # item when a push arrives first) needs the scheduler and multiple tasks, so
+  # it is exercised separately. Argument validation happens before any blocking
+  # and is checked here.
+
+  description "pop with zero timeout returns an available item, else nil"
+  def test_pop_zero_timeout_nonblocking
+    q = Task::Queue.new
+    q.push(:ready)
+    assert_equal :ready, q.pop(timeout_ms: 0)
+    assert_nil q.pop(timeout_ms: 0)
+  end
+
+  description "pop with non-Integer timeout raises TypeError"
+  def test_pop_timeout_type_error
+    q = Task::Queue.new
+    assert_raise(TypeError) { q.pop(timeout_ms: 1.0) }
+  end
+
+  description "pop with negative timeout raises ArgumentError"
+  def test_pop_timeout_negative
+    q = Task::Queue.new
+    assert_raise(ArgumentError) { q.pop(timeout_ms: -1) }
+  end
+
+  description "pop with non_block and timeout raises ArgumentError"
+  def test_pop_timeout_with_non_block
+    q = Task::Queue.new
+    assert_raise(ArgumentError) { q.pop(true, timeout_ms: 1) }
+  end
 end
