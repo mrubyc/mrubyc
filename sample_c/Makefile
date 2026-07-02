@@ -10,7 +10,7 @@
 
 include ../src/hal_selector.mk
 
-TARGETS = sample_scheduler sample_no_scheduler sample_include sample_concurrent sample_myclass sample_task_queue
+TARGETS = sample_scheduler sample_no_scheduler sample_include sample_concurrent sample_myclass sample_task_queue sample_task_queue_timeout
 CFLAGS += -I../src -Wall -g
 LDFLAGS +=
 LIBMRUBYC = ../build/libmrubyc.a
@@ -26,6 +26,7 @@ sample_include: sample_include.c $(LIBMRUBYC)
 sample_concurrent: sample_concurrent.c $(LIBMRUBYC)
 sample_myclass: sample_myclass.c $(LIBMRUBYC)
 sample_task_queue: sample_task_queue.c $(LIBMRUBYC)
+sample_task_queue_timeout: sample_task_queue_timeout.c $(LIBMRUBYC)
 
 clean:
 	rm -rf $(TARGETS) *.o *.dSYM *~

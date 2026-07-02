@@ -149,6 +149,31 @@ inline static void preempt_running_task(void)
 
 
 //================================================================
+/*! Get the timed wakeup tick of a waiting task, if it has one.
+
+  A SLEEP task always has a deadline; a QUEUE task has one only when popped
+  with a timeout (queue.wakeup_tick != MRBC_WAIT_FOREVER). Other wait reasons
+  have no timed wakeup.
+
+  @param  t	task control block.
+  @param  out	receives the wakeup tick when the function returns non-zero.
+  @return	non-zero if the task has a timed wakeup.
+*/
+static int task_timed_wakeup(const mrbc_tcb *t, uint32_t *out)
+{
+  if( t->reason == TASKREASON_SLEEP ) {
+    *out = t->wakeup_tick;
+    return 1;
+  }
+  if( t->reason == TASKREASON_QUEUE && t->queue.wakeup_tick != MRBC_WAIT_FOREVER ) {
+    *out = t->queue.wakeup_tick;
+    return 1;
+  }
+  return 0;
+}
+
+
+//================================================================
 /*! Tick timer interrupt handler.
 
 */
@@ -172,21 +197,23 @@ void mrbc_tick(void)
     int flag_preemption = 0;
     wakeup_tick_ = tick_ + (1 << 16);
 
-    // Find a wake up task in waiting task queue.
+    // Find a wake up task in waiting task queue. Both sleeping tasks and
+    // tasks blocked on a queue with a timeout carry a deadline.
     tcb = q_waiting_;
     while( tcb != NULL ) {
       mrbc_tcb *t = tcb;
       tcb = tcb->next;
-      if( t->reason != TASKREASON_SLEEP ) continue;
+      uint32_t wake;
+      if( !task_timed_wakeup(t, &wake) ) continue;
 
-      if( (int32_t)(t->wakeup_tick - tick_) < 0 ) {
+      if( (int32_t)(wake - tick_) < 0 ) {
         mrbc_task_q_delete(t);
         t->state  = TASKSTATE_READY;
         t->reason = 0;
         mrbc_task_q_insert(t);
         flag_preemption = 1;
-      } else if( (int32_t)(t->wakeup_tick - wakeup_tick_) < 0 ) {
-        wakeup_tick_ = t->wakeup_tick;
+      } else if( (int32_t)(wake - wakeup_tick_) < 0 ) {
+        wakeup_tick_ = wake;
       }
     }
 
@@ -540,6 +567,59 @@ void mrbc_sleep_ms(mrbc_tcb *tcb, uint32_t ms)
 
 
 //================================================================
+/*! Convert a millisecond timeout into an absolute wakeup tick (deadline).
+
+  @param  ms		timeout in milliseconds (must be >= 0).
+  @param  p_overflow	set to non-zero when the deadline is too far ahead to
+			be expressed in the 31-bit signed tick window.
+  @return		absolute deadline tick, normalized so that it never
+			equals the MRBC_WAIT_FOREVER sentinel.
+*/
+uint32_t mrbc_deadline_after_ms(mrbc_int_t ms, int *p_overflow)
+{
+  int64_t ticks = (int64_t)(ms / MRBC_TICK_UNIT) + !!(ms % MRBC_TICK_UNIT);
+  if( ticks > INT32_MAX ) {
+    *p_overflow = 1;
+    return 0;
+  }
+  *p_overflow = 0;
+
+  uint32_t deadline = tick_ + (uint32_t)ticks;
+  // Never hand back the "no timeout" sentinel for a real deadline; pulling it
+  // back one tick costs at most one tick in the 1-in-2^32 collision case.
+  return deadline == MRBC_WAIT_FOREVER ? deadline - 1 : deadline;
+}
+
+
+//================================================================
+/*! Test whether an absolute deadline tick has been reached.
+
+  @param  deadline	absolute deadline tick from mrbc_deadline_after_ms().
+  @return		non-zero if the current tick is at or past the deadline.
+*/
+int mrbc_deadline_reached(uint32_t deadline)
+{
+  return (int32_t)(deadline - tick_) <= 0;
+}
+
+
+//================================================================
+/*! Lower the global next-wakeup tick to account for a new deadline.
+
+  The caller must hold the IRQ lock; this only updates wakeup_tick_ when the
+  given deadline is earlier than the currently scheduled one.
+
+  @param  wakeup_tick	absolute deadline tick to register.
+*/
+void mrbc_register_wakeup(uint32_t wakeup_tick)
+{
+  if( (int32_t)(wakeup_tick - wakeup_tick_) < 0 ) {
+    wakeup_tick_ = wakeup_tick;
+  }
+}
+
+
+//================================================================
 /*! wake up the task.
 
   @param  tcb		target task.
@@ -561,9 +641,10 @@ void mrbc_wakeup_task(mrbc_tcb *tcb)
     mrbc_task_q_insert(tcb);
 
     for( mrbc_tcb *t = q_waiting_; t != NULL; t = t->next ) {
-      if( t->reason != TASKREASON_SLEEP ) continue;
-      if( (int32_t)(t->wakeup_tick - wakeup_tick_) < 0 ) {
-        wakeup_tick_ = t->wakeup_tick;
+      uint32_t wake;
+      if( !task_timed_wakeup(t, &wake) ) continue;
+      if( (int32_t)(wake - wakeup_tick_) < 0 ) {
+        wakeup_tick_ = wake;
       }
     }
     mrbc_hal_enable_irq();
@@ -648,9 +729,10 @@ void mrbc_resume_task(mrbc_tcb *tcb)
 
   mrbc_hal_enable_irq();
 
-  if( tcb->reason & TASKREASON_SLEEP ) {
-    if( (int32_t)(tcb->wakeup_tick - wakeup_tick_) < 0 ) {
-      wakeup_tick_ = tcb->wakeup_tick;
+  uint32_t wake;
+  if( task_timed_wakeup(tcb, &wake) ) {
+    if( (int32_t)(wake - wakeup_tick_) < 0 ) {
+      wakeup_tick_ = wake;
     }
   }
 }
