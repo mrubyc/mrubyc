@@ -1919,8 +1919,12 @@ static inline void op_break( mrbc_vm *vm, mrbc_value *regs EXT )
   mrbc_set_tt( &regs[a], MRBC_TT_EMPTY );
 
   // return to the proc generated level.
+  // Check the origin (generator) of proc before the ensure handler: once we
+  // reach the generator, break lands there and its body keeps running, so its
+  // ensure must fire on the later normal return, not here. Running it now would
+  // skip the rest of the generator body and corrupt the return value.
   int reg_offset = 0;
-  while( 1 ) {
+  while( vm->callinfo_tail != vm->ret_blk->callinfo ) {
     // If have a ensure, jump to it.
     const mrbc_irep_catch_handler *handler = find_catch_handler_ensure(vm);
     if( handler ) {
@@ -1929,9 +1933,6 @@ static inline void op_break( mrbc_vm *vm, mrbc_value *regs EXT )
       vm->inst = vm->cur_irep->inst + bin_to_uint32(handler->target);
       return;
     }
-
-    // Is it the origin (generator) of proc?
-    if( vm->callinfo_tail == vm->ret_blk->callinfo ) break;
 
     reg_offset = vm->callinfo_tail->reg_offset;
     mrbc_pop_callinfo(vm);
