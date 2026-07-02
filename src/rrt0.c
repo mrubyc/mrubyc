@@ -45,7 +45,7 @@ static mrbc_tcb *task_queue_[NUM_TASK_QUEUE];
 #define q_waiting_   (task_queue_[2])
 #define q_suspended_ (task_queue_[3])
 static volatile uint32_t tick_;
-static volatile uint32_t wakeup_tick_ = (1 << 16); // no significant meaning.
+static volatile uint32_t wakeup_tick_ = ((uint32_t)1 << 16); // no significant meaning.
 
 
 /***** Global variables *****************************************************/
@@ -170,7 +170,7 @@ void mrbc_tick(void)
   // Check the wakeup tick.
   if( (int32_t)(wakeup_tick_ - tick_) < 0 ) {
     int flag_preemption = 0;
-    wakeup_tick_ = tick_ + (1 << 16);
+    wakeup_tick_ = tick_ + ((uint32_t)1 << 16);
 
     // Find a wake up task in waiting task queue.
     tcb = q_waiting_;

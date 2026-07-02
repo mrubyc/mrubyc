@@ -310,7 +310,7 @@ mrbc_vm * mrbc_vm_open( mrbc_vm *vm )
   int vm_id;
   for( vm_id = 0; vm_id < MAX_VM_COUNT; vm_id++ ) {
     int idx = vm_id >> 4;
-    int bit = 1 << (vm_id & 0x0f);
+    uint16_t bit = (uint16_t)1 << (vm_id & 0x0f);
     if( (free_vm_bitmap[idx] & bit) == 0 ) {
       free_vm_bitmap[idx] |= bit;		// found
       break;
@@ -402,7 +402,7 @@ void mrbc_vm_close( mrbc_vm *vm )
   // free vm id.
   if( vm->vm_id != 0 ) {
     int idx = (vm->vm_id-1) >> 4;
-    int bit = 1 << ((vm->vm_id-1) & 0x0f);
+    uint16_t bit = (uint16_t)1 << ((vm->vm_id-1) & 0x0f);
     free_vm_bitmap[idx] &= ~bit;
   }
 
