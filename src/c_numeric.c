@@ -53,8 +53,14 @@ static void c_integer_bitref(mrbc_vm *vm, mrbc_value v[], int argc)
       (argc != 1 && mrbc_integer(v[2]) <= 0) ) {
     SET_INT_RETURN( 0 );
   } else {
-    mrbc_uint_t mask = (argc == 1) ? 1 :
-      (mrbc_integer(v[2]) >= INT_BITS) ? (mrbc_uint_t)-1 : ((mrbc_uint_t)1 << mrbc_integer(v[2])) - 1;
+    mrbc_uint_t mask;
+    if( argc == 1 ) {
+      mask = 1;
+    } else if( mrbc_integer(v[2]) >= INT_BITS ) {
+      mask = (mrbc_uint_t)-1;
+    } else {
+      mask = ((mrbc_uint_t)1 << mrbc_integer(v[2])) - 1;
+    }
     mrbc_uint_t ret = (mrbc_uint_t)(mrbc_integer(v[0]) >> mrbc_integer(v[1]));
     SET_INT_RETURN( (mrbc_int_t)(ret & mask) );
   }
