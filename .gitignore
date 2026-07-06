@@ -5,6 +5,7 @@ sample_concurrent
 sample_myclass
 sample_no_scheduler
 sample_task_queue
+sample_task_queue_timeout
 mrbc
 
 # build directory

@@ -33,6 +33,12 @@
 */
 static mrbc_value wait_retry_;
 
+/*
+  Unique sentinel returned by __pop_try when a timeout elapsed before an item
+  became available. Never exposed to Ruby; identity is checked by __timeout?.
+*/
+static mrbc_value wait_timeout_;
+
 /* Task::Error class, raised on illegal queue operations. */
 static struct RClass *task_error_class_;
 
@@ -56,11 +62,12 @@ static int queue_wake_one_waiter(void *q)
 
   mrbc_hal_disable_irq();
   for( mrbc_tcb *tcb = mrbc_task_q_waiting_head(); tcb != NULL; tcb = tcb->next ) {
-    if( tcb->reason == TASKREASON_QUEUE && tcb->queue == q ) {
+    if( tcb->reason == TASKREASON_QUEUE && tcb->queue.target == q ) {
       mrbc_task_q_delete(tcb);
       tcb->state  = TASKSTATE_READY;
       tcb->reason = 0;
-      tcb->queue  = NULL;
+      tcb->queue.target      = NULL;
+      tcb->queue.wakeup_tick = MRBC_WAIT_FOREVER;
       mrbc_task_q_insert(tcb);
       woke = 1;
       break;
@@ -86,11 +93,12 @@ static int queue_wake_all_waiters(void *q)
   mrbc_tcb *tcb = mrbc_task_q_waiting_head();
   while( tcb != NULL ) {
     mrbc_tcb *next = tcb->next;		// capture before the list is modified.
-    if( tcb->reason == TASKREASON_QUEUE && tcb->queue == q ) {
+    if( tcb->reason == TASKREASON_QUEUE && tcb->queue.target == q ) {
       mrbc_task_q_delete(tcb);
       tcb->state  = TASKSTATE_READY;
       tcb->reason = 0;
-      tcb->queue  = NULL;
+      tcb->queue.target      = NULL;
+      tcb->queue.wakeup_tick = MRBC_WAIT_FOREVER;
       mrbc_task_q_insert(tcb);
       woke = 1;
     }
@@ -143,17 +151,22 @@ static void c_task_queue_push(mrbc_vm *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) __pop_try
 
-  Tries to pop one item. Returns:
+  Tries to pop one item. Called as __pop_try(non_block, deadline) where
+  deadline is an absolute tick value (from __deadline) or nil for no timeout.
+  Returns:
     - the item if available
     - nil if closed and empty
     - raises Task::Error if non_block and empty
+    - the WAIT_TIMEOUT sentinel if the deadline has already passed
     - the WAIT_RETRY sentinel if the current task was parked to WAITING
 
-  The Ruby-level pop loops while __retry? is true.
+  The Ruby-level pop loops while __retry? is true, and maps WAIT_TIMEOUT to nil.
 */
 static void c_task_queue_pop_try(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   int non_block = (argc >= 1 && mrbc_type(v[1]) == MRBC_TT_TRUE);
+  int has_timeout = (argc >= 2 && mrbc_type(v[2]) == MRBC_TT_INTEGER);
+  uint32_t deadline = has_timeout ? (uint32_t)mrbc_integer(v[2]) : MRBC_WAIT_FOREVER;
 
   mrbc_value items = mrbc_instance_getiv(&v[0], sym_items_);
 
@@ -181,13 +194,22 @@ static void c_task_queue_pop_try(mrbc_vm *vm, mrbc_value v[], int argc)
     return;
   }
 
+  // timeout already elapsed (covers timeout_ms: 0) - give up without parking.
+  if( has_timeout && mrbc_deadline_reached(deadline) ) {
+    mrbc_incref(&wait_timeout_);
+    SET_RETURN(wait_timeout_);
+    return;
+  }
+
   // blocking: move the current task to WAITING and hand control back.
   mrbc_tcb *tcb = mrbc_get_tcb(vm);
   mrbc_hal_disable_irq();
   mrbc_task_q_delete(tcb);
   tcb->state  = TASKSTATE_WAITING;
   tcb->reason = TASKREASON_QUEUE;
-  tcb->queue  = v[0].instance;
+  tcb->queue.target      = v[0].instance;
+  tcb->queue.wakeup_tick = deadline;		// MRBC_WAIT_FOREVER when no timeout.
+  if( has_timeout ) mrbc_register_wakeup(deadline);
   mrbc_task_q_insert(tcb);
   mrbc_hal_enable_irq();
   tcb->vm.flag_preemption = 1;
@@ -209,6 +231,42 @@ static void c_task_queue_is_wait_retry(mrbc_vm *vm, mrbc_value v[], int argc)
   int r = (mrbc_type(v[1]) == MRBC_TT_OBJECT &&
            v[1].instance == wait_retry_.instance);
   SET_BOOL_RETURN(r);
+}
+
+
+//================================================================
+/*! (method) __timeout?
+
+  Returns true only if the argument is the WAIT_TIMEOUT sentinel itself
+  (pointer identity). Used by the Ruby pop loop to map a timeout to nil.
+*/
+static void c_task_queue_is_wait_timeout(mrbc_vm *vm, mrbc_value v[], int argc)
+{
+  int r = (mrbc_type(v[1]) == MRBC_TT_OBJECT &&
+           v[1].instance == wait_timeout_.instance);
+  SET_BOOL_RETURN(r);
+}
+
+
+//================================================================
+/*! (method) __deadline
+
+  Converts a millisecond timeout into an absolute tick deadline that the pop
+  loop passes back to __pop_try on every retry. Computing it once in Ruby
+  keeps the deadline fixed across spurious wakeups (e.g. a push that loses the
+  item to a higher-priority task), so the total wait never drifts past the
+  requested timeout. The argument is already validated as a non-negative
+  Integer by Queue#pop.
+*/
+static void c_task_queue_deadline(mrbc_vm *vm, mrbc_value v[], int argc)
+{
+  int overflow = 0;
+  uint32_t deadline = mrbc_deadline_after_ms(mrbc_integer(v[1]), &overflow);
+  if( overflow ) {
+    mrbc_raise(vm, MRBC_CLASS(RangeError), "timeout_ms is too large");
+    return;
+  }
+  SET_INT_RETURN((mrbc_int_t)deadline);
 }
 
 
@@ -289,7 +347,7 @@ static void c_task_queue_num_waiting(mrbc_vm *vm, mrbc_value v[], int argc)
 
   mrbc_hal_disable_irq();
   for( mrbc_tcb *tcb = mrbc_task_q_waiting_head(); tcb != NULL; tcb = tcb->next ) {
-    if( tcb->reason == TASKREASON_QUEUE && tcb->queue == v[0].instance ) {
+    if( tcb->reason == TASKREASON_QUEUE && tcb->queue.target == v[0].instance ) {
       count++;
     }
   }
@@ -318,8 +376,9 @@ void mrbc_init_task_queue(mrbc_class *task_class)
   sym_items_  = mrbc_str_to_symid("@items");
   sym_closed_ = mrbc_str_to_symid("@closed");
 
-  // Create the unique, private WAIT_RETRY sentinel (kept for the process life).
-  wait_retry_ = mrbc_instance_new(0, MRBC_CLASS(Object), 0);
+  // Create the unique, private sentinels (kept for the process life).
+  wait_retry_   = mrbc_instance_new(0, MRBC_CLASS(Object), 0);
+  wait_timeout_ = mrbc_instance_new(0, MRBC_CLASS(Object), 0);
 }
 
 
@@ -332,6 +391,8 @@ void mrbc_init_task_queue(mrbc_class *task_class)
   METHOD( "__push", c_task_queue_push )
   METHOD( "__pop_try", c_task_queue_pop_try )
   METHOD( "__retry?", c_task_queue_is_wait_retry )
+  METHOD( "__timeout?", c_task_queue_is_wait_timeout )
+  METHOD( "__deadline", c_task_queue_deadline )
   METHOD( "size", c_task_queue_size )
   METHOD( "length", c_task_queue_size )
   METHOD( "empty?", c_task_queue_empty_q )

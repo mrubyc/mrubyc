@@ -60,6 +60,11 @@ enum MrbcTaskReason {
 static const int MRBC_TASK_DEFAULT_PRIORITY = 128;
 static const int MRBC_TASK_DEFAULT_STATE = TASKSTATE_READY;
 
+/* Sentinel stored in queue.wakeup_tick meaning "wait without a timeout".
+   The scheduler never produces this tick value for a real deadline
+   (mrbc_deadline_after_ms normalizes it away), so it is safe to reserve. */
+#define MRBC_WAIT_FOREVER  UINT32_MAX
+
 #if !defined(MRBC_TASK_NAME_LEN)
 #define MRBC_TASK_NAME_LEN 15
 #endif
@@ -89,7 +94,10 @@ typedef struct RTcb {
   union {
     uint32_t wakeup_tick;	//!< wakeup time for sleep state.
     struct RMutex *mutex;
-    void *queue;		//!< Task::Queue instance waited on (TASKREASON_QUEUE).
+    struct {
+      void *target;		//!< Task::Queue instance waited on (TASKREASON_QUEUE).
+      uint32_t wakeup_tick;	//!< timeout deadline tick; MRBC_WAIT_FOREVER if none.
+    } queue;			//!< queue wait state (TASKREASON_QUEUE).
   };
   const struct RTcb *tcb_join;  //!< joined task.
   mrbc_instance *task_instance;	//!< Task instance or NULL.
@@ -140,6 +148,9 @@ void pqall(void);
 void mrbc_task_q_insert(mrbc_tcb *p_tcb);
 void mrbc_task_q_delete(mrbc_tcb *p_tcb);
 mrbc_tcb *mrbc_task_q_waiting_head(void);
+uint32_t mrbc_deadline_after_ms(mrbc_int_t ms, int *p_overflow);
+int mrbc_deadline_reached(uint32_t deadline);
+void mrbc_register_wakeup(uint32_t wakeup_tick);
 //@endcond
 
 
