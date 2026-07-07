@@ -381,6 +381,37 @@ int mrbc_start_task(mrbc_tcb *tcb)
 }
 
 
+//----------------------------------------------------------------
+static void terminate_task( mrbc_tcb *tcb )
+{
+  mrbc_hal_disable_irq();
+  mrbc_task_q_delete(tcb);
+  tcb->state = TASKSTATE_DORMANT;
+  mrbc_task_q_insert(tcb);
+  mrbc_hal_enable_irq();
+
+  if( ! tcb->vm.flag_permanence ) mrbc_vm_end( &tcb->vm );
+
+  // find task that called join.
+  mrbc_hal_disable_irq();
+  for( mrbc_tcb *t = q_waiting_; t != NULL; t = t->next ) {
+    if( t->reason == TASKREASON_JOIN && t->tcb_join == tcb ) {
+      mrbc_task_q_delete(t);
+      t->state = TASKSTATE_READY;
+      t->reason = 0;
+      mrbc_task_q_insert(t);
+    }
+  }
+  mrbc_hal_enable_irq();
+
+  for( mrbc_tcb *t = q_suspended_; t != NULL; t = t->next ) {
+    if( t->reason == TASKREASON_JOIN && t->tcb_join == tcb ) {
+      t->reason = 0;
+    }
+  }
+}
+
+
 //================================================================
 /*! execute
 
@@ -430,31 +461,8 @@ int mrbc_run(void)
       did the task done?
     */
     if( ret_vm_run != 0 ) {
-      mrbc_hal_disable_irq();
-      mrbc_task_q_delete(tcb);
-      tcb->state = TASKSTATE_DORMANT;
-      mrbc_task_q_insert(tcb);
-      mrbc_hal_enable_irq();
-
-      if( ! tcb->vm.flag_permanence ) mrbc_vm_end( &tcb->vm );
+      terminate_task( tcb );
       if( ret_vm_run != 1 ) ret = ret_vm_run;   // for debug info.
-
-      // find task that called join.
-      for( mrbc_tcb *tcb1 = q_waiting_; tcb1 != NULL; tcb1 = tcb1->next ) {
-        if( tcb1->reason == TASKREASON_JOIN && tcb1->tcb_join == tcb ) {
-          mrbc_hal_disable_irq();
-          mrbc_task_q_delete(tcb1);
-          tcb1->state = TASKSTATE_READY;
-          tcb1->reason = 0;
-          mrbc_task_q_insert(tcb1);
-          mrbc_hal_enable_irq();
-        }
-      }
-      for( mrbc_tcb *tcb1 = q_suspended_; tcb1 != NULL; tcb1 = tcb1->next ) {
-        if( tcb1->reason == TASKREASON_JOIN && tcb1->tcb_join == tcb ) {
-          tcb1->reason = 0;
-        }
-      }
       continue;
     }
 
@@ -497,33 +505,11 @@ mrbc_run_step(void)
   int ret_vm_run = mrbc_vm_run(&tcb->vm);
   tcb->vm.flag_preemption = 0;
 
+  /*
+    did the task done?
+  */
   if (ret_vm_run != 0) {
-    mrbc_hal_disable_irq();
-    mrbc_task_q_delete(tcb);
-    tcb->state = TASKSTATE_DORMANT;
-    mrbc_task_q_insert(tcb);
-    mrbc_hal_enable_irq();
-
-    if (!tcb->vm.flag_permanence) {
-      mrbc_vm_end(&tcb->vm);
-    }
-
-    for (mrbc_tcb *tcb1 = q_waiting_; tcb1 != NULL; tcb1 = tcb1->next) {
-      if (tcb1->reason == TASKREASON_JOIN && tcb1->tcb_join == tcb) {
-        mrbc_hal_disable_irq();
-        mrbc_task_q_delete(tcb1);
-        tcb1->state = TASKSTATE_READY;
-        tcb1->reason = 0;
-        mrbc_task_q_insert(tcb1);
-        mrbc_hal_enable_irq();
-      }
-    }
-    for (mrbc_tcb *tcb1 = q_suspended_; tcb1 != NULL; tcb1 = tcb1->next) {
-      if (tcb1->reason == TASKREASON_JOIN && tcb1->tcb_join == tcb) {
-        tcb1->reason = 0;
-      }
-    }
-
+    terminate_task( tcb );
     return ret_vm_run;
   }
 
@@ -750,12 +736,7 @@ void mrbc_terminate_task(mrbc_tcb *tcb)
 {
   if( tcb->state == TASKSTATE_DORMANT ) return;
 
-  mrbc_hal_disable_irq();
-  mrbc_task_q_delete(tcb);
-  tcb->state = TASKSTATE_DORMANT;
-  mrbc_task_q_insert(tcb);
-  mrbc_hal_enable_irq();
-
+  terminate_task( tcb );
   tcb->vm.flag_preemption = 1;
 }
 
@@ -1654,7 +1635,7 @@ void pq(const mrbc_tcb *p_tcb)
   // task priority, state.
   //  st:SsRr
   //     ^ suspended -> S:suspended
-  //      ^ waiting  -> s:sleep m:mutex J:join (uppercase is suspend state)
+  //      ^ waiting  -> s:sleep m:mutex j:join q:queue
   //       ^ ready   -> R:ready
   //        ^ running-> r:running
   for( const mrbc_tcb *t = p_tcb; t; t = t->next ) {
@@ -1663,12 +1644,12 @@ void pq(const mrbc_tcb *p_tcb)
     mrbc_tcb t1 = *t;               // Copy the value at this timing.
     mrbc_printf(" st:%c%c%c%c    ",
       (t1.state & TASKSTATE_SUSPENDED)?'S':'-',
-      (t1.state & TASKSTATE_SUSPENDED)? ("-SM!J"[t1.reason]) :
-      (t1.state & TASKSTATE_WAITING)?   ("!sm!j"[t1.reason]) : '-',
+      (t1.state & TASKSTATE_SUSPENDED)? ("-SM!J!!!Q"[t1.reason]) :
+      (t1.state & TASKSTATE_WAITING)?   ("!sm!j!!!q"[t1.reason]) : '-',
       (t1.state & 0x02)?'R':'-',
       (t1.state & 0x01)?'r':'-' );
 #else
-    mrbc_printf(" s%04b r%03b ", t->state, t->reason);
+    mrbc_printf(" s%04b r%04b ", t->state, t->reason);
 #endif
   }
   mrbc_printf("\n");
@@ -1683,6 +1664,17 @@ void pq(const mrbc_tcb *p_tcb)
     }
   }
   mrbc_printf("\n");
+
+  // join task
+  for( const mrbc_tcb *t = p_tcb; t; t = t->next ) {
+    if( t->reason & TASKREASON_JOIN ) {
+      mrbc_printf(" join:%p      ", t->tcb_join);
+    } else {
+      mrbc_printf("                    ");
+    }
+  }
+  mrbc_printf("\n");
+
 }
 
 void pqall(void)
