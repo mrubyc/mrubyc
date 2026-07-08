@@ -34,6 +34,13 @@
 #if !defined(MRBC_TIMESLICE_TICK_COUNT) || (MRBC_TIMESLICE_TICK_COUNT <= 0)
 #error "MRBC_TIMESLICE_TICK_COUNT must be a natural number."
 #endif
+#define DEPRECATED(msg) do { \
+    static const char msg1[] = "Warning: "; \
+    static const char msg2[] = " method will be removed in future version.\n"; \
+    mrbc_hal_write(2, msg1, sizeof(msg1)-1); \
+    mrbc_hal_write(2, msg, strlen(msg)); \
+    mrbc_hal_write(2, msg2, sizeof(msg2)-1); \
+  } while(0)
 
 /***** Typedefs *************************************************************/
 /***** Function prototypes **************************************************/
@@ -1093,22 +1100,25 @@ static void c_task_name_list(mrbc_vm *vm, mrbc_value v[], int argc)
 //================================================================
 /*! (method) name setter.
 
-  Task.name = "MyName"
+  task.name = "Name"
+  probably be used as Task.current.name = "MyName"
 */
 static void c_task_set_name(mrbc_vm *vm, mrbc_value v[], int argc)
 {
+  mrbc_tcb *tcb;
+
+  if( mrbc_type(v[0]) == MRBC_TT_CLASS ) {
+    DEPRECATED("Task.name=");
+    tcb = mrbc_get_tcb(vm);
+  } else {
+    tcb = *MRBC_INSTANCE_DATA_PTR(&v[0], mrbc_tcb *);
+  }
+
   if( mrbc_type(v[1]) != MRBC_TT_STRING ) {
     mrbc_raise( vm, MRBC_CLASS(ArgumentError), 0 );
     return;
   }
 
-  mrbc_tcb *tcb;
-
-  if( mrbc_type(v[0]) == MRBC_TT_CLASS ) {
-    tcb = mrbc_get_tcb(vm);
-  } else {
-    tcb = *MRBC_INSTANCE_DATA_PTR(&v[0], mrbc_tcb *);
-  }
   mrbc_set_task_name( tcb, mrbc_string_cstr(&v[1]) );
 
   mrbc_incref( &v[1] );
@@ -1127,6 +1137,7 @@ static void c_task_name(mrbc_vm *vm, mrbc_value v[], int argc)
   mrbc_value ret;
 
   if( mrbc_type(v[0]) == MRBC_TT_CLASS ) {
+    DEPRECATED("Task.name");
     ret = mrbc_string_new_cstr( vm, mrbc_get_tcb(vm)->name );
   } else {
     mrbc_tcb *tcb = *MRBC_INSTANCE_DATA_PTR(&v[0], mrbc_tcb *);
@@ -1149,6 +1160,7 @@ static void c_task_set_priority(mrbc_vm *vm, mrbc_value v[], int argc)
   mrbc_tcb *tcb;
 
   if( mrbc_type(v[0]) == MRBC_TT_CLASS ) {
+    DEPRECATED("Task.priority=");
     tcb = mrbc_get_tcb(vm);
   } else {
     tcb = *MRBC_INSTANCE_DATA_PTR(&v[0], mrbc_tcb *);
@@ -1180,6 +1192,7 @@ static void c_task_priority(mrbc_vm *vm, mrbc_value v[], int argc)
   mrbc_tcb *tcb;
 
   if( mrbc_type(v[0]) == MRBC_TT_CLASS ) {
+    DEPRECATED("Task.priority");
     tcb = mrbc_get_tcb(vm);
   } else {
     tcb = *MRBC_INSTANCE_DATA_PTR(&v[0], mrbc_tcb *);
