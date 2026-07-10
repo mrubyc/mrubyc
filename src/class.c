@@ -153,6 +153,7 @@ static mrbc_class * sub_define_class_or_module(struct VM *vm, const char *name, 
     cls->obj_mark_[1] = 'O';
   }
 #endif
+  mrbc_kv_init_handle( vm, &cls->ivar, 0 );
 
   // register to global constant
   mrbc_set_const( sym_id, &mrbc_immediate_value(vtype, .cls = cls) );
@@ -204,6 +205,7 @@ static mrbc_class * sub_define_class_or_module_under(struct VM *vm, const mrbc_c
     cls->obj_mark_[1] = 'O';
   }
 #endif
+  mrbc_kv_init_handle( vm, &cls->ivar, 0 );
 
   // register to global constant
   mrbc_set_class_const( outer, sym_id, &mrbc_immediate_value(vtype, .cls = cls) );
@@ -346,27 +348,54 @@ void mrbc_instance_delete(mrbc_value *v)
 //================================================================
 /*! instance variable setter
 
-  @param  obj		pointer to target.
+  @param  target	target object or class.
   @param  sym_id	key symbol ID.
   @param  v		pointer to value.
+  @return		error code.
 */
-void mrbc_instance_setiv(mrbc_value *obj, mrbc_sym sym_id, mrbc_value *v)
+int mrbc_instance_setiv(mrbc_value *target, mrbc_sym sym_id, mrbc_value *v)
 {
+  mrbc_kv_handle *kvh;
+
+  assert(mrbc_type(*target) == MRBC_TT_CLASS ||
+	 mrbc_type(*target) == MRBC_TT_OBJECT);
+
+  if( mrbc_type(*target) == MRBC_TT_CLASS ) {
+    if( target->cls->flag_builtin ) return E_NOTIMP_ERROR;
+    kvh = &target->cls->ivar;
+  } else {
+    kvh = &target->instance->ivar;
+  }
+
   mrbc_incref(v);
-  mrbc_kv_set( &obj->instance->ivar, sym_id, v );
+  mrbc_kv_set( kvh, sym_id, v );
+
+  return 0;
 }
 
 
 //================================================================
 /*! instance variable getter
 
-  @param  obj		target object.
+  @param  target	target object or class.
   @param  sym_id	key symbol ID.
   @return		value.
 */
-mrbc_value mrbc_instance_getiv(mrbc_value *obj, mrbc_sym sym_id)
+mrbc_value mrbc_instance_getiv(mrbc_value *target, mrbc_sym sym_id)
 {
-  mrbc_value *v = mrbc_kv_get( &obj->instance->ivar, sym_id );
+  mrbc_kv_handle *kvh;
+
+  assert(mrbc_type(*target) == MRBC_TT_CLASS ||
+	 mrbc_type(*target) == MRBC_TT_OBJECT);
+
+  if( mrbc_type(*target) == MRBC_TT_CLASS ) {
+    if( target->cls->flag_builtin ) return mrbc_nil_value();
+    kvh = &target->cls->ivar;
+  } else {
+    kvh = &target->instance->ivar;
+  }
+
+  mrbc_value *v = mrbc_kv_get( kvh, sym_id );
   if( !v ) return mrbc_nil_value();
 
   mrbc_incref(v);
@@ -417,7 +446,7 @@ int mrbc_obj_is_kind_of( const mrbc_value *obj, const mrbc_class *tcls )
   @param  r_method	pointer to mrbc_method to return values.
   @param  cls		search class or module.
   @param  sym_id	search symbol id.
-  @return		pointer to method if found, otherwise NULL.
+  @return		pointer to class if found, otherwise NULL.
 */
 mrbc_class * mrbc_find_method( mrbc_method *r_method, mrbc_class *cls, mrbc_sym sym_id )
 {
