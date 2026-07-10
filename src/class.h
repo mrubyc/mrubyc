@@ -111,6 +111,7 @@ typedef struct RClass {
 #if MRBC_INSTANCE_DESTRUCTOR
   void (*destructor)(mrbc_value *);	//!< specify a destructor if need.
 #endif
+  mrbc_kv_handle ivar;			//!< class instance valiables.
 
 } mrbc_class;
 
@@ -165,7 +166,7 @@ struct RBuiltinNoMethodClass {
   unsigned int flag_nomethod : 1; //!< is built-in no method class? (= 1)
   unsigned int flag_module : 1;   //!< is module?
   unsigned int flag_alias : 1;    //!< is module alias?
-  uint8_t num_builtin_method;     //!< num of built-in method.
+  uint8_t num_builtin_method;     //!< num of built-in method (=0)
   struct RClass *super;           //!< pointer to super class.
 };
 
@@ -238,8 +239,8 @@ mrbc_class *mrbc_define_module_under(struct VM *vm, const mrbc_class *outer, con
 void mrbc_define_method(struct VM *vm, mrbc_class *cls, const char *name, mrbc_func_t cfunc);
 mrbc_value mrbc_instance_new(struct VM *vm, mrbc_class *cls, int size);
 void mrbc_instance_delete(mrbc_value *v);
-void mrbc_instance_setiv(mrbc_value *obj, mrbc_sym sym_id, mrbc_value *v);
-mrbc_value mrbc_instance_getiv(mrbc_value *obj, mrbc_sym sym_id);
+int mrbc_instance_setiv(mrbc_value *target, mrbc_sym sym_id, mrbc_value *v);
+mrbc_value mrbc_instance_getiv(mrbc_value *target, mrbc_sym sym_id);
 void mrbc_instance_clear_vm_id(mrbc_value *v);
 int mrbc_obj_is_kind_of(const mrbc_value *obj, const mrbc_class *tcls);
 mrbc_class *mrbc_find_method(mrbc_method *r_method, mrbc_class *cls, mrbc_sym sym_id);
