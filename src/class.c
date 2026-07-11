@@ -114,7 +114,7 @@ mrbc_class * mrbc_traverse_class_tree_skip( mrbc_class *nest_buf[], int *nest_id
 /***** Global functions *****************************************************/
 
 //----------------------------------------------------------------
-static mrbc_class * sub_define_class_or_module(struct VM *vm, const char *name, mrbc_class *super, mrbc_vtype vtype)
+static mrbc_class * sub_define_class_or_module(struct VM *vm, const mrbc_class *outer, const char *name, mrbc_class *super, mrbc_vtype vtype)
 {
   mrbc_sym sym_id = mrbc_str_to_symid(name);
   if( sym_id < 0 ) {
@@ -123,7 +123,9 @@ static mrbc_class * sub_define_class_or_module(struct VM *vm, const char *name, 
   }
 
   // already defined?
-  const mrbc_value *val = mrbc_get_const(sym_id);
+  const mrbc_value *val = outer ?
+    mrbc_get_class_const( outer, sym_id ) : mrbc_get_const(sym_id);
+
   if( val ) {
     if( mrbc_type(*val) != vtype ) {	// is not TT_CLASS or TT_MODULE
       mrbc_raisef(vm, MRBC_CLASS(TypeError), "%s is not a %s", name,
@@ -135,9 +137,16 @@ static mrbc_class * sub_define_class_or_module(struct VM *vm, const char *name, 
 
   // create a new class/module.
   mrbc_class *cls = mrbc_raw_alloc_no_free( sizeof(mrbc_class) );
+  mrbc_sym sym_id1 = sym_id;
+
+  if( outer ) {
+    char buf[sizeof(mrbc_sym)*4+1];
+    make_nested_symbol_s( buf, outer->sym_id, sym_id );
+    sym_id1 = mrbc_symbol( mrbc_symbol_new( vm, buf ));
+  }
 
   *cls = (mrbc_class){
-    .sym_id = sym_id,
+    .sym_id = sym_id1,
     .flag_module = (vtype == MRBC_TT_MODULE),
     .super = super,
 #if defined(MRBC_DEBUG)
@@ -156,59 +165,11 @@ static mrbc_class * sub_define_class_or_module(struct VM *vm, const char *name, 
   mrbc_kv_init_handle( vm, &cls->ivar, 0 );
 
   // register to global constant
-  mrbc_set_const( sym_id, &mrbc_immediate_value(vtype, .cls = cls) );
-
-  return cls;
-}
-
-
-//----------------------------------------------------------------
-static mrbc_class * sub_define_class_or_module_under(struct VM *vm, const mrbc_class *outer, const char *name, mrbc_class *super, mrbc_vtype vtype)
-{
-  mrbc_sym sym_id = mrbc_str_to_symid(name);
-  if( sym_id < 0 ) {
-    mrbc_raise(vm, MRBC_CLASS(Exception), "Overflow MAX_SYMBOLS_COUNT");
-    return NULL;
-  }
-
-  // already defined?
-  const mrbc_value *val = mrbc_get_class_const( outer, sym_id );
-  if( val ) {
-    if( mrbc_type(*val) != vtype ) {	// is not TT_CLASS or TT_MODULE
-      mrbc_raisef(vm, MRBC_CLASS(TypeError), "%s is not a %s", name,
-		  vtype == MRBC_TT_CLASS ? "class" : "module");
-      return NULL;
-    }
-    return val->cls;
-  }
-
-  // create a new nested class/module.
-  mrbc_class *cls = mrbc_raw_alloc_no_free( sizeof(mrbc_class) );
-
-  char buf[sizeof(mrbc_sym)*4+1];
-  make_nested_symbol_s( buf, outer->sym_id, sym_id );
-
-  *cls = (mrbc_class){
-    .sym_id = mrbc_symbol( mrbc_symbol_new( vm, buf )),
-    .flag_module = (vtype == MRBC_TT_MODULE),
-    .super = super,
-#if defined(MRBC_DEBUG)
-    .name = name,
-#endif
-  };
-#if defined(MRBC_DEBUG)
-  if( vtype == MRBC_TT_CLASS ) {
-    cls->obj_mark_[0] = 'C';
-    cls->obj_mark_[1] = 'L';
+  if( outer ) {
+    mrbc_set_class_const( outer, sym_id, &mrbc_immediate_value(vtype, .cls = cls) );
   } else {
-    cls->obj_mark_[0] = 'M';
-    cls->obj_mark_[1] = 'O';
+    mrbc_set_const( sym_id, &mrbc_immediate_value(vtype, .cls = cls) );
   }
-#endif
-  mrbc_kv_init_handle( vm, &cls->ivar, 0 );
-
-  // register to global constant
-  mrbc_set_class_const( outer, sym_id, &mrbc_immediate_value(vtype, .cls = cls) );
 
   return cls;
 }
@@ -224,7 +185,7 @@ static mrbc_class * sub_define_class_or_module_under(struct VM *vm, const mrbc_c
 */
 mrbc_class * mrbc_define_class(struct VM *vm, const char *name, mrbc_class *super)
 {
-  return sub_define_class_or_module( vm, name,
+  return sub_define_class_or_module( vm, NULL, name,
     (super ? super : MRBC_CLASS(Object)), MRBC_TT_CLASS );
 }
 
@@ -240,7 +201,7 @@ mrbc_class * mrbc_define_class(struct VM *vm, const char *name, mrbc_class *supe
 */
 mrbc_class * mrbc_define_class_under(struct VM *vm, const mrbc_class *outer, const char *name, mrbc_class *super)
 {
-  return sub_define_class_or_module_under( vm, outer, name,
+  return sub_define_class_or_module( vm, outer, name,
     (super ? super : MRBC_CLASS(Object)), MRBC_TT_CLASS );
 }
 
@@ -254,7 +215,7 @@ mrbc_class * mrbc_define_class_under(struct VM *vm, const mrbc_class *outer, con
 */
 mrbc_class * mrbc_define_module(struct VM *vm, const char *name)
 {
-  return sub_define_class_or_module( vm, name, NULL, MRBC_TT_MODULE );
+  return sub_define_class_or_module( vm, NULL, name, NULL, MRBC_TT_MODULE );
 }
 
 
@@ -268,7 +229,7 @@ mrbc_class * mrbc_define_module(struct VM *vm, const char *name)
 */
 mrbc_class * mrbc_define_module_under(struct VM *vm, const mrbc_class *outer, const char *name)
 {
-  return sub_define_class_or_module_under( vm, outer, name, NULL, MRBC_TT_MODULE);
+  return sub_define_class_or_module( vm, outer, name, NULL, MRBC_TT_MODULE);
 }
 
 
