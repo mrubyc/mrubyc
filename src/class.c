@@ -609,18 +609,26 @@ int mrbc_run_mrblib(const void *bytecode)
   return ret;
 }
 
-#include "c_task_queue.h"
-
 #define MRBC_DEFINE_BUILTIN_CLASS_TABLE
 #include "_autogen_builtin_class.h"
 #undef MRBC_DEFINE_BUILTIN_CLASS_TABLE
+
 
 //================================================================
 /*! initialize all classes.
  */
 void mrbc_init_class(void)
 {
-  // initialize builtin class.
+  mrbc_init_class_c();
+  mrbc_init_class_mrblib();
+}
+
+
+//================================================================
+/*! Initialize built-in classes (scheduler-related classes excluded).
+ */
+void mrbc_init_class_c(void)
+{
   mrbc_value vcls;
 
   for( int i = 0; i < sizeof(MRBC_BuiltinClass)/sizeof(struct MRBC_BuiltinClass); i++ ) {
@@ -630,15 +638,21 @@ void mrbc_init_class(void)
     if( !cls->flag_nomethod ) cls->method_link = 0;
     mrbc_set_tt( &vcls, cls->flag_module ? MRBC_TT_MODULE : MRBC_TT_CLASS );
     vcls.cls = cls;
+
     mrbc_set_const( cls->sym_id, &vcls );
   }
 
 #if MRBC_USE_MATH
   mrbc_init_module_math();
 #endif
+}
 
-  mrbc_init_task_queue(MRBC_CLASS(Task));
 
+//================================================================
+/*! Initialize Ruby-implemented classes
+ */
+void mrbc_init_class_mrblib(void)
+{
   extern const uint8_t mrblib_bytecode[];
   mrbc_run_mrblib(mrblib_bytecode);
 }

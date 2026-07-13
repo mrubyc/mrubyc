@@ -28,7 +28,7 @@ extern "C" {
 /***** Global variables *****************************************************/
 /***** Function prototypes **************************************************/
 //@cond
-void mrbc_init_task_queue(mrbc_class *task_class);
+void mrbc_init_task_queue(void);
 //@endcond
 
 /***** Inline functions *****************************************************/

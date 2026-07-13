@@ -357,31 +357,6 @@ static void c_task_queue_num_waiting(mrbc_vm *vm, mrbc_value v[], int argc)
 }
 
 
-/***** Global functions *****************************************************/
-
-//================================================================
-/*! initialize
-*/
-void mrbc_init_task_queue(mrbc_class *task_class)
-{
-  // Register Task::Queue (builtin class) as a constant under Task.
-  mrbc_value vcls = mrbc_immediate_value(MRBC_TT_CLASS, .cls = MRBC_CLASS(Task_Queue));
-  mrbc_set_class_const(task_class, mrbc_str_to_symid("Queue"), &vcls);
-
-  // Define Task::Error < StandardError.
-  task_error_class_ = mrbc_define_class_under(0, task_class, "Error",
-                                              MRBC_CLASS(StandardError));
-
-  // Cache instance variable symbols.
-  sym_items_  = mrbc_str_to_symid("@items");
-  sym_closed_ = mrbc_str_to_symid("@closed");
-
-  // Create the unique, private sentinels (kept for the process life).
-  wait_retry_   = mrbc_instance_new(0, MRBC_CLASS(Object), 0);
-  wait_timeout_ = mrbc_instance_new(0, MRBC_CLASS(Object), 0);
-}
-
-
 /* MRBC_AUTOGEN_METHOD_TABLE
 
   CLASS("Task::Queue")
@@ -402,3 +377,28 @@ void mrbc_init_task_queue(mrbc_class *task_class)
   METHOD( "num_waiting", c_task_queue_num_waiting )
 */
 #include "_autogen_class_task_queue.h"
+
+
+/***** Global functions *****************************************************/
+
+//================================================================
+/*! initialize
+*/
+void mrbc_init_task_queue(void)
+{
+  // Register Task::Queue (builtin class) as a constant under Task.
+  mrbc_value vcls = mrbc_immediate_value(MRBC_TT_CLASS, .cls = MRBC_CLASS(Task_Queue));
+  mrbc_set_class_const(MRBC_CLASS(Task), MRBC_SYM(Queue), &vcls);
+
+  // Define Task::Error < StandardError.
+  task_error_class_ = mrbc_define_class_under(0, MRBC_CLASS(Task), "Error",
+                                              MRBC_CLASS(StandardError));
+
+  // Cache instance variable symbols.
+  sym_items_  = mrbc_str_to_symid("@items");
+  sym_closed_ = mrbc_str_to_symid("@closed");
+
+  // Create the unique, private sentinels (kept for the process life).
+  wait_retry_   = mrbc_instance_new(0, MRBC_CLASS(Object), 0);
+  wait_timeout_ = mrbc_instance_new(0, MRBC_CLASS(Object), 0);
+}

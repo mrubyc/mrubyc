@@ -249,6 +249,8 @@ mrbc_value mrbc_send(struct VM *vm, mrbc_value *v, int argc, mrbc_value *recv, c
 void c_ineffect(struct VM *vm, mrbc_value v[], int argc);
 int mrbc_run_mrblib(const void *bytecode);
 void mrbc_init_class(void);
+void mrbc_init_class_c(void);
+void mrbc_init_class_mrblib(void);
 //@endcond
 
 

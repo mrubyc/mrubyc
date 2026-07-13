@@ -27,8 +27,8 @@ ifdef MRBC_USE_UNICODE_CASE
 CFLAGS += -DMRBC_USE_UNICODE_CASE=$(MRBC_USE_UNICODE_CASE)
 endif
 SRCS = alloc.c c_array.c c_hash.c c_math.c c_numeric.c c_object.c c_proc.c \
-       c_range.c c_string.c c_task_queue.c class.c console.c error.c global.c \
-       keyvalue.c load.c mrblib.c rrt0.c symbol.c value.c vm.c hal.c
+       c_range.c c_string.c class.c console.c error.c global.c keyvalue.c \
+       load.c symbol.c value.c vm.c mrblib.c rrt0.c c_task_queue.c hal.c
 OBJS = $(addprefix $(BUILD_DIR)/, $(SRCS:.c=.o))
 BUILD_DIR = ../build
 
@@ -101,7 +101,6 @@ $(BUILD_DIR)/c_object.o: c_object.c $(MRUBYC_H) _autogen_class_object.h
 $(BUILD_DIR)/c_proc.o: c_proc.c $(MRUBYC_H) _autogen_class_proc.h
 $(BUILD_DIR)/c_range.o: c_range.c $(MRUBYC_H) _autogen_class_range.h
 $(BUILD_DIR)/c_string.o: c_string.c $(MRUBYC_H) _autogen_class_string.h _autogen_unicode_case.h
-$(BUILD_DIR)/c_task_queue.o: c_task_queue.c $(MRUBYC_H) rrt0.h c_task_queue.h _autogen_class_task_queue.h
 $(BUILD_DIR)/class.o: class.c $(MRUBYC_H)
 $(BUILD_DIR)/console.o: console.c $(MRUBYC_H) $(HAL_DIR)/hal.h
 $(BUILD_DIR)/error.o: error.c $(MRUBYC_H) _autogen_class_exception.h
@@ -109,10 +108,12 @@ $(BUILD_DIR)/global.o: global.c $(MRUBYC_H)
 $(BUILD_DIR)/keyvalue.o: keyvalue.c $(MRUBYC_H)
 $(BUILD_DIR)/load.o: load.c $(MRUBYC_H)
 $(BUILD_DIR)/mrblib.o: mrblib.c
-$(BUILD_DIR)/rrt0.o: rrt0.c $(MRUBYC_H) rrt0.h _autogen_class_rrt0.h $(HAL_DIR)/hal.h
 $(BUILD_DIR)/symbol.o: symbol.c $(MRUBYC_H) _autogen_class_symbol.h
 $(BUILD_DIR)/value.o: value.c $(MRUBYC_H)
 $(BUILD_DIR)/vm.o: vm.c $(MRUBYC_H) opcode.h
+
+$(BUILD_DIR)/rrt0.o: rrt0.c $(MRUBYC_H) rrt0.h _autogen_class_rrt0.h $(HAL_DIR)/hal.h
+$(BUILD_DIR)/c_task_queue.o: c_task_queue.c $(MRUBYC_H) rrt0.h c_task_queue.h _autogen_class_task_queue.h
 
 
 #
@@ -130,16 +131,15 @@ AUTOGEN_METHOD_TABLE = _autogen_class_array.h _autogen_class_exception.h \
 	_autogen_module_math.h _autogen_class_object.h _autogen_class_proc.h \
 	_autogen_class_range.h _autogen_class_string.h _autogen_class_symbol.h \
 	_autogen_class_rrt0.h _autogen_class_task_queue.h
-AUTOGEN_METHOD_SRCS1 = c_array.c c_hash.c c_math.c c_numeric.c c_object.c \
-	c_proc.c c_range.c c_string.c c_task_queue.c symbol.c error.c rrt0.c
-AUTOGEN_METHOD_SRCS2 = $(AUTOGEN_METHOD_SRCS1)
+AUTOGEN_METHOD_SRCS = c_array.c c_hash.c c_math.c c_numeric.c c_object.c \
+	c_proc.c c_range.c c_string.c symbol.c error.c rrt0.c c_task_queue.c
 
 ifdef RUBY_INSTALLED
-$(AUTOGEN_SYMBOL_TABLE): $(AUTOGEN_METHOD_SRCS2) ../mrblib/*
+$(AUTOGEN_SYMBOL_TABLE): $(AUTOGEN_METHOD_SRCS) ../mrblib/*.rb
 	$(MAKE_SYMBOL_TABLE) --path-c . --path-rb ../mrblib -o $@
 
-$(AUTOGEN_CLASS_TABLE): $(AUTOGEN_METHOD_SRCS1)
-	$(MAKE_CLASS_TABLE) -o $@ $(AUTOGEN_METHOD_SRCS1)
+$(AUTOGEN_CLASS_TABLE): $(AUTOGEN_METHOD_SRCS)
+	$(MAKE_CLASS_TABLE) -o $@ $(AUTOGEN_METHOD_SRCS)
 
 _autogen_class_array.h:		c_array.c
 	$(MAKE_METHOD_TABLE) $<
@@ -159,13 +159,13 @@ _autogen_class_range.h:		c_range.c
 	$(MAKE_METHOD_TABLE) $<
 _autogen_class_string.h:	c_string.c
 	$(MAKE_METHOD_TABLE) $<
-_autogen_class_task_queue.h:	c_task_queue.c
-	$(MAKE_METHOD_TABLE) $<
 _autogen_class_symbol.h:	symbol.c
 	$(MAKE_METHOD_TABLE) $<
 _autogen_class_exception.h:	error.c
 	$(MAKE_METHOD_TABLE) $<
 _autogen_class_rrt0.h:		rrt0.c
+	$(MAKE_METHOD_TABLE) $<
+_autogen_class_task_queue.h:	c_task_queue.c
 	$(MAKE_METHOD_TABLE) $<
 
 # To upgrade Unicode, update UNICODE_VERSION and replace UnicodeData.txt in the

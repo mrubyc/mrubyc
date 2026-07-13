@@ -18,6 +18,12 @@
 require "optparse"
 require_relative "common_sub"
 
+# (note)
+# Define task-related classes here.
+# Acknowledging this isn't the best practice, but keeping it simple for now
+# until the scope expands.
+TASK_RELATED_CLASS = %w(Task Mutex VM Task::Queue)
+
 
 ##
 # verbose print
@@ -101,6 +107,8 @@ static const struct MRBC_BuiltinClass {
 EOL
 
   all_classes.each {|cls|
+    next if TASK_RELATED_CLASS.include?( cls[:class] )
+
     cls_name = "MRBC_CLASS(#{sanitize_var_name(cls[:class])})"
     cls_super = cls[:super] == "0" ? cls[:super] : "MRBC_CLASS(#{sanitize_var_name(cls[:super])})"
     case cls[:class]

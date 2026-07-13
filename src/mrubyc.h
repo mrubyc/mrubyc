@@ -36,11 +36,12 @@
 #include "c_range.h"
 #include "c_hash.h"
 #include "c_math.h"
-#include "c_task_queue.h"
 
 #include "load.h"
 #include "console.h"
+
 #include "rrt0.h"
+#include "c_task_queue.h"
 //@endcond
 
 #endif

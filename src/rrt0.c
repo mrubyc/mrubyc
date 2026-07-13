@@ -1610,10 +1610,30 @@ void mrbc_init(void *heap_ptr, unsigned int size)
 
   mrbc_init_alloc(heap_ptr, size);
   mrbc_init_global();
-  mrbc_init_class();
+  mrbc_init_class_c();
+
+  // Initialize included classes
+  static mrbc_class * const rrt0_cls[] = {
+    MRBC_CLASS(Task), MRBC_CLASS(Mutex), MRBC_CLASS(VM)
+  };
+  mrbc_value vcls = mrbc_immediate_value(MRBC_TT_CLASS);
+
+  for( int i = 0; i < sizeof(rrt0_cls)/sizeof(rrt0_cls[0]); i++ ) {
+    mrbc_class *cls = rrt0_cls[i];
+
+    cls->super = MRBC_CLASS(Object);
+    cls->method_link = 0;
+    vcls.cls = cls;
+
+    mrbc_set_const( vcls.cls->sym_id, &vcls );
+  }
 
   mrbc_define_method(0, 0, "sleep", c_sleep);
   mrbc_define_method(0, 0, "sleep_ms", c_sleep_ms);
+
+  mrbc_init_task_queue();
+
+  mrbc_init_class_mrblib();
 }
 
 
