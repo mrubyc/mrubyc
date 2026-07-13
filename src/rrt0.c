@@ -166,7 +166,7 @@ inline static void preempt_running_task(void)
   @param  out	receives the wakeup tick when the function returns non-zero.
   @return	non-zero if the task has a timed wakeup.
 */
-static int task_timed_wakeup(const mrbc_tcb *t, uint32_t *out)
+static int get_timed_wakeup_tick(const mrbc_tcb *t, uint32_t *out)
 {
   if( t->reason == TASKREASON_SLEEP ) {
     *out = t->wakeup_tick;
@@ -211,7 +211,7 @@ void mrbc_tick(void)
       mrbc_tcb *t = tcb;
       tcb = tcb->next;
       uint32_t wake;
-      if( !task_timed_wakeup(t, &wake) ) continue;
+      if( !get_timed_wakeup_tick(t, &wake) ) continue;
 
       if( (int32_t)(wake - tick_) < 0 ) {
         mrbc_task_q_delete(t);
@@ -635,7 +635,7 @@ void mrbc_wakeup_task(mrbc_tcb *tcb)
 
     for( mrbc_tcb *t = q_waiting_; t != NULL; t = t->next ) {
       uint32_t wake;
-      if( !task_timed_wakeup(t, &wake) ) continue;
+      if( !get_timed_wakeup_tick(t, &wake) ) continue;
       if( (int32_t)(wake - wakeup_tick_) < 0 ) {
         wakeup_tick_ = wake;
       }
@@ -723,7 +723,7 @@ void mrbc_resume_task(mrbc_tcb *tcb)
   mrbc_hal_enable_irq();
 
   uint32_t wake;
-  if( task_timed_wakeup(tcb, &wake) ) {
+  if( get_timed_wakeup_tick(tcb, &wake) ) {
     if( (int32_t)(wake - wakeup_tick_) < 0 ) {
       wakeup_tick_ = wake;
     }
