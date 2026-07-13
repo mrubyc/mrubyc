@@ -45,12 +45,12 @@
 /***** Typedefs *************************************************************/
 /***** Function prototypes **************************************************/
 /***** Local variables ******************************************************/
-#define NUM_TASK_QUEUE 4
-static mrbc_tcb *task_queue_[NUM_TASK_QUEUE];
-#define q_dormant_   (task_queue_[0])
-#define q_ready_     (task_queue_[1])
-#define q_waiting_   (task_queue_[2])
-#define q_suspended_ (task_queue_[3])
+#define NUM_TCB_QUEUE 4
+static mrbc_tcb *tcb_queue_[NUM_TCB_QUEUE];
+#define q_dormant_   (tcb_queue_[0])
+#define q_ready_     (tcb_queue_[1])
+#define q_waiting_   (tcb_queue_[2])
+#define q_suspended_ (tcb_queue_[3])
 static volatile uint32_t tick_;
 static volatile uint32_t wakeup_tick_ = ((uint32_t)1 << 16); // no significant meaning.
 
@@ -75,7 +75,7 @@ void mrbc_task_q_insert(mrbc_tcb *p_tcb)
   //                    state value = 0  1  2  3  4  5  6  7  8
   //                             /2   0, 0, 1, 1, 2, 2, 3, 3, 4
   static const uint8_t conv_tbl[] = { 0,    1,    2,    0,    3 };
-  mrbc_tcb **pp_q = &task_queue_[ conv_tbl[ p_tcb->state / 2 ]];
+  mrbc_tcb **pp_q = &tcb_queue_[ conv_tbl[ p_tcb->state / 2 ]];
 
   // in case of insert on top.
   if((*pp_q == NULL) ||
@@ -107,7 +107,7 @@ void mrbc_task_q_delete(mrbc_tcb *p_tcb)
 {
   // select target queue pointer. (same as mrbc_task_q_insert)
   static const uint8_t conv_tbl[] = { 0,    1,    2,    0,    3 };
-  mrbc_tcb **pp_q = &task_queue_[ conv_tbl[ p_tcb->state / 2 ]];
+  mrbc_tcb **pp_q = &tcb_queue_[ conv_tbl[ p_tcb->state / 2 ]];
 
   if( *pp_q == p_tcb ) {
     *pp_q       = p_tcb->next;
@@ -350,8 +350,8 @@ mrbc_tcb * mrbc_find_task(const char *name)
   mrbc_tcb *tcb = NULL;
   mrbc_hal_disable_irq();
 
-  for( int i = 0; i < NUM_TASK_QUEUE; i++ ) {
-    for( tcb = task_queue_[i]; tcb != NULL; tcb = tcb->next ) {
+  for( int i = 0; i < NUM_TCB_QUEUE; i++ ) {
+    for( tcb = tcb_queue_[i]; tcb != NULL; tcb = tcb->next ) {
       if( strcmp( tcb->name, name ) == 0 ) goto RETURN_TCB;
     }
   }
@@ -932,7 +932,7 @@ void mrbc_cleanup(void)
   mrbc_cleanup_vm();
   mrbc_cleanup_symbol();
 
-  memset( task_queue_, 0, sizeof(task_queue_) );
+  memset( tcb_queue_, 0, sizeof(tcb_queue_) );
 }
 
 
@@ -1059,8 +1059,8 @@ static void c_task_list(mrbc_vm *vm, mrbc_value v[], int argc)
 
   mrbc_hal_disable_irq();
 
-  for( int i = 0; i < NUM_TASK_QUEUE; i++ ) {
-    for( mrbc_tcb *tcb = task_queue_[i]; tcb != NULL; tcb = tcb->next ) {
+  for( int i = 0; i < NUM_TCB_QUEUE; i++ ) {
+    for( mrbc_tcb *tcb = tcb_queue_[i]; tcb != NULL; tcb = tcb->next ) {
       mrbc_value task = sub_task_get(vm, tcb);
       mrbc_array_push( &ret, &task );
     }
@@ -1084,8 +1084,8 @@ static void c_task_name_list(mrbc_vm *vm, mrbc_value v[], int argc)
 
   mrbc_hal_disable_irq();
 
-  for( int i = 0; i < NUM_TASK_QUEUE; i++ ) {
-    for( mrbc_tcb *tcb = task_queue_[i]; tcb != NULL; tcb = tcb->next ) {
+  for( int i = 0; i < NUM_TCB_QUEUE; i++ ) {
+    for( mrbc_tcb *tcb = tcb_queue_[i]; tcb != NULL; tcb = tcb->next ) {
       mrbc_value s = mrbc_string_new_cstr(vm, tcb->name);
       mrbc_array_push( &ret, &s );
     }
