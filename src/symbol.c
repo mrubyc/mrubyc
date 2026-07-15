@@ -39,7 +39,7 @@
 #define MRBC_SYMBOL_TABLE_INDEX_TYPE	uint16_t
 #endif
 
-#define OFFSET_BUILTIN_SYMBOL 300
+#define OFFSET_BUILTIN_SYMBOL 512
 #if OFFSET_BUILTIN_SYMBOL <= MRBC_BUILTIN_SYMBOL_MAX
 # error OFFSET_BUILTIN_SYMBOL overflow. Please increase the value.
 #endif
