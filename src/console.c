@@ -153,7 +153,7 @@ void mrbc_print_symbol(mrbc_sym sym_id)
 {
   // normal case
   if( !mrbc_is_nested_symid(sym_id) ) {
-    mrbc_print( mrbc_symid_to_str(sym_id) );
+    mrbc_printf("%s", mrbc_symid_to_str(sym_id) );
     return;
   }
 

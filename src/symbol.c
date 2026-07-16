@@ -33,12 +33,6 @@
 #define MRBC_SYMBOL_SEARCH_BTREE
 #endif
 
-#if MAX_SYMBOLS_COUNT <= UCHAR_MAX
-#define MRBC_SYMBOL_TABLE_INDEX_TYPE	uint8_t
-#else
-#define MRBC_SYMBOL_TABLE_INDEX_TYPE	uint16_t
-#endif
-
 #define OFFSET_BUILTIN_SYMBOL 512
 #if OFFSET_BUILTIN_SYMBOL <= MRBC_BUILTIN_SYMBOL_MAX
 # error OFFSET_BUILTIN_SYMBOL overflow. Please increase the value.
@@ -50,8 +44,11 @@
 struct SYM_INDEX {
   uint16_t hash;	//!< hash value, returned by calc_hash().
 #ifdef MRBC_SYMBOL_SEARCH_BTREE
-  MRBC_SYMBOL_TABLE_INDEX_TYPE left;
-  MRBC_SYMBOL_TABLE_INDEX_TYPE right;
+#if MAX_SYMBOLS_COUNT <= UCHAR_MAX
+  uint8_t  left, right;
+#else
+  uint16_t left, right;
+#endif
 #endif
   const char *cstr;	//!< point to the symbol string.
 };
@@ -92,7 +89,7 @@ static inline uint16_t calc_hash(const char *str)
 */
 static int search_builtin_symbol( const char *str )
 {
-  int left = 0;
+  int left = 1;
   int right = sizeof(builtin_symbols) / sizeof(builtin_symbols[0]);
 
   while( left < right ) {
@@ -275,26 +272,32 @@ mrbc_sym mrbc_search_symid( const char *str )
 //================================================================
 /*! make internal use strings for class constant
 
-  @param  buf		output buffer.
+  @param  [out] buf	output buffer.
   @param  id1		parent class symbol id
   @param  id2		target symbol id
 */
-void make_nested_symbol_s( char *buf, mrbc_sym id1, mrbc_sym id2 )
+void mrbc_make_nested_symbol_s( char *buf, mrbc_sym id1, mrbc_sym id2 )
 {
-  static const int w = sizeof(mrbc_sym) * 2;
-  char *p = buf + w * 2;
-  *p = 0;
+  /*
+    index:   0    1  2  3  4        5  6  7  8        9
+    format: "\x01 id1(ascii 4bytes) id2(ascii 4bytes) \x00"
+  */
+  assert( sizeof(mrbc_sym) == 2 );
 
-  int i;
-  for( i = w; i > 0; i-- ) {
-    *--p = '0' + (id2 & 0x0f);
+  uint8_t *p = (uint8_t*)buf + 9;
+
+  *p-- = 0;
+
+  for( int i = 0; i < 4; i++ ) {
+    *p-- = '0' + (id2 & 0x0f);
     id2 >>= 4;
   }
-
-  for( i = w; i > 0; i-- ) {
-    *--p = '0' + (id1 & 0x0f);
+  for( int i = 0; i < 4; i++ ) {
+    *p-- = '0' + (id1 & 0x0f);
     id1 >>= 4;
   }
+
+  *p = 0x01;
 }
 
 
@@ -304,28 +307,20 @@ void make_nested_symbol_s( char *buf, mrbc_sym id1, mrbc_sym id2 )
   @param	sym_id	symbol ID
   @param [out]	id1	result 1
   @param [out]	id2	result 2
-  @see	make_nested_symbol_s
+  @see	mrbc_make_nested_symbol_s
 */
 void mrbc_separate_nested_symid(mrbc_sym sym_id, mrbc_sym *id1, mrbc_sym *id2)
 {
-  static const int w = sizeof(mrbc_sym) * 2;
-  const char *s = mrbc_symid_to_str(sym_id);
-
-  *id1 = 0;
-  if( id2 != NULL ) *id2 = 0;
-  if( *s == 0 ) return;
-
   assert( mrbc_is_nested_symid( sym_id ));
-  assert( strlen(s) == w*2 );
 
-  int i = 0;
-  while( i < w ) {
-    *id1 = (*id1 << 4) + (s[i++] - '0');
+  const char *p = mrbc_symid_to_str(sym_id);
+
+  *id1 = *id2 = 0;
+  for( int i = 0; i < 4; i++ ) {
+    *id1 = (*id1 << 4) + (*++p - '0');
   }
-
-  if( id2 == NULL ) return;
-  while( i < w*2 ) {
-    *id2 = (*id2 << 4) + (s[i++] - '0');
+  for( int i = 0; i < 4; i++ ) {
+    *id2 = (*id2 << 4) + (*++p - '0');
   }
 }
 

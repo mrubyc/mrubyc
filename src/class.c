@@ -140,8 +140,9 @@ static mrbc_class * sub_define_class_or_module(struct VM *vm, const mrbc_class *
   mrbc_sym sym_id1 = sym_id;
 
   if( outer ) {
-    char buf[sizeof(mrbc_sym)*4+1];
-    make_nested_symbol_s( buf, outer->sym_id, sym_id );
+    char buf[MRBC_NESTED_SYMBOL_BUF_LEN];
+
+    mrbc_make_nested_symbol_s( buf, outer->sym_id, sym_id );
     sym_id1 = mrbc_symbol( mrbc_symbol_new( vm, buf ));
   }
 

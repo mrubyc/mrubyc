@@ -710,8 +710,8 @@ static inline void op_getconst( mrbc_vm *vm, mrbc_value *regs EXT )
     if( ret ) goto DONE;
     if( !mrbc_is_nested_symid(cls->sym_id) ) break;
 
-    mrbc_sym outer_id;
-    mrbc_separate_nested_symid( cls->sym_id, &outer_id, 0 );
+    mrbc_sym outer_id, inner_id;
+    mrbc_separate_nested_symid( cls->sym_id, &outer_id, &inner_id );
     cls = mrbc_get_const( outer_id )->cls;
   }
 

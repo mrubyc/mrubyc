@@ -75,9 +75,9 @@ int mrbc_set_const( mrbc_sym sym_id, mrbc_value *v )
 */
 int mrbc_set_class_const( const mrbc_class *cls, mrbc_sym sym_id, mrbc_value *v )
 {
-  char buf[sizeof(mrbc_sym)*4+1];
+  char buf[MRBC_NESTED_SYMBOL_BUF_LEN];
 
-  make_nested_symbol_s( buf, cls->sym_id, sym_id );
+  mrbc_make_nested_symbol_s( buf, cls->sym_id, sym_id );
   mrbc_sym id = mrbc_symbol( mrbc_symbol_new( 0, buf ));
 
   return mrbc_set_const( id, v );
@@ -105,9 +105,9 @@ mrbc_value * mrbc_get_const( mrbc_sym sym_id )
 */
 mrbc_value * mrbc_get_class_const( const mrbc_class *cls, mrbc_sym sym_id )
 {
-  char buf[sizeof(mrbc_sym)*4+1];
+  char buf[MRBC_NESTED_SYMBOL_BUF_LEN];
 
-  make_nested_symbol_s( buf, cls->sym_id, sym_id );
+  mrbc_make_nested_symbol_s( buf, cls->sym_id, sym_id );
   mrbc_sym id = mrbc_search_symid(buf);
   if( id <= 0 ) return 0;
 
