@@ -38,12 +38,15 @@ def rename_for_symbol(s)
   return "#{$1}_E"  if /^(.+)!$/ =~ s
 
   r = ""
+  d = ""
   s.each_char {|ch|
     if !RENAME_CHAR[ch]
-      r << ch
+      r << d << ch
+      d = ""
     else
       r << "_"  if !r.empty?
       r << RENAME_CHAR[ch]
+      d = "_"
     end
   }
   return r

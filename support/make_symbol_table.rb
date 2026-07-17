@@ -148,6 +148,12 @@ def _parse_rb_sexp( s_exp, res )
         vp("Found method #{s_exp2[idx+1]}")
         res << s_exp2[idx+1]
       end
+      s_exp2.each_with_index {|item,idx|
+        if item == :@label
+          vp("Found label #{s_exp2[idx+1]}")
+          res << s_exp2[idx+1].chop
+        end
+      }
 
     when :class, :module
       s_exp1.each {|s_exp2|
