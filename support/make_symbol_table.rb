@@ -109,11 +109,18 @@ def fetch_builtin_symbol_c( filename )
         else
           raise "Not fund CLASS or MODULE declare"
         end
-        ret << (cls[:class] || cls[:module])
-        cls[:methods].to_a.each {|m| ret << m[:name] }
+
+        cnest = []
+        (cls[:class] || cls[:module]).split("::").each {|cls|
+          ret << cls
+          ret << (cnest << cls).join("::")
+        }
+
+        cls[:methods]&.each {|m| ret << m[:name] }
       }
     end
   }
+  ret.uniq!
 
   return ret
 end
