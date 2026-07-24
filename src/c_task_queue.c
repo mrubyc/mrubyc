@@ -111,6 +111,26 @@ static int queue_wake_all_waiters(void *q)
 
 
 //================================================================
+/*! Check whether the queue has been closed.
+
+  (NOTE)
+  @closed only ever holds true or false, so the decref is a no-op in practice.
+  It is kept to stay paired with the incref done by mrbc_instance_getiv().
+
+  @param  queue	Task::Queue instance.
+  @return	Non-zero if the queue is closed.
+*/
+static int queue_is_closed(mrbc_value *queue)
+{
+  mrbc_value closed = mrbc_instance_getiv(queue, sym_closed_);
+  int is_closed = (mrbc_type(closed) == MRBC_TT_TRUE);
+  mrbc_decref(&closed);
+
+  return is_closed;
+}
+
+
+//================================================================
 /*! (method) initialize
 */
 static void c_task_queue_initialize(mrbc_vm *vm, mrbc_value v[], int argc)
@@ -129,21 +149,22 @@ static void c_task_queue_initialize(mrbc_vm *vm, mrbc_value v[], int argc)
 */
 static void c_task_queue_push(mrbc_vm *vm, mrbc_value v[], int argc)
 {
-  mrbc_value closed = mrbc_instance_getiv(&v[0], sym_closed_);
-  int is_closed = (mrbc_type(closed) == MRBC_TT_TRUE);
-  mrbc_decref(&closed);
-  if( is_closed ) {
-    mrbc_raise(vm, task_error_class_, "queue closed");
-    return;
-  }
+  switch( mrbc_task_queue_push(&v[0], &v[1]) ) {
+  case MRBC_TASK_QUEUE_PUSH_OK:
+    break;
 
-  mrbc_value items = mrbc_instance_getiv(&v[0], sym_items_);
-  mrbc_array_push(&items, &v[1]);
-  mrbc_set_tt(&v[1], MRBC_TT_EMPTY);	// ownership moved into the array.
-  mrbc_decref(&items);
-
-  if( queue_wake_one_waiter(v[0].instance) ) {
+  case MRBC_TASK_QUEUE_PUSH_OK_WOKE:
+    // hand control back so the woken task is selected by the scheduler.
     mrbc_get_tcb(vm)->vm.flag_preemption = 1;
+    break;
+
+  case MRBC_TASK_QUEUE_PUSH_CLOSED:
+    mrbc_raise(vm, task_error_class_, "queue closed");
+    break;
+
+  case MRBC_TASK_QUEUE_PUSH_INVALID:
+    mrbc_raise(vm, MRBC_CLASS(ArgumentError), "invalid queue");
+    break;
   }
 }
 
@@ -180,10 +201,7 @@ static void c_task_queue_pop_try(mrbc_vm *vm, mrbc_value v[], int argc)
   mrbc_decref(&items);
 
   // closed and empty.
-  mrbc_value closed = mrbc_instance_getiv(&v[0], sym_closed_);
-  int is_closed = (mrbc_type(closed) == MRBC_TT_TRUE);
-  mrbc_decref(&closed);
-  if( is_closed ) {
+  if( queue_is_closed(&v[0]) ) {
     SET_NIL_RETURN();
     return;
   }
@@ -311,11 +329,7 @@ static void c_task_queue_clear(mrbc_vm *vm, mrbc_value v[], int argc)
 */
 static void c_task_queue_close(mrbc_vm *vm, mrbc_value v[], int argc)
 {
-  mrbc_value closed = mrbc_instance_getiv(&v[0], sym_closed_);
-  int was_closed = (mrbc_type(closed) == MRBC_TT_TRUE);
-  mrbc_decref(&closed);
-
-  if( !was_closed ) {
+  if( !queue_is_closed(&v[0]) ) {
     mrbc_value t = mrbc_true_value();
     mrbc_instance_setiv(&v[0], sym_closed_, &t);
     if( queue_wake_all_waiters(v[0].instance) ) {
@@ -331,10 +345,7 @@ static void c_task_queue_close(mrbc_vm *vm, mrbc_value v[], int argc)
 */
 static void c_task_queue_closed_q(mrbc_vm *vm, mrbc_value v[], int argc)
 {
-  mrbc_value closed = mrbc_instance_getiv(&v[0], sym_closed_);
-  int is_closed = (mrbc_type(closed) == MRBC_TT_TRUE);
-  mrbc_decref(&closed);
-  SET_BOOL_RETURN(is_closed);
+  SET_BOOL_RETURN( queue_is_closed(&v[0]) );
 }
 
 
@@ -401,4 +412,47 @@ void mrbc_init_task_queue(void)
   // Create the unique, private sentinels (kept for the process life).
   wait_retry_   = mrbc_instance_new(0, MRBC_CLASS(Object), 0);
   wait_timeout_ = mrbc_instance_new(0, MRBC_CLASS(Object), 0);
+}
+
+
+//================================================================
+/*! Push a value into a Task::Queue from C and wake one waiting task.
+
+  Ownership of value stays with the caller; the queue takes its own reference.
+  An invalid receiver and a closed queue are reported as a result code rather
+  than an exception, so this is usable where no VM context is at hand.
+
+  (NOTE)
+  This grows the item array through the mruby/c allocator and edits the task
+  queues, so it must NOT be called from an interrupt handler, nor from any
+  context that could re-enter the VM. There is no portable way to detect that
+  at run time, so the caller is responsible for honouring it. To feed a queue
+  from an interrupt, buffer the data in an ISR-safe ring buffer and push it
+  from a task.
+
+  A caller running inside the VM must set flag_preemption when
+  MRBC_TASK_QUEUE_PUSH_OK_WOKE is returned, otherwise the woken task waits for
+  the current time slice to expire. See c_task_queue_push().
+
+  @param  queue	Task::Queue instance (or an instance of its subclass).
+  @param  value	value to push.
+  @return	result code. see mrbc_task_queue_push_result.
+*/
+mrbc_task_queue_push_result mrbc_task_queue_push(mrbc_value *queue, mrbc_value *value)
+{
+  if( mrbc_type(*queue) != MRBC_TT_OBJECT ||
+      !mrbc_obj_is_kind_of(queue, MRBC_CLASS(Task_Queue)) ) {
+    return MRBC_TASK_QUEUE_PUSH_INVALID;
+  }
+
+  if( queue_is_closed(queue) ) return MRBC_TASK_QUEUE_PUSH_CLOSED;
+
+  mrbc_value items = mrbc_instance_getiv(queue, sym_items_);
+  assert( mrbc_type(items) == MRBC_TT_ARRAY );
+  mrbc_incref(value);
+  mrbc_array_push(&items, value);
+  mrbc_decref(&items);
+
+  return queue_wake_one_waiter(queue->instance) ?
+         MRBC_TASK_QUEUE_PUSH_OK_WOKE : MRBC_TASK_QUEUE_PUSH_OK;
 }

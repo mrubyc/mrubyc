@@ -1,4 +1,11 @@
 
+# Picotest collects the test list by loading this file in CRuby as well, where
+# Task::Queue does not exist. Define the subclass on the target VM only.
+if RUBY_ENGINE != "ruby"
+  class MyTaskQueue < Task::Queue
+  end
+end
+
 class TaskQueueTest < Picotest::Test
 
   # Only synchronous behaviour is covered here: pushing, non-blocking pop
@@ -160,5 +167,49 @@ class TaskQueueTest < Picotest::Test
   def test_pop_timeout_with_non_block
     q = Task::Queue.new
     assert_raise(ArgumentError) { q.pop(true, timeout_ms: 1) }
+  end
+
+  # __push runs the shared C entry point mrbc_task_queue_push(), which checks
+  # the receiver with a kind_of? test. These pin that subclasses stay usable.
+
+  description "a subclass of Task::Queue can push and pop"
+  def test_subclass_push_pop
+    q = MyTaskQueue.new
+    assert q.is_a?(Task::Queue)
+    q.push(1)
+    q.push(2)
+    assert_equal 1, q.pop(true)
+    assert_equal 2, q.pop(true)
+    assert q.empty?
+  end
+
+  description "a closed subclass raises Task::Error on push"
+  def test_subclass_push_after_close_raises
+    q = MyTaskQueue.new
+    q.close
+    assert_raise(Task::Error) { q.push(1) }
+  end
+
+  # push takes its own reference instead of moving the caller's, so the pushed
+  # object stays alive and usable on the caller side.
+
+  description "push keeps the caller's object, not a copy"
+  def test_push_keeps_object_identity
+    q = Task::Queue.new
+    a = [1]
+    q.push(a)
+    a << 2
+    assert_equal [1, 2], q.pop(true)
+  end
+
+  description "the same object can be pushed more than once"
+  def test_push_same_object_twice
+    q = Task::Queue.new
+    a = [1]
+    q.push(a)
+    q.push(a)
+    assert_equal [1], q.pop(true)
+    assert_equal [1], q.pop(true)
+    assert_equal [1], a
   end
 end
