@@ -117,7 +117,9 @@ void mrbc_string_delete(mrbc_value *str)
 */
 void mrbc_string_clear(mrbc_value *str)
 {
-  mrbc_raw_realloc(str->string->data, 1);
+  // shrink suitable size. realloc() may move the block.
+  uint8_t *buf = mrbc_raw_realloc(str->string->data, 1);
+  if( buf ) str->string->data = buf;
   str->string->data[0] = '\0';
   str->string->size = 0;
 }
@@ -288,7 +290,9 @@ int mrbc_string_strip(mrbc_value *src, int mode)
   char *buf = mrbc_string_cstr(src);
   if( p1 != buf ) memmove( buf, p1, new_size );
   buf[new_size] = '\0';
-  mrbc_raw_realloc(buf, new_size+1);	// shrink suitable size.
+  // shrink suitable size. realloc() may move the block.
+  uint8_t *buf2 = mrbc_raw_realloc(buf, new_size+1);
+  if( buf2 ) src->string->data = buf2;
   src->string->size = new_size;
 
   return 1;
@@ -1499,7 +1503,9 @@ static void c_string_slice_self(mrbc_vm *vm, mrbc_value v[], int argc)
     memmove( mrbc_string_cstr(v) + byte_pos, mrbc_string_cstr(v) + byte_pos + byte_len,
              byte_size - byte_pos - byte_len + 1 );
     v->string->size = byte_size - byte_len;
-    mrbc_raw_realloc( mrbc_string_cstr(v), v->string->size + 1 );
+    // shrink suitable size. realloc() may move the block.
+    uint8_t *buf = mrbc_raw_realloc( mrbc_string_cstr(v), v->string->size + 1 );
+    if( buf ) v->string->data = buf;
   }
 #else
   mrbc_value ret = mrbc_string_new(vm, mrbc_string_cstr(v) + pos, len);
@@ -1508,7 +1514,9 @@ static void c_string_slice_self(mrbc_vm *vm, mrbc_value v[], int argc)
     memmove( mrbc_string_cstr(v) + pos, mrbc_string_cstr(v) + pos + len,
              mrbc_string_size(v) - pos - len + 1 );
     v->string->size = mrbc_string_size(v) - len;
-    mrbc_raw_realloc( mrbc_string_cstr(v), mrbc_string_size(v)+1 );
+    // shrink suitable size. realloc() may move the block.
+    uint8_t *buf = mrbc_raw_realloc( mrbc_string_cstr(v), mrbc_string_size(v)+1 );
+    if( buf ) v->string->data = buf;
   }
 #endif
 

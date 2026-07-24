@@ -777,7 +777,9 @@ static void c_object_sprintf(mrbc_vm *vm, mrbc_value v[], int argc)
   mrbc_printf_end( &pf );
 
   buflen = mrbc_printf_len( &pf );
-  mrbc_realloc(vm, pf.buf, buflen+1);	// shrink suitable size.
+  // shrink suitable size. realloc() may move the block.
+  buf = mrbc_realloc(vm, pf.buf, buflen+1);
+  if( buf ) mrbc_printf_replace_buffer(&pf, buf, buflen+1);
 
   mrbc_value value = mrbc_string_new_alloc( vm, pf.buf, buflen );
 
