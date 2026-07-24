@@ -280,7 +280,7 @@ void mrbc_make_nested_symbol_s( char *buf, mrbc_sym id1, mrbc_sym id2 )
 {
   /*
     index:   0    1  2  3  4        5  6  7  8        9
-    format: "\x01 id1(ascii 4bytes) id2(ascii 4bytes) \x00"
+    format: "\x7f id1(ascii 4bytes) id2(ascii 4bytes) \x00"
   */
   assert( sizeof(mrbc_sym) == 2 );
 
@@ -297,7 +297,7 @@ void mrbc_make_nested_symbol_s( char *buf, mrbc_sym id1, mrbc_sym id2 )
     id1 >>= 4;
   }
 
-  *p = 0x01;
+  *p = 0x7f;
 }
 
 

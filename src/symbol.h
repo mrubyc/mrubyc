@@ -75,7 +75,7 @@ static inline int mrbc_is_nested_symid(mrbc_sym sym_id)
 {
   const char *s = mrbc_symid_to_str(sym_id);
 
-  return (s[0] == 0x01);
+  return (s[0] == 0x7f);
 }
 
 
