@@ -26,6 +26,10 @@
 
 /***** Constant values ******************************************************/
 /***** Macros ***************************************************************/
+#define IS_CLASS_OR_MODULE(v) \
+  (mrbc_type(v) == MRBC_TT_CLASS || mrbc_type(v) == MRBC_TT_MODULE)
+
+
 /***** Typedefs *************************************************************/
 /***** Function prototypes **************************************************/
 /***** Local variables ******************************************************/
@@ -491,11 +495,9 @@ mrbc_class * mrbc_get_class_by_name( const char *name )
 
   mrbc_value *obj = mrbc_get_const(sym_id);
   if( obj == NULL ) return NULL;
+  if( !IS_CLASS_OR_MODULE(*obj) ) return NULL;
 
-  if( mrbc_type(*obj) == MRBC_TT_CLASS ||
-      mrbc_type(*obj) == MRBC_TT_MODULE ) return obj->cls;
-
-  return NULL;
+  return obj->cls;
 }
 
 

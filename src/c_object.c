@@ -25,6 +25,11 @@
 /***** Local headers ********************************************************/
 #include "mrubyc.h"
 
+/***** Macros ***************************************************************/
+#define IS_CLASS_OR_MODULE(v) \
+  (mrbc_type(v) == MRBC_TT_CLASS || mrbc_type(v) == MRBC_TT_MODULE)
+
+
 /***** Local functions ******************************************************/
 #if MRBC_USE_STRING
 //================================================================
@@ -88,7 +93,7 @@ void mrbc_object_inspect(mrbc_vm *vm, mrbc_value v[], int argc)
   char buf[64];		// max length of class (or object) name.
   char *s = buf;
   mrbc_sym sym_id = find_class_by_object(&v[0])->sym_id;
-  int class_or_module = (mrbc_type(v[0]) == MRBC_TT_CLASS || mrbc_type(v[0]) == MRBC_TT_MODULE);
+  int class_or_module = IS_CLASS_OR_MODULE(v[0]);
 
   if (!class_or_module) {
     buf[0] = '#'; buf[1] = '<';
@@ -237,7 +242,7 @@ static void c_object_block_given(mrbc_vm *vm, mrbc_value v[], int argc)
  */
 static void c_object_kind_of(mrbc_vm *vm, mrbc_value v[], int argc)
 {
-  if( mrbc_type(v[1]) != MRBC_TT_CLASS && mrbc_type(v[1]) != MRBC_TT_MODULE ) {
+  if( !IS_CLASS_OR_MODULE(v[1]) ) {
     mrbc_raise(vm, MRBC_CLASS(TypeError), "class or module required");
     return;
   }
@@ -584,7 +589,7 @@ static void c_object_include(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   mrbc_class *self;
 
-  if( mrbc_type(v[0]) == MRBC_TT_CLASS || mrbc_type(v[0]) == MRBC_TT_MODULE ) {
+  if( IS_CLASS_OR_MODULE(v[0]) ) {
     self = v[0].cls;
   } else if( vm->callinfo_tail == 0 ) {    // is top level?
     self = MRBC_CLASS(Object);
