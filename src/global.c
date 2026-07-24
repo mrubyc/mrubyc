@@ -190,16 +190,16 @@ void mrbc_global_clear_vm_id(void)
 */
 void mrbc_debug_dump_const( void )
 {
-  mrbc_print("<< Const table dump. >>\n(s_id:identifier = value)\n");
+  mrbc_print("<< Const table dump. >>\n(symid:identifier = value)\n");
   mrbc_kv_iterator ite = mrbc_kv_iterator_new( &handle_const );
 
   while( mrbc_kv_i_has_next( &ite ) ) {
     const mrbc_kv *kv = mrbc_kv_i_next( &ite );
     const char *s = mrbc_symid_to_str(kv->sym_id);
 
-    if( kv->sym_id < 0x100 ) continue;	// OFFSET_BUILTIN_SYMBOL in symbol.c
+    if( kv->sym_id < 512 ) continue;	// OFFSET_BUILTIN_SYMBOL in symbol.c
 
-    mrbc_printf(" %04x:\"%s\"", kv->sym_id, s );
+    mrbc_printf(" $%04x:\"%s\"", kv->sym_id, s );
     if( mrbc_is_nested_symid(kv->sym_id) ) {
       mrbc_printf("(");
       mrbc_print_symbol(kv->sym_id);
@@ -241,13 +241,13 @@ void mrbc_debug_dump_const( void )
 */
 void mrbc_debug_dump_global( void )
 {
-  mrbc_print("<< Global table dump. >>\n(s_id:identifier = value)\n");
+  mrbc_print("<< Global table dump. >>\n(symid:identifier = value)\n");
 
   mrbc_kv_iterator ite = mrbc_kv_iterator_new( &handle_global );
   while( mrbc_kv_i_has_next( &ite ) ) {
     mrbc_kv *kv = mrbc_kv_i_next( &ite );
 
-    mrbc_printf(" %04x:%s = ", kv->sym_id, mrbc_symid_to_str(kv->sym_id));
+    mrbc_printf(" $%04x:%s = ", kv->sym_id, mrbc_symid_to_str(kv->sym_id));
     mrbc_p_sub( &kv->value );
     if( mrbc_type(kv->value) <= MRBC_TT_INC_DEC_THRESHOLD ) {
       mrbc_printf(" .tt=%d\n", mrbc_type(kv->value));
