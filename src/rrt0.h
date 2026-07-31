@@ -153,6 +153,21 @@ int mrbc_deadline_reached(uint32_t deadline);
 void mrbc_register_wakeup(uint32_t wakeup_tick);
 //@endcond
 
+#if defined(MRBC_TASK_SCHEDULER_HOOK)
+//================================================
+/*!@brief
+  Scheduler hook.
+
+  Called in thread context at every scheduler entry (mrbc_run and
+  mrbc_run_step), right before the ready-queue read: a task the hook
+  makes ready (e.g. via mrbc_task_queue_push) runs in the same
+  iteration. One process-global hook -- setting replaces, fn == NULL
+  clears, composition is the embedder's concern, the caller owns ud.
+  Must be cheap, never sleep, never re-enter the scheduler.
+*/
+void mrbc_task_set_scheduler_hook(void (*fn)(void *ud), void *ud);
+#endif
+
 
 /***** Inline functions *****************************************************/
 //================================================================
