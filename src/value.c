@@ -102,8 +102,11 @@ int mrbc_compare(const mrbc_value *v1, const mrbc_value *v2)
   case MRBC_TT_TRUE:
     return 0;
 
-  case MRBC_TT_INTEGER:
-    return mrbc_integer(*v1) - mrbc_integer(*v2);
+  case MRBC_TT_INTEGER: {
+    mrbc_int_t i1 = mrbc_integer(*v1);
+    mrbc_int_t i2 = mrbc_integer(*v2);
+    return -1 + (i1 == i2) + (i1 > i2)*2;
+  }
 
   case MRBC_TT_SYMBOL: {
     const char *str1 = mrbc_symid_to_str(mrbc_symbol(*v1));

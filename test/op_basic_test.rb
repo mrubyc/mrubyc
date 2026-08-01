@@ -234,4 +234,17 @@ class OpBasicTest < Picotest::Test
     assert_true( a >= b )
   end
 
+  description "op_compare with a difference that does not fit in int"
+  def test_op_compare_wide_difference
+    a = 2000000000
+    b = -2000000000
+    assert_false( a < b )
+    assert_false( a <= b )
+    assert_true( a > b )
+    assert_true( a >= b )
+    assert_true( b < a )
+    assert_equal( 1, a <=> b )
+    assert_equal( -1, b <=> a )
+  end
+
 end
