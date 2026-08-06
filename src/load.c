@@ -192,8 +192,11 @@ static mrbc_irep * load_irep_1(mrbc_vm *vm, const uint8_t *bin, int *len)
   irep.ofs_pools = siz;
 
   siz += sizeof(uint16_t) * plen;
+  // tbl_ireps holds pointers, so align to the pointer size.
+  //  in 32bit: sizeof(mrbc_irep *) - 1 = 0x03
+  //  in 64bit: sizeof(mrbc_irep *) - 1 = 0x07
+  siz += (-siz & (uint32_t)(sizeof(mrbc_irep *) - 1));
   if( siz > 0xffff ) goto ERROR_TOO_LARGE;
-  siz += (-siz & 0x03);	// padding. 32bit align.
   irep.ofs_ireps = siz;
 
 #if defined(MRBC_DEBUG)
