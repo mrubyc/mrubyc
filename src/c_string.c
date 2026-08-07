@@ -118,8 +118,7 @@ void mrbc_string_delete(mrbc_value *str)
 void mrbc_string_clear(mrbc_value *str)
 {
   // shrink suitable size. realloc() may move the block.
-  uint8_t *buf = mrbc_raw_realloc(str->string->data, 1);
-  if( buf ) str->string->data = buf;
+  str->string->data = mrbc_raw_realloc(str->string->data, 1);
   str->string->data[0] = '\0';
   str->string->size = 0;
 }
@@ -290,9 +289,9 @@ int mrbc_string_strip(mrbc_value *src, int mode)
   char *buf = mrbc_string_cstr(src);
   if( p1 != buf ) memmove( buf, p1, new_size );
   buf[new_size] = '\0';
+
   // shrink suitable size. realloc() may move the block.
-  uint8_t *buf2 = mrbc_raw_realloc(buf, new_size+1);
-  if( buf2 ) src->string->data = buf2;
+  src->string->data = mrbc_raw_realloc(buf, new_size+1);
   src->string->size = new_size;
 
   return 1;
@@ -1504,8 +1503,7 @@ static void c_string_slice_self(mrbc_vm *vm, mrbc_value v[], int argc)
              byte_size - byte_pos - byte_len + 1 );
     v->string->size = byte_size - byte_len;
     // shrink suitable size. realloc() may move the block.
-    uint8_t *buf = mrbc_raw_realloc( mrbc_string_cstr(v), v->string->size + 1 );
-    if( buf ) v->string->data = buf;
+    v->string->data = mrbc_raw_realloc( mrbc_string_cstr(v), v->string->size+1 );
   }
 #else
   mrbc_value ret = mrbc_string_new(vm, mrbc_string_cstr(v) + pos, len);
@@ -1515,8 +1513,7 @@ static void c_string_slice_self(mrbc_vm *vm, mrbc_value v[], int argc)
              mrbc_string_size(v) - pos - len + 1 );
     v->string->size = mrbc_string_size(v) - len;
     // shrink suitable size. realloc() may move the block.
-    uint8_t *buf = mrbc_raw_realloc( mrbc_string_cstr(v), mrbc_string_size(v)+1 );
-    if( buf ) v->string->data = buf;
+    v->string->data = mrbc_raw_realloc( mrbc_string_cstr(v), v->string->size+1 );
   }
 #endif
 
@@ -1987,12 +1984,7 @@ static int tr_main_utf8(mrbc_vm *vm, mrbc_value v[], int argc)
   // Swap the data
   if( mrbc_string_size(&v[0]) != mrbc_string_size(&result) ) {
     // Need to reallocate
-    uint8_t *new_data = mrbc_realloc(vm, orig->data, res->size + 1);
-    if( new_data == NULL ) {
-      mrbc_decref(&result);
-      return -1;
-    }
-    orig->data = new_data;
+    orig->data = mrbc_realloc(vm, orig->data, res->size + 1);
   }
   memcpy(orig->data, res->data, res->size + 1);
   orig->size = res->size;
