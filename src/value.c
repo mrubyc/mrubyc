@@ -155,32 +155,6 @@ int mrbc_compare(const mrbc_value *v1, const mrbc_value *v2)
 }
 
 
-#if defined(MRBC_ALLOC_VMID)
-//================================================================
-/*! clear vm id
-
-  @param   v     Pointer to target mrbc_value
-*/
-void mrbc_clear_vm_id(mrbc_value *v)
-{
-  switch( mrbc_type(*v) ) {
-  case MRBC_TT_OBJECT:	mrbc_instance_clear_vm_id(v);	break;
-  case MRBC_TT_PROC:	mrbc_proc_clear_vm_id(v);	break;
-  case MRBC_TT_ARRAY:	mrbc_array_clear_vm_id(v);	break;
-#if MRBC_USE_STRING
-  case MRBC_TT_STRING:	mrbc_string_clear_vm_id(v);	break;
-#endif
-  case MRBC_TT_RANGE:	mrbc_range_clear_vm_id(v);	break;
-  case MRBC_TT_HASH:	mrbc_hash_clear_vm_id(v);	break;
-
-  default:
-    // Nothing
-    break;
-  }
-}
-#endif
-
-
 //================================================================
 /*! convert ASCII string to integer mruby/c version
 

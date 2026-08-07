@@ -369,20 +369,6 @@ mrbc_value mrbc_instance_getiv(mrbc_value *target, mrbc_sym sym_id)
 }
 
 
-#if defined(MRBC_ALLOC_VMID)
-//================================================================
-/*! clear vm_id
-
-  @param  v		pointer to target.
-*/
-void mrbc_instance_clear_vm_id(mrbc_value *v)
-{
-  mrbc_set_vm_id( v->instance, 0 );
-  mrbc_kv_clear_vm_id( &v->instance->ivar );
-}
-#endif
-
-
 //================================================================
 /*! Check the class is the class of object.
 

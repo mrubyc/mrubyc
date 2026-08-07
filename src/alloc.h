@@ -70,25 +70,7 @@ void *mrbc_raw_alloc_no_free(unsigned int size);
 void *mrbc_raw_calloc(unsigned int nmemb, unsigned int size);
 void mrbc_raw_free(void *ptr);
 void *mrbc_raw_realloc(void *ptr, unsigned int size);
-#define mrbc_free(vm,ptr)		mrbc_raw_free(ptr)
-#define mrbc_realloc(vm,ptr,size)	mrbc_raw_realloc(ptr, size)
 unsigned int mrbc_alloc_usable_size(void *ptr);
-
-#if defined(MRBC_ALLOC_VMID)
-// Enables memory management by VMID.
-void *mrbc_alloc(const struct VM *vm, unsigned int size);
-void *mrbc_calloc(const struct VM *vm, unsigned int nmemb, unsigned int size);
-void mrbc_free_all(const struct VM *vm);
-void mrbc_set_vm_id(void *ptr, int vm_id);
-int mrbc_get_vm_id(void *ptr);
-
-# else
-#define mrbc_alloc(vm,size)	mrbc_raw_alloc(size)
-#define mrbc_free_all(vm)	((void)0)
-#define mrbc_set_vm_id(ptr,id)	((void)0)
-#define mrbc_get_vm_id(ptr)	0
-#endif
-
 void mrbc_alloc_statistics(struct MRBC_ALLOC_STATISTICS *ret);
 void mrbc_alloc_start_profiling(void);
 void mrbc_alloc_stop_profiling(void);
@@ -99,15 +81,10 @@ void mrbc_alloc_print_memory_block(void *pool_header);
 void mrbc_alloc_print_memory_pool(void);
 
 
-
 #elif defined(MRBC_ALLOC_LIBC)
 /*
   use the system (libc) memory allocator.
 */
-#if defined(MRBC_ALLOC_VMID)
-#error "Can't use MRBC_ALLOC_LIBC with MRBC_ALLOC_VMID"
-#endif
-
 static inline void mrbc_init_alloc(void *ptr, unsigned int size) {}
 static inline void mrbc_cleanup_alloc(void) {}
 static inline void *mrbc_raw_alloc(unsigned int size) {
@@ -134,23 +111,11 @@ static inline void *mrbc_raw_realloc(void *ptr, unsigned int size) {
  *   return malloc_usable_size(ptr);
  * }
 */
-static inline void mrbc_free(const struct VM *vm, void *ptr) {
-  free(ptr);
-}
-static inline void * mrbc_realloc(const struct VM *vm, void *ptr, unsigned int size) {
-  return realloc(ptr, size);
-}
-static inline void *mrbc_alloc(const struct VM *vm, unsigned int size) {
-  return malloc(size);
-}
-static inline void mrbc_free_all(const struct VM *vm) {
-}
-static inline void mrbc_set_vm_id(void *ptr, int vm_id) {
-}
-static inline int mrbc_get_vm_id(void *ptr) {
-  return 0;
-}
 #endif	// MRBC_ALLOC_LIBC
+
+#define mrbc_alloc(vm,size)		mrbc_raw_alloc(size)
+#define mrbc_free(vm,ptr)		mrbc_raw_free(ptr)
+#define mrbc_realloc(vm,ptr,size)	mrbc_raw_realloc(ptr, size)
 //@endcond
 
 

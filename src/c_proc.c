@@ -75,19 +75,6 @@ void mrbc_proc_delete(mrbc_value *val)
 }
 
 
-#if defined(MRBC_ALLOC_VMID)
-//================================================================
-/*! clear vm_id
-
-  @param  v		pointer to target.
-*/
-void mrbc_proc_clear_vm_id(mrbc_value *v)
-{
-  mrbc_set_vm_id( v->proc, 0 );
-}
-#endif
-
-
 
 /***** Proc class ***********************************************************/
 //================================================================

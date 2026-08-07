@@ -116,27 +116,6 @@ void mrbc_array_delete(mrbc_value *ary)
 }
 
 
-#if defined(MRBC_ALLOC_VMID)
-//================================================================
-/*! clear vm_id
-
-  @param  ary	pointer to target value
-*/
-void mrbc_array_clear_vm_id(mrbc_value *ary)
-{
-  mrbc_array *h = ary->array;
-
-  mrbc_set_vm_id( h, 0 );
-
-  mrbc_value *p1 = h->data;
-  const mrbc_value *p2 = p1 + h->n_stored;
-  while( p1 < p2 ) {
-    mrbc_clear_vm_id(p1++);
-  }
-}
-#endif
-
-
 //================================================================
 /*! resize buffer
 

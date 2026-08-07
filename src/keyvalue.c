@@ -174,29 +174,6 @@ void mrbc_kv_delete_data(mrbc_kv_handle *kvh)
 }
 
 
-#if defined(MRBC_ALLOC_VMID)
-//================================================================
-/*! clear vm_id
-
-  @param  kvh	pointer to key-value handle.
-*/
-void mrbc_kv_clear_vm_id(mrbc_kv_handle *kvh)
-{
-  if( kvh->data_size == 0 ) return;
-
-  mrbc_kv *p1 = kvh->data;
-  const mrbc_kv *p2 = p1 + kvh->n_stored;
-
-  mrbc_set_vm_id( p1, 0 );
-
-  while( p1 < p2 ) {
-    mrbc_clear_vm_id(&p1->value);
-    p1++;
-  }
-}
-#endif
-
-
 //================================================================
 /*! resize buffer
 

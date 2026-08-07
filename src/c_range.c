@@ -69,21 +69,6 @@ void mrbc_range_delete(mrbc_value *v)
 }
 
 
-#if defined(MRBC_ALLOC_VMID)
-//================================================================
-/*! clear vm_id
-
-  @param  v 	pointer to target.
-*/
-void mrbc_range_clear_vm_id(mrbc_value *v)
-{
-  mrbc_set_vm_id( v->range, 0 );
-  mrbc_clear_vm_id( &v->range->first );
-  mrbc_clear_vm_id( &v->range->last );
-}
-#endif
-
-
 //================================================================
 /*! compare
 

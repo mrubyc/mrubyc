@@ -124,18 +124,6 @@ void mrbc_string_clear(mrbc_value *str)
 }
 
 
-#if defined(MRBC_ALLOC_VMID)
-//================================================================
-/*! clear vm_id
-*/
-void mrbc_string_clear_vm_id(mrbc_value *str)
-{
-  mrbc_set_vm_id( str->string, 0 );
-  mrbc_set_vm_id( str->string->data, 0 );
-}
-#endif
-
-
 //================================================================
 /*! duplicate string
 
