@@ -89,14 +89,6 @@ static inline int mrbc_hash_size(const mrbc_value *hash) {
   return hash->hash->n_stored / 2;
 }
 
-#if defined(MRBC_ALLOC_VMID)
-//================================================================
-/*! clear vm_id
-*/
-static inline void mrbc_hash_clear_vm_id(mrbc_value *hash) {
-  mrbc_array_clear_vm_id(hash);
-}
-#endif
 
 //================================================================
 /*! resize buffer

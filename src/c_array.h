@@ -55,7 +55,6 @@ typedef struct RArray {
 //@cond
 mrbc_value mrbc_array_new(mrbc_vm *vm, int size);
 void mrbc_array_delete(mrbc_value *ary);
-void mrbc_array_clear_vm_id(mrbc_value *ary);
 int mrbc_array_resize(mrbc_value *ary, int size);
 int mrbc_array_set(mrbc_value *ary, int idx, mrbc_value *set_val);
 mrbc_value mrbc_array_get(const mrbc_value *ary, int idx);

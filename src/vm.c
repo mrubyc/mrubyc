@@ -386,11 +386,6 @@ void mrbc_vm_end( mrbc_vm *vm )
   mrbc_printf("Finally number of registers used was %d in VM %d.\n",
               n_used, vm->vm_id );
 #endif
-
-#if defined(MRBC_ALLOC_VMID)
-  mrbc_global_clear_vm_id();
-  mrbc_free_all(vm);
-#endif
 }
 
 

@@ -169,18 +169,6 @@ mrbc_value * mrbc_get_global( mrbc_sym sym_id )
 }
 
 
-#if defined(MRBC_ALLOC_VMID)
-//================================================================
-/*! clear vm_id in global object for process terminated.
-*/
-void mrbc_global_clear_vm_id(void)
-{
-  mrbc_kv_clear_vm_id( &handle_const );
-  mrbc_kv_clear_vm_id( &handle_global );
-}
-#endif
-
-
 #ifdef MRBC_DEBUG
 //================================================================
 /*! debug dump all const table.
