@@ -1387,7 +1387,14 @@ static inline void op_super( mrbc_vm *vm, mrbc_value *regs EXT )
 
   assert( cls );
   cls = cls->super;
-  assert( cls );
+  if( cls == NULL ) {
+    mrbc_raisef(vm, MRBC_CLASS(NoMethodError),
+                "no superclass method '%s' for %s",
+                mrbc_symid_to_str(callinfo->method_id),
+                mrbc_symid_to_str(callinfo->own_class->sym_id));
+    return;
+  }
+
   if( mrbc_find_method( &method, cls, callinfo->method_id ) == 0 ) {
     mrbc_raisef( vm, MRBC_CLASS(NoMethodError),
         "no superclass method '%s' for %s",
