@@ -121,11 +121,11 @@
   define memory block header
 
   (note)
-  Typical size of block.
-  |            | MRBC_ALLOC_16BIT | MRBC_ALLOC_24BIT |
-  |------------|------------------|------------------|
-  | USED_BLOCK |         2 bytes  |         4 bytes  |
-  | FREE_BLOCK |         8 bytes  |        16 bytes  |
+  Typical block size on 32-bit CPU
+   |            |  default  | MRBC_ALLOC_16BIT |
+   |------------|-----------|------------------|
+   | USED_BLOCK |   4 bytes |      2 bytes     |
+   | FREE_BLOCK |  16 bytes |      8 bytes     |
 */
 
 #if defined(MRBC_ALLOC_16BIT)
