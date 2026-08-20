@@ -89,15 +89,8 @@ EOL
 
     n = cls[:methods].empty? ? "0" : "sizeof(method_symbols_#{var_name}) / sizeof(mrbc_sym)"
     file.puts "  .num_builtin_method = #{n},"
-    sp = case cls[:super]
-         when nil
-           raise "SUPER isn't specified."
-         when /^[A-Z][A-Za-z0-9:]+$/
-           "MRBC_CLASS(#{sanitize_var_name(cls[:super])})"
-         else
-           cls[:super]
-         end
-    file.puts "  .super = #{sp},"
+    cls_super = cls[:super] ? "MRBC_CLASS(#{sanitize_var_name(cls[:super])})" : "0"
+    file.puts "  .super = #{cls_super},"
     file.puts "#if defined(MRBC_DEBUG)"
     file.puts "  .obj_mark_ = \"#{type.to_s.upcase[0,2]}\","
     file.puts "  .name = \"#{cls_name}\","

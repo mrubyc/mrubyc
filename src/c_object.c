@@ -819,7 +819,6 @@ static void c_object_inspect(mrbc_vm *vm, mrbc_value v[], int argc)
 
   CLASS("Object")
   FILE("_autogen_class_object.h")
-  SUPER(0)
 
   METHOD( "new",	c_object_new )
   METHOD( "!",		c_object_not )

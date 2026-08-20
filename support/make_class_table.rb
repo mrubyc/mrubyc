@@ -110,7 +110,7 @@ EOL
     next if TASK_RELATED_CLASS.include?( cls[:class] )
 
     cls_name = "MRBC_CLASS(#{sanitize_var_name(cls[:class])})"
-    cls_super = cls[:super] == "0" ? cls[:super] : "MRBC_CLASS(#{sanitize_var_name(cls[:super])})"
+    cls_super = cls[:super] ? "MRBC_CLASS(#{sanitize_var_name(cls[:super])})" : "0"
     case cls[:class]
     when "Float", "String", "Math"
       file.puts "#if MRBC_USE_#{cls[:class].upcase}"

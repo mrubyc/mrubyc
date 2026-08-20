@@ -131,7 +131,7 @@ AUTOGEN_METHOD_TABLE = _autogen_class_array.h _autogen_class_exception.h \
 	_autogen_module_math.h _autogen_class_object.h _autogen_class_proc.h \
 	_autogen_class_range.h _autogen_class_string.h _autogen_class_symbol.h \
 	_autogen_class_rrt0.h _autogen_class_task_queue.h
-AUTOGEN_METHOD_SRCS = c_array.c c_hash.c c_math.c c_numeric.c c_object.c \
+AUTOGEN_METHOD_SRCS = c_object.c c_array.c c_hash.c c_math.c c_numeric.c \
 	c_proc.c c_range.c c_string.c symbol.c error.c rrt0.c c_task_queue.c
 
 ifdef RUBY_INSTALLED

@@ -150,19 +150,14 @@ def parse_source_string( src )
     flag_arg_ok = true
     case key.upcase
     when "CLASS"
-      cls = { class:strip_double_quot(args[0]), super:"Object", methods:[] }
+      cls1 = strip_double_quot(args[0]).split("<").map(&:strip)
+      cls1[1] = "Object"  if cls1[0] != "Object" && cls1[1] == nil
+      cls = { class:cls1[0], super:cls1[1], methods:[] }
       ret[:classes] << cls
 
     when "MODULE"
-      cls = { module:strip_double_quot(args[0]), super:"0", methods:[] }
+      cls = { module:strip_double_quot(args[0]), super:nil, methods:[] }
       ret[:classes] << cls
-
-    when "SUPER"
-      if !cls
-        puts "Error: need CLASS parameter first."
-        next
-      end
-      cls[:super] = strip_double_quot(args[0])
 
     when "METHOD"
       if !cls
