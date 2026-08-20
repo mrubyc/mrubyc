@@ -57,8 +57,9 @@ void mrbc_init_global(void)
 int mrbc_set_const( mrbc_sym sym_id, mrbc_value *v )
 {
   if( mrbc_kv_get( &handle_const, sym_id ) != NULL ) {
-    mrbc_printf("warning: already initialized constant %s\n",
-		mrbc_symid_to_str(sym_id));
+    mrbc_print("warning: already initialized constant ");
+    mrbc_print_symbol(sym_id);
+    mrbc_print("\n");
   }
 
   return mrbc_kv_set( &handle_const, sym_id, v );
