@@ -167,15 +167,10 @@ static mrbc_irep * load_irep_1(mrbc_vm *vm, const uint8_t *bin, int *len)
     case IREP_TT_SSTR:   siz = bin_to_uint16(p) + 3; break;
     case IREP_TT_INT32:  siz = 4; break;
 
-#if defined(MRBC_INT64)
+    // an unsupported literal is skipped here and raises when it is used.
+    // (see mrbc_irep_pool_value)
     case IREP_TT_INT64:  siz = 8; break;
     case IREP_TT_BIGINT: siz = *p + 2; break;
-#else
-    case IREP_TT_INT64:
-    case IREP_TT_BIGINT:
-       mrbc_raise(vm, MRBC_CLASS(NotImplementedError), "Unsupported int64 (set MRBC_INT64 in vm_config)");
-       return NULL;
-#endif
 
     case IREP_TT_FLOAT: siz = 8; break;
     default:
@@ -246,10 +241,8 @@ static mrbc_irep * load_irep_1(mrbc_vm *vm, const uint8_t *bin, int *len)
     case IREP_TT_STR:
     case IREP_TT_SSTR:   siz = bin_to_uint16(p) + 3; break;
     case IREP_TT_INT32:  siz = 4; break;
-#if defined(MRBC_INT64)
     case IREP_TT_INT64:  siz = 8; break;
     case IREP_TT_BIGINT: siz = *p + 2; break;
-#endif
     case IREP_TT_FLOAT:	siz = 8;  break;
     }
     p += siz;
@@ -431,6 +424,12 @@ mrbc_value mrbc_irep_pool_value(mrbc_vm *vm, int n)
 
   case IREP_TT_BIGINT:
     mrbc_set_integer(&obj, conv_bigint(p));
+    break;
+#else
+  case IREP_TT_INT64:
+  case IREP_TT_BIGINT:
+    mrbc_raise(vm, MRBC_CLASS(NotImplementedError), "Unsupported int64 (set MRBC_INT64 in vm_config)");
+    mrbc_set_nil(&obj);
     break;
 #endif
 
