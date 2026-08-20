@@ -1,6 +1,8 @@
 #
-# mrbc -E -Bary sample_include_bytecode.rb
+# bytecode-included demo
 #
+# Compile with:
+#   mrbc --remove-lv -Bmrbbuf sample_include_bytecode.rb
 
 while true
   puts "sample"

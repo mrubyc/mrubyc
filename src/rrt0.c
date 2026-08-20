@@ -54,10 +54,32 @@ static mrbc_tcb *tcb_queue_[NUM_TCB_QUEUE];
 static volatile uint32_t tick_;
 static volatile uint32_t wakeup_tick_ = ((uint32_t)1 << 16); // no significant meaning.
 
+#if defined(MRBC_TASK_SCHEDULER_HOOK)
+static void (*scheduler_hook_)(void *ud);
+static void *scheduler_hook_ud_;
+#endif
+
 
 /***** Global variables *****************************************************/
 /***** Signal catching functions ********************************************/
 /***** Functions ************************************************************/
+#if defined(MRBC_TASK_SCHEDULER_HOOK)
+//================================================================
+/*! Register the scheduler hook.
+
+  @param  fn	Hook function. NULL clears the hook.
+  @param  ud	Opaque argument passed to fn.
+
+  See the declaration in rrt0.h for the calling contract.
+*/
+void mrbc_task_set_scheduler_hook(void (*fn)(void *ud), void *ud)
+{
+  scheduler_hook_ = fn;
+  scheduler_hook_ud_ = ud;
+}
+#endif
+
+
 //================================================================
 /*! Insert task(TCB) to task queue
 
@@ -429,6 +451,11 @@ int mrbc_run(void)
   (void)ret;	// avoid warning.
 
   while( 1 ) {
+#if defined(MRBC_TASK_SCHEDULER_HOOK)
+    // Scheduler servicing point. Runs before the ready-queue read so
+    // a task woken here is picked up in this iteration.
+    if( scheduler_hook_ ) scheduler_hook_(scheduler_hook_ud_);
+#endif
     mrbc_tcb *tcb = q_ready_;
     if( tcb == NULL ) {		// no task to run.
 #if MRBC_SCHEDULER_EXIT
@@ -498,6 +525,11 @@ EMSCRIPTEN_KEEPALIVE
 int
 mrbc_run_step(void)
 {
+#if defined(MRBC_TASK_SCHEDULER_HOOK)
+  // Scheduler servicing point (see mrbc_run).
+  if (scheduler_hook_) scheduler_hook_(scheduler_hook_ud_);
+#endif
+
   // Take the task that can be executed
   mrbc_tcb *tcb = q_ready_;
   if (tcb == NULL) {

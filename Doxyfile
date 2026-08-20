@@ -48,7 +48,8 @@ PROJECT_NAME           = "mruby/c VM Source Code"
 # could be handy for archiving the generated documentation or if some version
 # control system is used.
 
-PROJECT_NUMBER         = "release 3.4"
+# (usage) DATE=$(date +%Y-%m-%d) doxygen
+PROJECT_NUMBER         = "master ($(DATE))"
 
 # Using the PROJECT_BRIEF tag one can provide an optional one line description
 # for a project that appears at the top of each page and should give viewers a

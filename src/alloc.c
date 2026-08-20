@@ -118,73 +118,34 @@
 
 /***** Typedefs *************************************************************/
 /*
-  define memory block header for 16 bit
+  define memory block header
 
   (note)
-  Typical size of
-    USED_BLOCK is 2 bytes
-    FREE_BLOCK is 8 bytes
-  on 16bit machine.
+  Typical block size on 32-bit CPU
+   |            |  default  | MRBC_ALLOC_16BIT |
+   |------------|-----------|------------------|
+   | USED_BLOCK |   4 bytes |      2 bytes     |
+   | FREE_BLOCK |  16 bytes |      8 bytes     |
 */
+
 #if defined(MRBC_ALLOC_16BIT)
-#define MRBC_ALLOC_MEMSIZE_T	uint16_t
+# define MRBC_ALLOC_MEMSIZE_T	uint16_t
+#else
+# define MRBC_ALLOC_MEMSIZE_T	uint32_t
+#endif
 
 typedef struct USED_BLOCK {
   MRBC_ALLOC_MEMSIZE_T size;		//!< block size, header included
-#if defined(MRBC_ALLOC_VMID)
-  uint8_t	       vm_id;		//!< mruby/c VM ID
-#endif
 } USED_BLOCK;
 
 typedef struct FREE_BLOCK {
   MRBC_ALLOC_MEMSIZE_T size;		//!< block size, header included
-#if defined(MRBC_ALLOC_VMID)
-  uint8_t	       vm_id;		//!< dummy
-#endif
 
   struct FREE_BLOCK *next_free;
   struct FREE_BLOCK *prev_free;
   struct FREE_BLOCK *top_adrs;		//!< dummy for calculate sizeof(FREE_BLOCK)
 } FREE_BLOCK;
 
-
-/*
-  define memory block header for 24/32 bit.
-
-  (note)
-  Typical size of
-    USED_BLOCK is  4 bytes
-    FREE_BLOCK is 16 bytes
-  on 32bit machine.
-*/
-#elif defined(MRBC_ALLOC_24BIT)
-#define MRBC_ALLOC_MEMSIZE_T	uint32_t
-
-typedef struct USED_BLOCK {
-#if defined(MRBC_ALLOC_VMID)
-  MRBC_ALLOC_MEMSIZE_T size : 24;	//!< block size, header included
-  uint8_t	       vm_id : 8;	//!< mruby/c VM ID
-#else
-  MRBC_ALLOC_MEMSIZE_T size;
-#endif
-} USED_BLOCK;
-
-typedef struct FREE_BLOCK {
-#if defined(MRBC_ALLOC_VMID)
-  MRBC_ALLOC_MEMSIZE_T size : 24;	//!< block size, header included
-  uint8_t	       vm_id : 8;	//!< dummy
-#else
-  MRBC_ALLOC_MEMSIZE_T size;
-#endif
-
-  struct FREE_BLOCK *next_free;
-  struct FREE_BLOCK *prev_free;
-  struct FREE_BLOCK *top_adrs;		//!< dummy for calculate sizeof(FREE_BLOCK)
-} FREE_BLOCK;
-
-#else
-# error 'define MRBC_ALLOC_*' required.
-#endif
 
 /*
   and operation macro
@@ -199,15 +160,6 @@ typedef struct FREE_BLOCK {
 #define SET_PREV_FREE(p)	((p)->size &= ~0x02)
 #define IS_PREV_USED(p)		((p)->size &   0x02)
 #define IS_PREV_FREE(p)		(!IS_PREV_USED(p))
-
-#if defined(MRBC_ALLOC_VMID)
-#define SET_VM_ID(p,id)	(((USED_BLOCK *)(p))->vm_id = (id))
-#define GET_VM_ID(p)	(((USED_BLOCK *)(p))->vm_id)
-
-#else
-#define SET_VM_ID(p,id)	((void)0)
-#define GET_VM_ID(p)	0
-#endif
 
 
 /*
@@ -483,7 +435,6 @@ void mrbc_init_alloc(void *ptr, unsigned int size)
 
   free_block->size = free_size | 0x02;		// flag prev=1, used=0
   used_block->size = sentinel_size | 0x01;	// flag prev=0, used=1
-  SET_VM_ID( used_block, 0xff );
 
   add_free_block( memory_pool, free_block );
 }
@@ -609,7 +560,6 @@ void * mrbc_raw_alloc(unsigned int size)
   }
 
   SET_USED_BLOCK(target);
-  SET_VM_ID( target, 0 );
 
 #if defined(MRBC_DEBUG)
   memset( (uint8_t *)target + sizeof(USED_BLOCK), 0xaa,
@@ -666,7 +616,6 @@ void * mrbc_raw_alloc_no_free(unsigned int size)
     memset( (uint8_t *)tail + sizeof(USED_BLOCK), 0xaa, alloc_size );
 #endif
   }
-  SET_VM_ID( tail, 0xff );
 
   return (uint8_t *)tail + sizeof(USED_BLOCK);
 
@@ -758,7 +707,6 @@ void mrbc_raw_free(void *ptr)
       return;
     }
 
-    SET_VM_ID( target, 0xff );
     memset( ptr, 0xff, BLOCK_SIZE(target) - sizeof(USED_BLOCK) );
   }
 #endif
@@ -865,8 +813,6 @@ void * mrbc_raw_realloc(void *ptr, unsigned int size)
     RETURN_IF_NULL( new_ptr );		// ENOMEM
 
     memcpy(new_ptr, ptr, BLOCK_SIZE(target) - sizeof(USED_BLOCK));
-    mrbc_set_vm_id(new_ptr, target->vm_id);
-
     mrbc_raw_free(ptr);
 
     return new_ptr;
@@ -885,95 +831,6 @@ unsigned int mrbc_alloc_usable_size(void *ptr)
   USED_BLOCK *target = BLOCK_ADRS(ptr);
   return (unsigned int)(BLOCK_SIZE(target) - sizeof(USED_BLOCK));
 }
-
-
-#if defined(MRBC_ALLOC_VMID)
-//================================================================
-/*! allocate memory
-
-  @param  vm	pointer to VM.
-  @param  size	request size.
-  @return void * pointer to allocated memory.
-  @retval NULL	error.
-*/
-void * mrbc_alloc(const struct VM *vm, unsigned int size)
-{
-  void *ptr = mrbc_raw_alloc(size);
-  RETURN_IF_NULL( ptr );		// ENOMEM
-
-  if( vm ) mrbc_set_vm_id(ptr, vm->vm_id);
-
-  return ptr;
-}
-
-
-//================================================================
-/*! allocate memory where zero-cleared out.
-
-  @param  vm     pointer to VM.
-  @param  nmemb  number of elements.
-  @param  size   size of an element.
-  @return void * pointer to allocated memory.
-  @retval NULL   error.
-*/
-void * mrbc_calloc(const struct VM *vm, unsigned int nmemb, unsigned int size)
-{
-  void *ptr = mrbc_raw_calloc(nmemb, size);
-  RETURN_IF_NULL( ptr );		// ENOMEM
-
-  if( vm ) mrbc_set_vm_id(ptr, vm->vm_id);
-
-  return ptr;
-}
-
-
-//================================================================
-/*! release memory, vm used.
-
-  @param  vm	pointer to VM.
-*/
-void mrbc_free_all(const struct VM *vm)
-{
-  MEMORY_POOL *pool = memory_pool;
-  USED_BLOCK *target = BPOOL_TOP(pool);
-  USED_BLOCK *next;
-  int vm_id = vm->vm_id;
-
-  while( target < (USED_BLOCK *)BPOOL_END(pool) ) {
-    next = PHYS_NEXT(target);
-    if( IS_FREE_BLOCK(next) ) next = PHYS_NEXT(next);
-
-    if( IS_USED_BLOCK(target) && (target->vm_id == vm_id) ) {
-      mrbc_raw_free( (uint8_t *)target + sizeof(USED_BLOCK) );
-    }
-    target = next;
-  }
-}
-
-
-//================================================================
-/*! set vm id
-
-  @param  ptr	Return value of mrbc_alloc()
-  @param  vm_id	vm id
-*/
-void mrbc_set_vm_id(void *ptr, int vm_id)
-{
-  SET_VM_ID( BLOCK_ADRS(ptr), vm_id );
-}
-
-
-//================================================================
-/*! get vm id
-
-  @param  ptr	Return value of mrbc_alloc()
-  @return int	vm id
-*/
-int mrbc_get_vm_id(void *ptr)
-{
-  return GET_VM_ID( BLOCK_ADRS(ptr) );
-}
-#endif	// defined(MRBC_ALLOC_VMID)
 
 
 //================================================================
@@ -1108,9 +965,6 @@ void mrbc_alloc_print_memory_block( void *pool_header )
 
   while( block < (FREE_BLOCK *)BPOOL_END(pool) ) {
     mrbc_printf("%p", block );
-#if defined(MRBC_ALLOC_VMID)
-    mrbc_printf(" id:%02x", block->vm_id );
-#endif
     mrbc_printf(" size:%5d($%04x) use:%d prv:%d ",
                 block->size & ~0x03, block->size & ~0x03,
                 !!(block->size & 0x01), !!(block->size & 0x02) );

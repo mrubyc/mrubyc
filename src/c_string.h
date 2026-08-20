@@ -62,7 +62,6 @@ mrbc_value mrbc_string_new(mrbc_vm *vm, const void *src, int len);
 mrbc_value mrbc_string_new_alloc(mrbc_vm *vm, void *buf, int len);
 void mrbc_string_delete(mrbc_value *str);
 void mrbc_string_clear(mrbc_value *str);
-void mrbc_string_clear_vm_id(mrbc_value *str);
 mrbc_value mrbc_string_dup(mrbc_vm *vm, mrbc_value *s1);
 mrbc_value mrbc_string_add(mrbc_vm *vm, const mrbc_value *s1, const mrbc_value *s2);
 int mrbc_string_append(mrbc_value *s1, const mrbc_value *s2);

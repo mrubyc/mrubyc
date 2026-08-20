@@ -26,6 +26,10 @@
 
 /***** Constant values ******************************************************/
 /***** Macros ***************************************************************/
+#define IS_CLASS_OR_MODULE(v) \
+  (mrbc_type(v) == MRBC_TT_CLASS || mrbc_type(v) == MRBC_TT_MODULE)
+
+
 /***** Typedefs *************************************************************/
 /***** Function prototypes **************************************************/
 /***** Local variables ******************************************************/
@@ -365,20 +369,6 @@ mrbc_value mrbc_instance_getiv(mrbc_value *target, mrbc_sym sym_id)
 }
 
 
-#if defined(MRBC_ALLOC_VMID)
-//================================================================
-/*! clear vm_id
-
-  @param  v		pointer to target.
-*/
-void mrbc_instance_clear_vm_id(mrbc_value *v)
-{
-  mrbc_set_vm_id( v->instance, 0 );
-  mrbc_kv_clear_vm_id( &v->instance->ivar );
-}
-#endif
-
-
 //================================================================
 /*! Check the class is the class of object.
 
@@ -491,11 +481,9 @@ mrbc_class * mrbc_get_class_by_name( const char *name )
 
   mrbc_value *obj = mrbc_get_const(sym_id);
   if( obj == NULL ) return NULL;
+  if( !IS_CLASS_OR_MODULE(*obj) ) return NULL;
 
-  if( mrbc_type(*obj) == MRBC_TT_CLASS ||
-      mrbc_type(*obj) == MRBC_TT_MODULE ) return obj->cls;
-
-  return NULL;
+  return obj->cls;
 }
 
 

@@ -32,6 +32,10 @@
 
 
 /***** Macros ***************************************************************/
+#define IS_CLASS_OR_MODULE(v) \
+  (mrbc_type(v) == MRBC_TT_CLASS || mrbc_type(v) == MRBC_TT_MODULE)
+
+
 /***** Typedefs *************************************************************/
 /***** Function prototypes **************************************************/
 /***** Local variables ******************************************************/
@@ -381,11 +385,6 @@ void mrbc_vm_end( mrbc_vm *vm )
 #if defined(MRBC_DEBUG_REGS)
   mrbc_printf("Finally number of registers used was %d in VM %d.\n",
               n_used, vm->vm_id );
-#endif
-
-#if defined(MRBC_ALLOC_VMID)
-  mrbc_global_clear_vm_id();
-  mrbc_free_all(vm);
 #endif
 }
 
@@ -753,8 +752,7 @@ static inline void op_setconst( mrbc_vm *vm, mrbc_value *regs EXT )
   mrbc_sym sym_id = mrbc_irep_symbol_id(vm->cur_irep, b);
 
   mrbc_incref(&regs[a]);
-  if( mrbc_type(regs[0]) == MRBC_TT_CLASS ||
-      mrbc_type(regs[0]) == MRBC_TT_MODULE ) {
+  if( IS_CLASS_OR_MODULE(regs[0]) ) {
     mrbc_set_class_const(regs[0].cls, sym_id, &regs[a]);
   } else {
     mrbc_set_const(sym_id, &regs[a]);
@@ -2828,6 +2826,7 @@ static inline void op_class( mrbc_vm *vm, mrbc_value *regs EXT )
 {
   FETCH_BB();
 
+  // get the super class.
   mrbc_class *super;
 
   switch( mrbc_type(regs[a+1]) ) {
@@ -2852,11 +2851,12 @@ static inline void op_class( mrbc_vm *vm, mrbc_value *regs EXT )
     }
   }
 
+  // get the nested outer class or module.
   mrbc_class *outer = 0;
 
-  if( mrbc_type(regs[a]) == MRBC_TT_CLASS || mrbc_type(regs[a]) == MRBC_TT_MODULE ) {
+  if( IS_CLASS_OR_MODULE(regs[a])) {
     outer = regs[a].cls;
-  } else if( mrbc_type(vm->cur_regs[0]) == MRBC_TT_CLASS || mrbc_type(vm->cur_regs[0]) == MRBC_TT_MODULE ) {
+  } else if( IS_CLASS_OR_MODULE(vm->cur_regs[0])) {
     outer = vm->cur_regs[0].cls;
   }
 
@@ -2886,11 +2886,12 @@ static inline void op_module( mrbc_vm *vm, mrbc_value *regs EXT )
 {
   FETCH_BB();
 
+  // get the nested outer class or module.
   mrbc_class *outer = 0;
 
-  if( mrbc_type(regs[a]) == MRBC_TT_CLASS || mrbc_type(regs[a]) == MRBC_TT_MODULE ) {
+  if( IS_CLASS_OR_MODULE(regs[a])) {
     outer = regs[a].cls;
-  } else if( mrbc_type(vm->cur_regs[0]) == MRBC_TT_CLASS || mrbc_type(vm->cur_regs[0]) == MRBC_TT_MODULE ) {
+  } else if( IS_CLASS_OR_MODULE(vm->cur_regs[0])) {
     outer = vm->cur_regs[0].cls;
   }
 
@@ -2919,7 +2920,6 @@ static inline void op_module( mrbc_vm *vm, mrbc_value *regs EXT )
 static inline void op_exec( mrbc_vm *vm, mrbc_value *regs EXT )
 {
   FETCH_BB();
-  assert( mrbc_type(regs[a]) == MRBC_TT_CLASS || mrbc_type(regs[a]) == MRBC_TT_MODULE );
 
   // prepare callinfo
   mrbc_push_callinfo(vm, regs[a].cls->sym_id, a, 0);

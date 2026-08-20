@@ -25,10 +25,24 @@ extern "C" {
 /***** Constant values ******************************************************/
 /***** Macros ***************************************************************/
 /***** Typedefs *************************************************************/
+//================================================================
+/*!@brief
+  Result of mrbc_task_queue_push().
+*/
+typedef enum {
+  MRBC_TASK_QUEUE_PUSH_OK = 0,	//!< pushed. no task was waiting.
+  MRBC_TASK_QUEUE_PUSH_OK_WOKE,	//!< pushed and a waiting task was woken.
+  MRBC_TASK_QUEUE_PUSH_CLOSED,	//!< the queue is closed.
+  MRBC_TASK_QUEUE_PUSH_INVALID,	//!< not a Task::Queue instance.
+
+} mrbc_task_queue_push_result;
+
+
 /***** Global variables *****************************************************/
 /***** Function prototypes **************************************************/
 //@cond
 void mrbc_init_task_queue(void);
+mrbc_task_queue_push_result mrbc_task_queue_push(mrbc_value *queue, mrbc_value *value);
 //@endcond
 
 /***** Inline functions *****************************************************/

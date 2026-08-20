@@ -60,7 +60,6 @@ typedef struct RProc mrb_proc;
 //@cond
 mrbc_value mrbc_proc_new(struct VM *vm, void *irep, uint8_t b_or_m);
 void mrbc_proc_delete(mrbc_value *val);
-void mrbc_proc_clear_vm_id(mrbc_value *v);
 //@endcond
 
 

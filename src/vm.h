@@ -58,7 +58,7 @@ typedef struct IREP {
   uint16_t slen;		//!< num of symbols
 #endif
   uint16_t ofs_pools;		//!< offset of data->tbl_pools.
-  uint16_t ofs_ireps;		//!< offset of data->tbl_ireps. (32bit aligned)
+  uint16_t ofs_ireps;		//!< offset of data->tbl_ireps. (pointer aligned)
 
   const uint8_t *inst;		//!< pointer to instruction in RITE binary
   const uint8_t *pool;		//!< pointer to pool in RITE binary

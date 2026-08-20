@@ -241,7 +241,6 @@ mrbc_value mrbc_instance_new(struct VM *vm, mrbc_class *cls, int size);
 void mrbc_instance_delete(mrbc_value *v);
 int mrbc_instance_setiv(mrbc_value *target, mrbc_sym sym_id, mrbc_value *v);
 mrbc_value mrbc_instance_getiv(mrbc_value *target, mrbc_sym sym_id);
-void mrbc_instance_clear_vm_id(mrbc_value *v);
 int mrbc_obj_is_kind_of(const mrbc_value *obj, const mrbc_class *tcls);
 mrbc_class *mrbc_find_method(mrbc_method *r_method, mrbc_class *cls, mrbc_sym sym_id);
 mrbc_class *mrbc_get_class_by_name(const char *name);
