@@ -368,28 +368,6 @@ static void c_task_queue_num_waiting(mrbc_vm *vm, mrbc_value v[], int argc)
 }
 
 
-/* MRBC_AUTOGEN_METHOD_TABLE
-
-  CLASS("Task::Queue")
-  FILE("_autogen_class_task_queue.h")
-
-  METHOD( "initialize", c_task_queue_initialize )
-  METHOD( "__push", c_task_queue_push )
-  METHOD( "__pop_try", c_task_queue_pop_try )
-  METHOD( "__retry?", c_task_queue_is_wait_retry )
-  METHOD( "__timeout?", c_task_queue_is_wait_timeout )
-  METHOD( "__deadline", c_task_queue_deadline )
-  METHOD( "size", c_task_queue_size )
-  METHOD( "length", c_task_queue_size )
-  METHOD( "empty?", c_task_queue_empty_q )
-  METHOD( "clear", c_task_queue_clear )
-  METHOD( "close", c_task_queue_close )
-  METHOD( "closed?", c_task_queue_closed_q )
-  METHOD( "num_waiting", c_task_queue_num_waiting )
-*/
-#include "_autogen_class_task_queue.h"
-
-
 /***** Global functions *****************************************************/
 
 //================================================================
@@ -397,14 +375,6 @@ static void c_task_queue_num_waiting(mrbc_vm *vm, mrbc_value v[], int argc)
 */
 void mrbc_init_task_queue(void)
 {
-  // Register Task::Queue (builtin class) as a constant under Task.
-  mrbc_value vcls = mrbc_immediate_value(MRBC_TT_CLASS, .cls = MRBC_CLASS(Task_Queue));
-  mrbc_set_class_const(MRBC_CLASS(Task), MRBC_SYM(Queue), &vcls);
-
-  // Define Task::Error < StandardError.
-  task_error_class_ = mrbc_define_class_under(0, MRBC_CLASS(Task), "Error",
-                                              MRBC_CLASS(StandardError));
-
   // Cache instance variable symbols.
   sym_items_  = mrbc_str_to_symid("@items");
   sym_closed_ = mrbc_str_to_symid("@closed");
@@ -456,3 +426,27 @@ mrbc_task_queue_push_result mrbc_task_queue_push(mrbc_value *queue, mrbc_value *
   return queue_wake_one_waiter(queue->instance) ?
          MRBC_TASK_QUEUE_PUSH_OK_WOKE : MRBC_TASK_QUEUE_PUSH_OK;
 }
+
+
+/* MRBC_AUTOGEN_METHOD_TABLE
+
+  FILE("_autogen_class_task_queue.h")
+
+  CLASS("Task::Queue")
+  METHOD("initialize", c_task_queue_initialize )
+  METHOD("__push", c_task_queue_push )
+  METHOD("__pop_try", c_task_queue_pop_try )
+  METHOD("__retry?", c_task_queue_is_wait_retry )
+  METHOD("__timeout?", c_task_queue_is_wait_timeout )
+  METHOD("__deadline", c_task_queue_deadline )
+  METHOD("size", c_task_queue_size )
+  METHOD("length", c_task_queue_size )
+  METHOD("empty?", c_task_queue_empty_q )
+  METHOD("clear", c_task_queue_clear )
+  METHOD("close", c_task_queue_close )
+  METHOD("closed?", c_task_queue_closed_q )
+  METHOD("num_waiting", c_task_queue_num_waiting )
+
+  CLASS("Task::Error < StandardError")
+*/
+#include "_autogen_class_task_queue.h"
