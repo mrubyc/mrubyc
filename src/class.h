@@ -281,6 +281,14 @@ static inline mrbc_class *mrbc_find_class_by_object(const mrbc_value *obj)
   return cls;
 }
 
+//@cond
+// for legacy compatibility.
+static inline mrbc_class *find_class_by_object(const mrbc_value *obj)
+{
+  return mrbc_find_class_by_object(obj);
+}
+//@endcond
+
 
 #if MRBC_INSTANCE_DESTRUCTOR
 //================================================================
