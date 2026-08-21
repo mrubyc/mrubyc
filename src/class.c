@@ -378,7 +378,7 @@ mrbc_value mrbc_instance_getiv(mrbc_value *target, mrbc_sym sym_id)
 */
 int mrbc_obj_is_kind_of( const mrbc_value *obj, const mrbc_class *tcls )
 {
-  mrbc_class *cls = find_class_by_object( obj );
+  mrbc_class *cls = mrbc_find_class_by_object( obj );
   mrbc_class *nest_buf[MRBC_TRAVERSE_NEST_LEVEL];
   int nest_idx = 0;
 
@@ -513,7 +513,7 @@ mrbc_value mrbc_send( struct VM *vm, mrbc_value *v, int argc,
         mrbc_value *recv, const char *method_name, int n_params, ... )
 {
   mrbc_method method;
-  mrbc_class *cls = find_class_by_object(recv);
+  mrbc_class *cls = mrbc_find_class_by_object(recv);
   mrbc_sym sym_id = mrbc_str_to_symid(method_name);
 
   if( mrbc_find_method( &method, cls, sym_id ) == 0 ) {

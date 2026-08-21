@@ -542,7 +542,7 @@ int mrbc_print_sub(const mrbc_value *v)
 
   case MRBC_TT_OBJECT:{
     mrbc_printf("#<");
-    mrbc_print_symbol( find_class_by_object(v)->sym_id );
+    mrbc_print_symbol( mrbc_find_class_by_object(v)->sym_id );
     mrbc_printf(":%08x", MRBC_PTR_TO_UINT32(v->instance) );
 
     mrbc_kv_iterator ite = mrbc_kv_iterator_new( &(v->instance->ivar) );

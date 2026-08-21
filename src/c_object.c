@@ -92,7 +92,7 @@ void mrbc_object_inspect(mrbc_vm *vm, mrbc_value v[], int argc)
 {
   char buf[64];		// max length of class (or object) name.
   char *s = buf;
-  mrbc_sym sym_id = find_class_by_object(&v[0])->sym_id;
+  mrbc_sym sym_id = mrbc_find_class_by_object(&v[0])->sym_id;
   int class_or_module = IS_CLASS_OR_MODULE(v[0]);
 
   if (!class_or_module) {
@@ -187,7 +187,7 @@ static void c_object_class(mrbc_vm *vm, mrbc_value v[], int argc)
   mrbc_value value;
 
   mrbc_set_tt(&value, MRBC_TT_CLASS);
-  value.cls = find_class_by_object( v );
+  value.cls = mrbc_find_class_by_object( v );
   SET_RETURN( value );
 }
 

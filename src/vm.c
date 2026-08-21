@@ -114,7 +114,7 @@ static void send_by_name( mrbc_vm *vm, mrbc_sym sym_id, int a, int c )
   }
 
   // find a method
-  mrbc_class *cls = find_class_by_object(recv);
+  mrbc_class *cls = mrbc_find_class_by_object(recv);
   mrbc_method method;
   if( mrbc_find_method( &method, cls, sym_id ) != 0 ) goto CALL_METHOD;
 
@@ -699,7 +699,7 @@ static inline void op_getconst( mrbc_vm *vm, mrbc_value *regs EXT )
     crit_cls = vm->callinfo_tail->own_class;
     if( crit_cls->flag_alias ) crit_cls = crit_cls->aliased;
   } else {
-    crit_cls = find_class_by_object( mrbc_get_self(vm, regs) );
+    crit_cls = mrbc_find_class_by_object( mrbc_get_self(vm, regs) );
   }
 
   // search in my class, then search nested outer class.
@@ -2662,7 +2662,7 @@ static inline void op_strcat( mrbc_vm *vm, mrbc_value *regs EXT )
 #if MRBC_USE_STRING
   // call "to_s"
   mrbc_method method;
-  if( mrbc_find_method( &method, find_class_by_object(&regs[a+1]),
+  if( mrbc_find_method( &method, mrbc_find_class_by_object(&regs[a+1]),
                         MRBC_SYM(to_s)) == 0 ) return;
   if( !method.c_func ) return;		// TODO: Not support?
 
