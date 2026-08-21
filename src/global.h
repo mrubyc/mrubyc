@@ -39,6 +39,7 @@ void mrbc_get_all_class_const(const mrbc_class *cls, mrbc_value *ret);
 int mrbc_set_global(mrbc_sym sym_id, mrbc_value *v);
 mrbc_value *mrbc_get_global(mrbc_sym sym_id);
 void mrbc_debug_dump_const(void);
+void mrbc_debug_dump_const2(int flag);
 void mrbc_debug_dump_global(void);
 //@endcond
 

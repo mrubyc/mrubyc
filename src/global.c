@@ -179,6 +179,11 @@ mrbc_value * mrbc_get_global( mrbc_sym sym_id )
 */
 void mrbc_debug_dump_const( void )
 {
+  mrbc_debug_dump_const2( 1 );
+}
+
+void mrbc_debug_dump_const2( int flag )
+{
   mrbc_print("<< Const table dump. >>\n(symid:identifier = value)\n");
   mrbc_kv_iterator ite = mrbc_kv_iterator_new( &handle_const );
 
@@ -186,7 +191,7 @@ void mrbc_debug_dump_const( void )
     const mrbc_kv *kv = mrbc_kv_i_next( &ite );
     const char *s = mrbc_symid_to_str(kv->sym_id);
 
-    if( kv->sym_id < 512 ) continue;	// OFFSET_BUILTIN_SYMBOL in symbol.c
+    if( !flag && kv->sym_id < 512 ) continue; // 512 = OFFSET_BUILTIN_SYMBOL in symbol.c
 
     mrbc_printf(" $%04x:\"%s\"", kv->sym_id, s );
     if( mrbc_is_nested_symid(kv->sym_id) ) {
@@ -197,17 +202,13 @@ void mrbc_debug_dump_const( void )
 
     if( mrbc_type(kv->value) == MRBC_TT_CLASS ) {
       const mrbc_class *cls = kv->value.cls;
-      mrbc_printf(" = Class(symid=$%x name=", cls->sym_id);
-      mrbc_print_symbol(cls->sym_id);
-      mrbc_printf(")\n");
+      mrbc_printf(" = Class(symid=$%x name=%s)\n", cls->sym_id, cls->name );
       continue;
     }
 
     if( mrbc_type(kv->value) == MRBC_TT_MODULE ) {
       const mrbc_class *cls = kv->value.cls;
-      mrbc_printf(" = Module(symid=$%x name=", cls->sym_id);
-      mrbc_print_symbol(cls->sym_id);
-      mrbc_printf(")\n");
+      mrbc_printf(" = Module(symid=$%x name=%s)\n", cls->sym_id, cls->name );
       continue;
     }
 
