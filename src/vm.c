@@ -701,6 +701,7 @@ static inline void op_getconst( mrbc_vm *vm, mrbc_value *regs EXT )
   } else {
     crit_cls = mrbc_find_class_by_object( mrbc_get_self(vm, regs) );
   }
+  if( crit_cls == MRBC_CLASS(Object) ) goto GET_TOP_LEVEL;
 
   // search in my class, then search nested outer class.
   mrbc_class *cls = crit_cls;
@@ -726,6 +727,7 @@ static inline void op_getconst( mrbc_vm *vm, mrbc_value *regs EXT )
   }
 
   // is top level constant definition?
+ GET_TOP_LEVEL:
   ret = mrbc_get_const(sym_id);
   if( ret == NULL ) {
     mrbc_raisef( vm, MRBC_CLASS(NameError),
