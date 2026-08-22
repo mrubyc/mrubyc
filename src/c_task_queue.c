@@ -39,9 +39,6 @@ static mrbc_value wait_retry_;
 */
 static mrbc_value wait_timeout_;
 
-/* Task::Error class, raised on illegal queue operations. */
-static struct RClass *task_error_class_;
-
 /* Cached instance variable symbols. */
 static mrbc_sym sym_items_;
 static mrbc_sym sym_closed_;
@@ -159,7 +156,7 @@ static void c_task_queue_push(mrbc_vm *vm, mrbc_value v[], int argc)
     break;
 
   case MRBC_TASK_QUEUE_PUSH_CLOSED:
-    mrbc_raise(vm, task_error_class_, "queue closed");
+    mrbc_raise(vm, MRBC_CLASS(Task_Error), "queue closed");
     break;
 
   case MRBC_TASK_QUEUE_PUSH_INVALID:
@@ -208,7 +205,7 @@ static void c_task_queue_pop_try(mrbc_vm *vm, mrbc_value v[], int argc)
 
   // non-blocking and empty.
   if( non_block ) {
-    mrbc_raise(vm, task_error_class_, "queue empty");
+    mrbc_raise(vm, MRBC_CLASS(Task_Error), "queue empty");
     return;
   }
 
