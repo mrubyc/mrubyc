@@ -116,10 +116,14 @@ static void send_by_name( mrbc_vm *vm, mrbc_sym sym_id, int a, int c )
   // find a method
   mrbc_class *cls = mrbc_find_class_by_object(recv);
   mrbc_method method;
-  if( mrbc_find_method( &method, cls, sym_id ) != 0 ) goto CALL_METHOD;
+  mrbc_class *own_cls;
+
+  own_cls = mrbc_find_method( &method, cls, sym_id );
+  if( own_cls != NULL ) goto CALL_METHOD;
 
   // method missing?
-  if( mrbc_find_method( &method, cls, MRBC_SYM(method_missing) ) == 0 ) {
+  own_cls = mrbc_find_method( &method, cls, MRBC_SYM(method_missing));
+  if( own_cls == NULL ) {
     mrbc_raisef(vm, MRBC_CLASS(NoMethodError),
                 "undefined local variable or method '%s' for %s",
                 mrbc_symid_to_str(sym_id), mrbc_symid_to_str(cls->sym_id));
@@ -158,7 +162,7 @@ static void send_by_name( mrbc_vm *vm, mrbc_sym sym_id, int a, int c )
 
  CALL_RUBY_METHOD:;
   mrbc_callinfo *callinfo = mrbc_push_callinfo(vm, sym_id, a, narg);
-  callinfo->own_class = method.cls;
+  callinfo->own_class = own_cls;
 
   vm->cur_irep = method.irep;
   vm->inst = vm->cur_irep->inst;
@@ -1375,30 +1379,16 @@ static inline void op_super( mrbc_vm *vm, mrbc_value *regs EXT )
 
   // find super class
   mrbc_callinfo *callinfo = vm->callinfo_tail;
-  if( callinfo == NULL ) {
-    mrbc_raise(vm, MRBC_CLASS(NoMethodError), "super called outside of method");
-    return;
-  }
-  mrbc_class *cls = callinfo->own_class;
+  if( callinfo == NULL ) goto RAISE_SUPER_CALLED_OUTSIDE_OF_METHOD;
+
+  assert( callinfo->own_class );
+  mrbc_class *cls = callinfo->own_class->super;
+  if( cls == NULL ) goto RAISE_NO_SUPERCLASS_METHOD;
+
   mrbc_method method;
-
-  assert( cls );
-  cls = cls->super;
-  if( cls == NULL ) {
-    mrbc_raisef(vm, MRBC_CLASS(NoMethodError),
-                "no superclass method '%s' for %s",
-                mrbc_symid_to_str(callinfo->method_id),
-                mrbc_symid_to_str(callinfo->own_class->sym_id));
-    return;
-  }
-
-  if( mrbc_find_method( &method, cls, callinfo->method_id ) == 0 ) {
-    mrbc_raisef( vm, MRBC_CLASS(NoMethodError),
-        "no superclass method '%s' for %s",
-        mrbc_symid_to_str(callinfo->method_id),
-        mrbc_symid_to_str(callinfo->own_class->sym_id));
-    return;
-  }
+  mrbc_class *own_cls;
+  own_cls = mrbc_find_method( &method, cls, callinfo->method_id );
+  if( own_cls == NULL ) goto RAISE_NO_SUPERCLASS_METHOD;
 
   // call C function and return.
   if( method.c_func ) {
@@ -1411,12 +1401,25 @@ static inline void op_super( mrbc_vm *vm, mrbc_value *regs EXT )
 
   // call Ruby method.
   callinfo = mrbc_push_callinfo(vm, callinfo->method_id, a, narg);
-  callinfo->own_class = method.cls;
+  callinfo->own_class = own_cls;
   callinfo->is_called_super = 1;
 
   vm->cur_irep = method.irep;
   vm->inst = vm->cur_irep->inst;
   vm->cur_regs = recv;
+  return;
+
+
+ RAISE_SUPER_CALLED_OUTSIDE_OF_METHOD:
+  mrbc_raise(vm, MRBC_CLASS(NoMethodError), "super called outside of method");
+  return;
+
+ RAISE_NO_SUPERCLASS_METHOD:
+  mrbc_raisef(vm, MRBC_CLASS(NoMethodError),
+	      "no superclass method '%s' for %s",
+	      mrbc_symid_to_str(callinfo->method_id),
+	      mrbc_symid_to_str(callinfo->own_class->sym_id));
+  return;
 }
 
 
