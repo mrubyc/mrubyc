@@ -239,6 +239,47 @@ mrbc_class * mrbc_define_module_under(struct VM *vm, const mrbc_class *outer, co
 
 
 //================================================================
+/*! create method entry.
+
+  @param  vm		pointer to vm.
+  @param  cls		target class.
+  @param  sym_id	method name's symbol ID.
+  @return		pointer to method entry.
+*/
+mrbc_method * mrbc_method_table_new_entry( struct VM *vm, mrbc_class *cls, mrbc_sym sym_id )
+{
+  assert( cls->flag_nomethod == 0 );
+
+  // allocate method table, if need.
+  if( cls->methods == NULL ) {
+    cls->num_methods = 1;
+    cls->methods = mrbc_alloc( vm, sizeof(mrbc_method) );
+    cls->methods[0].sym_id = 0;
+    return &cls->methods[0];
+  }
+
+  // Search for the insertion position in the sorted method table.
+  int i;
+  for( i = 0; i < cls->num_methods; i++ ) {
+    if( cls->methods[i].sym_id == sym_id ) {
+      return &cls->methods[i];		// Duplicate method name found.
+    }
+    if( cls->methods[i].sym_id > sym_id ) break;
+  }
+
+  // allocates space for a new method entry.
+  cls->num_methods++;
+  cls->methods = mrbc_realloc( vm, cls->methods, sizeof(mrbc_method) * cls->num_methods );
+  for( int j = cls->num_methods-1; j > i; j-- ) {
+    cls->methods[j] = cls->methods[j-1];
+  }
+  cls->methods[i].sym_id = 0;
+
+  return &cls->methods[i];
+}
+
+
+//================================================================
 /*! define method.
 
   @param  vm		pointer to vm.
@@ -256,17 +297,23 @@ void mrbc_define_method(struct VM *vm, mrbc_class *cls, const char *name, mrbc_f
     return;
   }
 
-  mrbc_method *method = mrbc_raw_alloc_no_free( sizeof(mrbc_method) );
-
-  method->type = 'm';
-  method->c_func = 1;
-  method->sym_id = mrbc_str_to_symid( name );
-  if( method->sym_id < 0 ) {
+  mrbc_sym sym_id = mrbc_str_to_symid( name );
+  if( sym_id < 0 ) {
     mrbc_raise(vm, MRBC_CLASS(Exception), "Overflow MAX_SYMBOLS_COUNT");
+    return;
   }
-  method->func = cfunc;
-  method->next = cls->method_link;
-  cls->method_link = method;
+
+  mrbc_method *m = mrbc_method_table_new_entry( vm, cls, sym_id );
+  if( m->sym_id == sym_id ) {
+    // TODO: 重複
+  }
+
+  *m = (mrbc_method){
+    .type = 'm',
+    .c_func = 1,
+    .sym_id = mrbc_str_to_symid( name ),
+    .func = cfunc,
+  };
 }
 
 
@@ -413,23 +460,32 @@ mrbc_class * mrbc_find_method( mrbc_method *r_method, mrbc_class *cls, mrbc_sym 
   }
 
   while( 1 ) {
-    mrbc_method *method;
-
+    int right, left;
     assert( !cls->flag_alias );
     if( cls->flag_nomethod ) goto next_class;
-    for( method = cls->method_link; method != 0; method = method->next ) {
-      if( method->sym_id == sym_id ) {
-        *r_method = *method;
-        return cls_save;
+
+    // search the method table
+    if( cls->num_methods == 0 ) goto search_builtin_method;
+    right = cls->num_methods - 1;
+    left = 0;
+    while( left < right ) {
+      int mid = (left + right) / 2;
+      if( cls->methods[mid].sym_id < sym_id ) {
+        left = mid + 1;
+      } else {
+        right = mid;
       }
     }
+    if( cls->methods[right].sym_id == sym_id ) {
+      *r_method = cls->methods[right];
+      break;		// found target.
+    }
 
+  search_builtin_method:;
     struct RBuiltinClass *c = (struct RBuiltinClass *)cls;
-    int right = c->num_builtin_method;
-    if( right == 0 ) goto next_class;
-    right--;
-    int left = 0;
-
+    if( c->num_builtin_method == 0 ) goto next_class;
+    right = c->num_builtin_method - 1;
+    left = 0;
     while( left < right ) {
       int mid = (left + right) / 2;
       if( c->method_symbols[mid] < sym_id ) {
@@ -438,7 +494,6 @@ mrbc_class * mrbc_find_method( mrbc_method *r_method, mrbc_class *cls, mrbc_sym 
         right = mid;
       }
     }
-
     if( c->method_symbols[right] == sym_id ) {
       *r_method = (mrbc_method){
         .type = 'm',
@@ -446,13 +501,13 @@ mrbc_class * mrbc_find_method( mrbc_method *r_method, mrbc_class *cls, mrbc_sym 
         .sym_id = sym_id,
         .func = c->method_functions[right],
       };
-      return cls_save;
+      break;		// found target.
     }
 
   next_class:
     cls = mrbc_traverse_class_tree( cls, nest_buf, &nest_idx );
     if( cls == NULL ) {
-      if( !flag_module ) break;
+      if( !flag_module ) return NULL;
       cls = MRBC_CLASS(Object);
       flag_module = 0;
     }
@@ -462,7 +517,7 @@ mrbc_class * mrbc_find_method( mrbc_method *r_method, mrbc_class *cls, mrbc_sym 
     }
   }  // loop next.
 
-  return NULL;
+  return cls_save;
 }
 
 
@@ -619,14 +674,14 @@ void mrbc_init_class_c(void)
   mrbc_value vcls;
 
   for( int i = 0; i < sizeof(MRBC_BuiltinClass)/sizeof(struct MRBC_BuiltinClass); i++ ) {
-    mrbc_class *cls = MRBC_BuiltinClass[i].cls;
-
-    cls->super = MRBC_BuiltinClass[i].super;
-    if( !cls->flag_nomethod ) cls->method_link = 0;
-    mrbc_set_tt( &vcls, cls->flag_module ? MRBC_TT_MODULE : MRBC_TT_CLASS );
-    vcls.cls = cls;
-
-    mrbc_set_const( cls->sym_id, &vcls );
+    vcls.cls = MRBC_BuiltinClass[i].cls;
+    vcls.cls->super = MRBC_BuiltinClass[i].super;
+    if( !vcls.cls->flag_nomethod ) {
+      vcls.cls->num_methods = 0;	// TODO いる？
+      vcls.cls->methods = NULL;		// TODO いる？
+    }
+    mrbc_set_tt( &vcls, vcls.cls->flag_module ? MRBC_TT_MODULE : MRBC_TT_CLASS);
+    mrbc_set_const( vcls.cls->sym_id, &vcls );
   }
 
 #if MRBC_USE_MATH
