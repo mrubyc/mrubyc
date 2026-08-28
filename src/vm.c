@@ -2965,7 +2965,7 @@ static void sub_op_def( mrbc_vm *vm, mrbc_class *cls, mrbc_irep *irep, mrbc_sym 
     return;
   }
 
-  mrbc_method *m = mrbc_method_table_new_entry( vm, cls, sym_id );
+  mrbc_method *m = mrbc_method_table_insert_entry( vm, cls, sym_id );
 
   if( m->sym_id == sym_id ) {
     // Duplicate method name found.
@@ -3055,15 +3055,14 @@ static inline void op_alias( mrbc_vm *vm, mrbc_value *regs EXT )
     return;
   }
 
-  mrbc_method *m = mrbc_method_table_new_entry( vm, cls, sym_id_new );
+  mrbc_method *m = mrbc_method_table_insert_entry( vm, cls, sym_id_new );
   if( m->sym_id == sym_id_new ) {
     // Duplicate method name found.
     if( ! m->c_func ) sub_irep_inc_dec_ref( m->irep, -1 );
   }
 
-  method.sym_id = sym_id_new;
   *m = method;
-
+  m->sym_id = sym_id_new;
   if( !m->c_func ) sub_irep_inc_dec_ref( m->irep, +1 );
 }
 
