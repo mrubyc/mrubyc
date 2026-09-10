@@ -1036,10 +1036,13 @@ static inline void op_rescue( mrbc_vm *vm, mrbc_value *regs EXT )
 {
   FETCH_BB();
 
-  assert( mrbc_type(regs[a]) == MRBC_TT_EXCEPTION );
   assert( mrbc_type(regs[b]) == MRBC_TT_CLASS );
 
-  int res = mrbc_obj_is_kind_of( &regs[a], regs[b].cls );
+  // The compiler also emits OP_RESCUE at the entry of an ensure to decide
+  // whether `$!` should name the exception. R[a] is then nil on a normal
+  // entry, or a break/return passing through, neither an exception.
+  int res = (mrbc_type(regs[a]) == MRBC_TT_EXCEPTION) &&
+            mrbc_obj_is_kind_of( &regs[a], regs[b].cls );
   mrbc_set_bool( &regs[b], res );
 }
 
