@@ -261,6 +261,19 @@ static void c_object_nil(mrbc_vm *vm, mrbc_value v[], int argc)
 
 
 //================================================================
+/*! (method) __pat_values
+
+  A hash pattern reads what #deconstruct_keys answered through
+  __pat_values, which only Hash carries (see c_hash.c), so anything
+  else lands here and gets the TypeError CRuby raises for it.
+ */
+static void c_object_pat_values(mrbc_vm *vm, mrbc_value v[], int argc)
+{
+  mrbc_raise(vm, MRBC_CLASS(TypeError), "deconstruct_keys must return Hash");
+}
+
+
+//================================================================
 /*! (method) p
  */
 #if !defined(MRBC_NO_STDIO)
@@ -832,6 +845,7 @@ static void c_object_inspect(mrbc_vm *vm, mrbc_value v[], int argc)
   METHOD( "is_a?",	c_object_kind_of )
   METHOD( "kind_of?",	c_object_kind_of )
   METHOD( "nil?",	c_object_nil )
+  METHOD( "__pat_values", c_object_pat_values )
 #if !defined(MRBC_NO_STDIO)
   METHOD( "p",		c_object_p )
   METHOD( "print",	c_object_print )
