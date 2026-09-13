@@ -315,6 +315,11 @@ class PatternMatchTest < Picotest::Test
       nil
     end
   end
+  class NotHash
+    def deconstruct_keys(keys)
+      :nothash
+    end
+  end
 
   description "deconstruct returns nil"
   def test_deconstruct_returns_nil
@@ -327,15 +332,30 @@ class PatternMatchTest < Picotest::Test
     assert_equal :no_match, result
   end
 
-  description "deconstruct_keys returns nil"
+  # A hash pattern reads what #deconstruct_keys answered through a method
+  # only Hash carries, so anything else raises the TypeError CRuby raises.
+  description "deconstruct_keys returning nil raises TypeError"
   def test_deconstruct_keys_returns_nil
-    result = case Bar.new
-    in {a: 1}
-      :match
-    else
-      :no_match
+    assert_raise(TypeError) do
+      case Bar.new
+      in {a: 1}
+        :match
+      else
+        :no_match
+      end
     end
-    assert_equal :no_match, result
+  end
+
+  description "deconstruct_keys returning a non-Hash raises TypeError"
+  def test_deconstruct_keys_returns_non_hash
+    assert_raise(TypeError) do
+      case NotHash.new
+      in {a: 1}
+        :match
+      else
+        :no_match
+      end
+    end
   end
 
   description "deconstruct returns nil for find pattern"

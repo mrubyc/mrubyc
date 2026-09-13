@@ -236,6 +236,28 @@ mrbc_callinfo * mrbc_push_callinfo( mrbc_vm *vm, mrbc_sym method_id, int reg_off
 
 
 //================================================================
+/*! Release the value a pending return carries.
+
+  A `return` on its way through an ensure clause (see sub_op_return)
+  keeps its value in a box that the MRBC_TT_RETURN marker points to.
+  When an exception or a break raised in that clause abandons the
+  return, the marker is left in a register; drop the box with it.
+
+  @param  vm	pointer to VM.
+  @param  v	register to check.
+*/
+static void release_pending_return( mrbc_vm *vm, mrbc_value *v )
+{
+  if( mrbc_type(*v) != MRBC_TT_RETURN ) return;
+
+  mrbc_value *box = v->handle;
+  mrbc_decref( box );
+  mrbc_free( vm, box );
+  mrbc_set_nil( v );
+}
+
+
+//================================================================
 /*! Pop current status from callinfo stack
 */
 void mrbc_pop_callinfo( mrbc_vm *vm )
@@ -247,6 +269,7 @@ void mrbc_pop_callinfo( mrbc_vm *vm )
   mrbc_value *r0 = vm->cur_regs;
 
   for( int i = 1; i < vm->cur_irep->nregs; i++ ) {
+    release_pending_return( vm, r0+i );
     mrbc_decref_empty( r0+i );
   }
 
@@ -379,6 +402,7 @@ void mrbc_vm_end( mrbc_vm *vm )
   for( int i = 1; i < vm->regs_size; i++ ) {
     //mrbc_printf("vm->regs[%d].tt = %d\n", i, mrbc_type(vm->regs[i]));
     if( mrbc_type(vm->regs[i]) != MRBC_TT_NIL ) n_used = i;
+    release_pending_return(vm, &vm->regs[i]);
     mrbc_decref_empty(&vm->regs[i]);
   }
   (void)n_used;	// avoid warning.
@@ -1036,13 +1060,18 @@ static inline void op_rescue( mrbc_vm *vm, mrbc_value *regs EXT )
 {
   FETCH_BB();
 
-  assert( mrbc_type(regs[a]) == MRBC_TT_EXCEPTION );
   assert( mrbc_type(regs[b]) == MRBC_TT_CLASS );
 
-  int res = mrbc_obj_is_kind_of( &regs[a], regs[b].cls );
+  // The compiler also emits OP_RESCUE at the entry of an ensure to decide
+  // whether `$!` should name the exception. R[a] is then nil on a normal
+  // entry, or a break/return passing through, neither an exception.
+  int res = (mrbc_type(regs[a]) == MRBC_TT_EXCEPTION) &&
+            mrbc_obj_is_kind_of( &regs[a], regs[b].cls );
   mrbc_set_bool( &regs[b], res );
 }
 
+
+static inline void sub_op_return( mrbc_vm *vm, mrbc_value *regs, int a );
 
 //================================================================
 /*! OP_RAISEIF
@@ -1073,20 +1102,14 @@ static inline void op_raiseif( mrbc_vm *vm, mrbc_value *regs EXT )
 
 CASE_OP_RETURN:
  {
-  // find ensure that still needs to be executed.
-  const mrbc_irep_catch_handler *handler = find_catch_handler_ensure(vm);
-  if( handler ) {
-    vm->exception = ra;
-    vm->inst = vm->cur_irep->inst + bin_to_uint32(handler->target);
-    return;
-  }
+  // Take the value back from the box sub_op_return saved it in, and
+  // return it as usual. That runs the next ensure on the way out, if
+  // there is one, and handles the top level.
+  mrbc_value *box = ra.handle;
+  regs[a] = *box;
+  mrbc_free( vm, box );
 
-  // set the return value and return to caller.
-  mrbc_decref(&regs[0]);
-  regs[0] = regs[ vm->cur_irep->nregs ];
-  mrbc_set_tt( &regs[ vm->cur_irep->nregs ], MRBC_TT_EMPTY );
-
-  mrbc_pop_callinfo(vm);
+  sub_op_return( vm, regs, a );
   return;
  }
 
@@ -1722,11 +1745,16 @@ static inline void sub_op_return( mrbc_vm *vm, mrbc_value *regs, int a )
     if( handler ) {
       assert( mrbc_type(vm->exception) == MRBC_TT_NIL );
 
-      // Save the return value in the last+1 register.
-      regs[ vm->cur_irep->nregs ] = regs[a];
+      // Save the return value in a box the pending return carries
+      // through the ensure. A register past the frame (regs[nregs])
+      // is not safe: a method the ensure clause calls builds its
+      // frame there.
+      mrbc_value *box = mrbc_alloc( vm, sizeof(mrbc_value) );
+      *box = regs[a];
       mrbc_set_tt( &regs[a], MRBC_TT_EMPTY );
 
       vm->exception.tt = MRBC_TT_RETURN;
+      vm->exception.handle = box;
       vm->inst = vm->cur_irep->inst + bin_to_uint32(handler->target);
       return;
     }
