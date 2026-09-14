@@ -88,7 +88,7 @@ EOL
     file.puts "  .flag_module = 1,"  if type == :module
 
     n = cls[:methods].empty? ? "0" : "sizeof(method_symbols_#{var_name}) / sizeof(mrbc_sym)"
-    file.puts "  .num_builtin_method = #{n},"
+    file.puts "  .num_builtin_methods = #{n},"
     cls_super = cls[:super] ? "MRBC_CLASS(#{sanitize_var_name(cls[:super])})" : "0"
     file.puts "  .super = #{cls_super},"
     file.puts "#if defined(MRBC_DEBUG)"

@@ -116,10 +116,14 @@ static void send_by_name( mrbc_vm *vm, mrbc_sym sym_id, int a, int c )
   // find a method
   mrbc_class *cls = mrbc_find_class_by_object(recv);
   mrbc_method method;
-  if( mrbc_find_method( &method, cls, sym_id ) != 0 ) goto CALL_METHOD;
+  mrbc_class *own_cls;
+
+  own_cls = mrbc_find_method( &method, cls, sym_id );
+  if( own_cls != NULL ) goto CALL_METHOD;
 
   // method missing?
-  if( mrbc_find_method( &method, cls, MRBC_SYM(method_missing) ) == 0 ) {
+  own_cls = mrbc_find_method( &method, cls, MRBC_SYM(method_missing));
+  if( own_cls == NULL ) {
     mrbc_raisef(vm, MRBC_CLASS(NoMethodError),
                 "undefined local variable or method '%s' for %s",
                 mrbc_symid_to_str(sym_id), mrbc_symid_to_str(cls->sym_id));
@@ -158,7 +162,7 @@ static void send_by_name( mrbc_vm *vm, mrbc_sym sym_id, int a, int c )
 
  CALL_RUBY_METHOD:;
   mrbc_callinfo *callinfo = mrbc_push_callinfo(vm, sym_id, a, narg);
-  callinfo->own_class = method.cls;
+  callinfo->own_class = own_cls;
 
   vm->cur_irep = method.irep;
   vm->inst = vm->cur_irep->inst;
@@ -1398,30 +1402,16 @@ static inline void op_super( mrbc_vm *vm, mrbc_value *regs EXT )
 
   // find super class
   mrbc_callinfo *callinfo = vm->callinfo_tail;
-  if( callinfo == NULL ) {
-    mrbc_raise(vm, MRBC_CLASS(NoMethodError), "super called outside of method");
-    return;
-  }
-  mrbc_class *cls = callinfo->own_class;
+  if( callinfo == NULL ) goto RAISE_SUPER_CALLED_OUTSIDE_OF_METHOD;
+
+  assert( callinfo->own_class );
+  mrbc_class *cls = callinfo->own_class->super;
+  if( cls == NULL ) goto RAISE_NO_SUPERCLASS_METHOD;
+
   mrbc_method method;
-
-  assert( cls );
-  cls = cls->super;
-  if( cls == NULL ) {
-    mrbc_raisef(vm, MRBC_CLASS(NoMethodError),
-                "no superclass method '%s' for %s",
-                mrbc_symid_to_str(callinfo->method_id),
-                mrbc_symid_to_str(callinfo->own_class->sym_id));
-    return;
-  }
-
-  if( mrbc_find_method( &method, cls, callinfo->method_id ) == 0 ) {
-    mrbc_raisef( vm, MRBC_CLASS(NoMethodError),
-        "no superclass method '%s' for %s",
-        mrbc_symid_to_str(callinfo->method_id),
-        mrbc_symid_to_str(callinfo->own_class->sym_id));
-    return;
-  }
+  mrbc_class *own_cls;
+  own_cls = mrbc_find_method( &method, cls, callinfo->method_id );
+  if( own_cls == NULL ) goto RAISE_NO_SUPERCLASS_METHOD;
 
   // call C function and return.
   if( method.c_func ) {
@@ -1434,12 +1424,25 @@ static inline void op_super( mrbc_vm *vm, mrbc_value *regs EXT )
 
   // call Ruby method.
   callinfo = mrbc_push_callinfo(vm, callinfo->method_id, a, narg);
-  callinfo->own_class = method.cls;
+  callinfo->own_class = own_cls;
   callinfo->is_called_super = 1;
 
   vm->cur_irep = method.irep;
   vm->inst = vm->cur_irep->inst;
   vm->cur_regs = recv;
+  return;
+
+
+ RAISE_SUPER_CALLED_OUTSIDE_OF_METHOD:
+  mrbc_raise(vm, MRBC_CLASS(NoMethodError), "super called outside of method");
+  return;
+
+ RAISE_NO_SUPERCLASS_METHOD:
+  mrbc_raisef(vm, MRBC_CLASS(NoMethodError),
+	      "no superclass method '%s' for %s",
+	      mrbc_symid_to_str(callinfo->method_id),
+	      mrbc_symid_to_str(callinfo->own_class->sym_id));
+  return;
 }
 
 
@@ -2978,30 +2981,7 @@ static void sub_irep_inc_dec_ref( mrbc_irep *irep, int inc_dec )
   }
 
   irep->ref_count += inc_dec;
-}
-
-static void sub_newmethod( mrbc_class *cls, mrbc_method *method, mrbc_sym sym_id )
-{
-  method->next = cls->method_link;
-  cls->method_link = method;
-
-  if( !method->c_func ) sub_irep_inc_dec_ref( method->irep, +1 );
-
-  // checking same method
-  for( ;method->next != NULL; method = method->next ) {
-    if( method->next->sym_id == sym_id ) {
-      // Found it. Unchain it in linked list and remove.
-      mrbc_method *del_method = method->next;
-
-      method->next = del_method->next;
-      if( del_method->type == 'M' ) {
-        if( !del_method->c_func ) sub_irep_inc_dec_ref( del_method->irep, -1 );
-        mrbc_raw_free( del_method );
-      }
-
-      break;
-    }
-  }
+  assert( irep->ref_count != 0xffff );
 }
 
 static void sub_op_def( mrbc_vm *vm, mrbc_class *cls, mrbc_irep *irep, mrbc_sym sym_id )
@@ -3013,18 +2993,20 @@ static void sub_op_def( mrbc_vm *vm, mrbc_class *cls, mrbc_irep *irep, mrbc_sym 
     return;
   }
 
-  mrbc_method *method = (vm->vm_id == 0) ?
-    mrbc_raw_alloc_no_free( sizeof(mrbc_method) ) :
-    mrbc_raw_alloc( sizeof(mrbc_method) );
+  mrbc_method *m = mrbc_method_table_insert_entry( vm, cls, sym_id );
 
-  *method = (mrbc_method){
+  if( m->sym_id == sym_id ) {
+    // Duplicate method name found.
+    if( ! m->c_func ) sub_irep_inc_dec_ref( m->irep, -1 );
+  }
+
+  *m = (mrbc_method){
     .type = (vm->vm_id == 0) ? 'm' : 'M',
     .c_func = 0,
     .sym_id = sym_id,
     .irep = irep,
   };
-
-  sub_newmethod( cls, method, sym_id );
+  sub_irep_inc_dec_ref( irep, +1 );
 }
 
 //================================================================
@@ -3093,21 +3075,23 @@ static inline void op_alias( mrbc_vm *vm, mrbc_value *regs EXT )
   mrbc_sym sym_id_new = mrbc_irep_symbol_id(vm->cur_irep, a);
   mrbc_sym sym_id_org = mrbc_irep_symbol_id(vm->cur_irep, b);
   mrbc_class *cls = vm->target_class;
-  mrbc_method *method = (vm->vm_id == 0) ?
-    mrbc_raw_alloc_no_free( sizeof(mrbc_method) ) :
-    mrbc_raw_alloc( sizeof(mrbc_method) );
+  mrbc_method method;
 
-  if( mrbc_find_method( method, cls, sym_id_org ) == 0 ) {
+  if( mrbc_find_method( &method, cls, sym_id_org ) == NULL ) {
     mrbc_raisef(vm, MRBC_CLASS(NameError), "undefined method '%s'",
                 mrbc_symid_to_str(sym_id_org));
-    if(vm->vm_id != 0) mrbc_raw_free( method );
     return;
   }
 
-  method->type = (vm->vm_id == 0) ? 'm' : 'M';
-  method->sym_id = sym_id_new;
+  mrbc_method *m = mrbc_method_table_insert_entry( vm, cls, sym_id_new );
+  if( m->sym_id == sym_id_new ) {
+    // Duplicate method name found.
+    if( ! m->c_func ) sub_irep_inc_dec_ref( m->irep, -1 );
+  }
 
-  sub_newmethod( cls, method, sym_id_new );
+  *m = method;
+  m->sym_id = sym_id_new;
+  if( !m->c_func ) sub_irep_inc_dec_ref( m->irep, +1 );
 }
 
 

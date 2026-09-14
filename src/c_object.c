@@ -62,9 +62,10 @@ void mrbc_instance_call_initialize( mrbc_vm *vm, mrbc_value v[], int argc )
 {
   // call the initialize method.
   mrbc_method method;
-  if( !mrbc_find_method(&method, v[0].instance->cls, MRBC_SYM(initialize))) {
-    return;
-  }
+  mrbc_class *own_cls;
+
+  own_cls = mrbc_find_method(&method, v[0].instance->cls, MRBC_SYM(initialize));
+  if( own_cls == NULL ) return;
 
   if( method.c_func ) {
     method.func(vm, v, argc);
@@ -76,7 +77,7 @@ void mrbc_instance_call_initialize( mrbc_vm *vm, mrbc_value v[], int argc )
 
   mrbc_callinfo *callinfo = mrbc_push_callinfo(vm, MRBC_SYM(initialize),
                                                (v - vm->cur_regs), argc);
-  callinfo->own_class = method.cls;
+  callinfo->own_class = own_cls;
 
   vm->cur_irep = method.irep;
   vm->inst = vm->cur_irep->inst;
@@ -428,16 +429,14 @@ static void c_object_instance_methods(mrbc_vm *vm, mrbc_value v[], int argc)
 
   while( 1 ) {
     // builtin method.
-    for( int i = 0; i < cls->num_builtin_method; i++ ) {
+    for( int i = 0; i < cls->num_builtin_methods; i++ ) {
       mrbc_array_push( &ret,
 	&mrbc_symbol_value(((struct RBuiltinClass *)cls)->method_symbols[i]) );
     }
 
     // no builtin method.
-    const mrbc_method *method = cls->flag_nomethod ? NULL : cls->method_link;
-    while( method ) {
-      mrbc_array_push( &ret, &mrbc_symbol_value(method->sym_id) );
-      method = method->next;
+    for( int i = 0; i < cls->num_methods; i++ ) {
+      mrbc_array_push( &ret, &mrbc_symbol_value(cls->methods[i].sym_id) );
     }
 
     if( !flag_inherit ) break;
