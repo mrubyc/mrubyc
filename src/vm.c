@@ -1549,6 +1549,18 @@ static inline void op_enter( mrbc_vm *vm, mrbc_value *regs EXT )
     return;
   }
 
+  // Guard: OP_ENTER requires an active call frame (vm->callinfo_tail != NULL).
+  // At the top level, mrbc_vm_begin() initialises callinfo_tail to NULL.
+  // Untrusted .mrb bytecode can place OP_ENTER outside a method definition,
+  // causing a NULL pointer dereference at 'argc = vm->callinfo_tail->n_args'
+  // and crashing the embedding application (CVE-2026-86547).
+  // Mirrors the guard added for CVE-2026-38976 in op_super.
+  if( vm->callinfo_tail == NULL ) {
+    mrbc_raise( vm, MRBC_CLASS(NotImplementedError),
+                "OP_ENTER called at top level: no active call frame" );
+    return;
+  }
+
   // Check m2 parameter.
   if( a & FLAG_M2 ) {
     mrbc_raise( vm, MRBC_CLASS(NotImplementedError), "not support m2 argument");
