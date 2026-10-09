@@ -374,6 +374,7 @@ void mrbc_vm_begin( mrbc_vm *vm )
   vm->ret_blk = NULL;
   vm->exception = mrbc_nil_value();
   vm->flag_preemption = 0;
+  vm->flag_exc_delivering = 0;
   vm->flag_stop = 0;
 
   // set self to reg[0], others nil
@@ -1052,6 +1053,7 @@ static inline void op_except( mrbc_vm *vm, mrbc_value *regs EXT )
   mrbc_decref( &regs[a] );
   regs[a] = vm->exception;
   mrbc_set_nil( &vm->exception );
+  vm->flag_exc_delivering = 0;
 }
 
 
@@ -3333,7 +3335,15 @@ int mrbc_vm_run( mrbc_vm *vm )
     ext = 0;
 #endif
     if( !vm->flag_preemption ) continue;	// execute next ope code.
-    if( !mrbc_israised(vm) ) return vm->flag_stop; // normal return.
+    /*
+      If flag_exc_delivering is set, do NOT re-enter the handler search
+      below -- this exception is already delivered: the search jumped to
+      its catch handler, and only OP_EXCEPT there may consume vm->exception.
+      Re-searching from inside the handler would miss the catch range and
+      unwind past the rescue. Switching the task here is fine; delivery
+      continues from the handler entry when the task resumes.
+    */
+    if( !mrbc_israised(vm) || vm->flag_exc_delivering ) return vm->flag_stop; // normal return.
 
 
     // Handle exception
@@ -3359,6 +3369,8 @@ int mrbc_vm_run( mrbc_vm *vm )
 
   JUMP_TO_HANDLER:
     // jump to handler (rescue or ensure).
+    // Delivery continues until OP_EXCEPT in the handler stores vm->exception.
+    vm->flag_exc_delivering = 1;
     vm->inst = vm->cur_irep->inst + bin_to_uint32(handler->target);
   }
 }
