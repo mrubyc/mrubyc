@@ -2516,7 +2516,10 @@ static inline void op_arycat( mrbc_vm *vm, mrbc_value *regs EXT )
 
   // need resize?
   if( regs[a].array->data_size < new_size ) {
-    mrbc_array_resize(&regs[a], new_size);
+    if( mrbc_array_resize(&regs[a], new_size) != 0 ) {
+      mrbc_raise( vm, MRBC_CLASS(NoMemoryError), 0 );
+      return;
+    }
   }
 
   for( int i = 0; i < size_2; i++ ) {
@@ -2538,7 +2541,10 @@ static inline void op_arypush( mrbc_vm *vm, mrbc_value *regs EXT )
 
   int sz1 = mrbc_array_size(&regs[a]);
 
-  mrbc_array_resize(&regs[a], sz1 + b);
+  if( mrbc_array_resize(&regs[a], sz1 + b) != 0 ) {
+    mrbc_raise( vm, MRBC_CLASS(NoMemoryError), 0 );
+    return;
+  }
 
   // data copy.
   memcpy( regs[a].array->data + sz1, &regs[a+1], sizeof(mrbc_value) * b );
@@ -2762,7 +2768,10 @@ static inline void op_hashadd( mrbc_vm *vm, mrbc_value *regs EXT )
   int sz1 = mrbc_array_size(&regs[a]);
   int sz2 = b * 2;
 
-  mrbc_array_resize(&regs[a], sz1 + sz2);
+  if( mrbc_array_resize(&regs[a], sz1 + sz2) != 0 ) {
+    mrbc_raise( vm, MRBC_CLASS(NoMemoryError), 0 );
+    return;
+  }
 
   // data copy.
   // note: Do not detect duplicate keys.

@@ -129,6 +129,7 @@ int mrbc_array_resize(mrbc_value *ary, int size)
 
   mrbc_array *h = ary->array;
   mrbc_value *data = mrbc_raw_realloc(h->data, sizeof(mrbc_value) * size);
+  if( data == NULL ) return E_NOMEMORY_ERROR;	// h->data is still valid.
 
   h->data = data;
   h->data_size = size;
@@ -156,7 +157,7 @@ int mrbc_array_set(mrbc_value *ary, int idx, mrbc_value *set_val)
 
   // need resize?
   if( idx >= h->data_size ) {
-    mrbc_array_resize(ary, idx + 1);
+    if( mrbc_array_resize(ary, idx + 1) != 0 ) return E_NOMEMORY_ERROR;
   }
 
   if( idx < h->n_stored ) {
@@ -224,7 +225,7 @@ int mrbc_array_push(mrbc_value *ary, mrbc_value *set_val)
   mrbc_array *h = ary->array;
 
   if( h->n_stored >= h->data_size ) {
-    mrbc_array_resize(ary, h->data_size + 6);
+    if( mrbc_array_resize(ary, h->data_size + 6) != 0 ) return E_NOMEMORY_ERROR;
   }
 
   h->data[h->n_stored++] = *set_val;
@@ -247,7 +248,7 @@ int mrbc_array_push_m(mrbc_value *ary, mrbc_value *set_val)
   int new_size = ha_d->n_stored + ha_s->n_stored;
 
   if( new_size > ha_d->data_size ) {
-    mrbc_array_resize(ary, new_size);
+    if( mrbc_array_resize(ary, new_size) != 0 ) return E_NOMEMORY_ERROR;
   }
 
   memcpy( &ha_d->data[ha_d->n_stored], ha_s->data,
@@ -330,7 +331,7 @@ int mrbc_array_insert(mrbc_value *ary, int idx, mrbc_value *set_val)
     size = h->data_size + 1;
   }
   if( size ) {
-    mrbc_array_resize(ary, size);
+    if( mrbc_array_resize(ary, size) != 0 ) return E_NOMEMORY_ERROR;
   }
 
   // move datas.
@@ -797,7 +798,12 @@ static void c_array_set(mrbc_vm *vm, mrbc_value v[], int argc)
     in case of self[nth] = val
   */
   if( argc == 2 && mrbc_type(v[1]) == MRBC_TT_INTEGER ) {
-    if( mrbc_array_set(v, mrbc_integer(v[1]), &v[2]) != 0 ) {
+    int ret = mrbc_array_set(v, mrbc_integer(v[1]), &v[2]);
+    if( ret == E_NOMEMORY_ERROR ) {
+      mrbc_raise( vm, MRBC_CLASS(NoMemoryError), 0 );
+      return;
+    }
+    if( ret != 0 ) {
       mrbc_raise( vm, MRBC_CLASS(IndexError), "too small for array");
       return;
     }
