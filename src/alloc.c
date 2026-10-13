@@ -51,10 +51,11 @@
 #include <assert.h>
 //@endcond
 
-#if !defined(MRBC_ALLOC_LIBC)
 /***** Local headers ********************************************************/
 #include "alloc.h"
 #include "hal.h"
+
+#if !defined(MRBC_ALLOC_LIBC)
 #if defined(MRBC_DEBUG)
 #include "console.h"
 #endif
@@ -519,13 +520,7 @@ void * mrbc_raw_alloc(unsigned int size)
   }
 
   // else out of memory
-#if defined(MRBC_OUT_OF_MEMORY)
-  MRBC_OUT_OF_MEMORY();
-#else
-  static const char msg[] = "Fatal error: Out of memory.\n";
-  mrbc_hal_write(2, msg, sizeof(msg)-1);
-  mrbc_hal_abort(0);
-#endif
+  mrbc_alloc_out_of_memory();
   return NULL;  // ENOMEM (unreachable if mrbc_hal_abort doesn't return)
 
 
@@ -1011,3 +1006,20 @@ void mrbc_alloc_print_memory_pool( void )
 
 #endif // defined(MRBC_DEBUG)
 #endif // !defined(MRBC_ALLOC_LIBC)
+
+
+//================================================================
+/*! out of memory handler
+
+  Both the mruby/c allocator and the libc wrappers call this function.
+*/
+void mrbc_alloc_out_of_memory(void)
+{
+#if defined(MRBC_OUT_OF_MEMORY)
+  MRBC_OUT_OF_MEMORY();
+#else
+  static const char msg[] = "Fatal error: Out of memory.\n";
+  mrbc_hal_write(2, msg, sizeof(msg)-1);
+  mrbc_hal_abort(0);
+#endif
+}
