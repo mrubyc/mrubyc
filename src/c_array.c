@@ -1076,6 +1076,45 @@ static void c_array_unshift(mrbc_vm *vm, mrbc_value v[], int argc)
 
 
 //================================================================
+/*! (method) insert
+*/
+static void c_array_insert(mrbc_vm *vm, mrbc_value v[], int argc)
+{
+  if( argc < 1 ) {
+    mrbc_raise( vm, MRBC_CLASS(ArgumentError), 0 );
+    return;
+  }
+  if( mrbc_type(v[1]) != MRBC_TT_INTEGER ) {
+    mrbc_raise( vm, MRBC_CLASS(TypeError), 0 );
+    return;
+  }
+  if( argc == 1 ) return;	// nothing to insert, returns self.
+
+  mrbc_array *h = v[0].array;
+  int pos = mrbc_integer(v[1]);
+  if( pos < 0 ) {
+    // negative index inserts after the element.
+    pos = h->n_stored + pos + 1;
+    if( pos < 0 ) {
+      mrbc_raise( vm, MRBC_CLASS(IndexError), "index too small for array");
+      return;
+    }
+  }
+
+  // allocate all the space at once.
+  int size = (pos > h->n_stored ? pos : h->n_stored) + argc - 1;
+  if( size > h->data_size ) {
+    mrbc_array_resize(&v[0], size);
+  }
+
+  for( int i = 2; i <= argc; i++ ) {
+    mrbc_array_insert(&v[0], pos++, &v[i]);
+    mrbc_set_tt( &v[i], MRBC_TT_EMPTY );
+  }
+}
+
+
+//================================================================
 /*! (method) shift
 */
 static void c_array_shift(mrbc_vm *vm, mrbc_value v[], int argc)
@@ -1367,6 +1406,7 @@ static void c_array_join(mrbc_vm *vm, mrbc_value v[], int argc)
   METHOD( "pop",	c_array_pop )
   METHOD( "shift",	c_array_shift )
   METHOD( "unshift",	c_array_unshift )
+  METHOD( "insert",	c_array_insert )
   METHOD( "dup",	c_array_dup )
   METHOD( "min",	c_array_min )
   METHOD( "max",	c_array_max )

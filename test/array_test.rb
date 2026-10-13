@@ -198,6 +198,27 @@ class ArrayTest < Picotest::Test
     assert_equal [1,2], a
   end
 
+  description "insert"
+  def test_insert
+    a = [1,2,3]
+    assert_equal [1,:a,2,3], a.insert(1, :a)
+    assert_equal [1,:a,2,3], a
+    assert_equal [1,:a,:b,:c,2,3], a.insert(2, :b, :c)
+    assert_equal [1,:a,:b,:c,2,3,:d], a.insert(-1, :d)
+    assert_equal [1,:a,:b,:c,2,:e,3,:d], a.insert(-3, :e)
+    assert_equal [1,:a,:b,:c,2,:e,3,:d], a.insert(1)
+
+    a = [1,2]
+    assert_equal [1,2,nil,nil,:x,:y], a.insert(4, :x, :y)
+    assert_equal [:z,1,2,nil,nil,:x,:y], a.insert(-7, :z)
+    assert_raise(IndexError) { a.insert(-9, :w) }
+    assert_raise(TypeError) { a.insert(nil, :w) }
+
+    a = []
+    assert_equal ["s"], a.insert(0, "s")
+    assert_equal [:z,"s"], a.insert(-2, :z)
+  end
+
   description "unshift / shift"
   def test_shift
     a = []
