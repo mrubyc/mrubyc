@@ -156,6 +156,7 @@ typedef struct VM {
   unsigned int flag_need_memfree : 1;
   unsigned int flag_stop : 1;
   unsigned int flag_permanence : 1;
+  unsigned int flag_exc_delivering : 1;	//!< exception jumped to its catch handler but OP_EXCEPT has not stored it yet.
 
   mrbc_irep       *top_irep;		//!< IREP tree top.
 
