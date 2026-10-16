@@ -902,6 +902,7 @@ void mrbc_alloc_get_profiling(struct MRBC_ALLOC_PROF *prof)
 #endif  // defined(MRBC_USE_ALLOC_PROF)
 
 
+#if defined(MRBC_DEBUG)
 //================================================================
 /*! print used/free memory size.
 
@@ -1008,4 +1009,5 @@ void mrbc_alloc_print_memory_pool( void )
   mrbc_alloc_print_memory_block(0);
 }
 
+#endif // defined(MRBC_DEBUG)
 #endif // !defined(MRBC_ALLOC_LIBC)
