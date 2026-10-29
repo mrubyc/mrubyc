@@ -60,6 +60,8 @@ struct VM;
 /***** Global variables *****************************************************/
 /***** Function prototypes and inline functions *****************************/
 //@cond
+void mrbc_alloc_out_of_memory(void);
+
 #if !defined(MRBC_ALLOC_LIBC)
 /*
   Normally enabled
@@ -88,20 +90,31 @@ void mrbc_alloc_print_memory_pool(void);
 */
 static inline void mrbc_init_alloc(void *ptr, unsigned int size) {}
 static inline void mrbc_cleanup_alloc(void) {}
+/*
+  Like the mruby/c allocator, these wrappers never return NULL on
+  a failure. They call mrbc_alloc_out_of_memory() instead.
+  A request of size 0 can return NULL, as libc permits it.
+*/
 static inline void *mrbc_raw_alloc(unsigned int size) {
-  return malloc(size);
+  void *ptr = malloc(size);
+  if( ptr == NULL && size != 0 ) mrbc_alloc_out_of_memory();
+  return ptr;
 }
 static inline void *mrbc_raw_alloc_no_free(unsigned int size) {
-  return malloc(size);
+  return mrbc_raw_alloc(size);
 }
 static inline void *mrbc_raw_calloc(unsigned int nmemb, unsigned int size) {
-  return calloc(nmemb, size);
+  void *ptr = calloc(nmemb, size);
+  if( ptr == NULL && nmemb != 0 && size != 0 ) mrbc_alloc_out_of_memory();
+  return ptr;
 }
 static inline void mrbc_raw_free(void *ptr) {
   free(ptr);
 }
 static inline void *mrbc_raw_realloc(void *ptr, unsigned int size) {
-  return realloc(ptr, size);
+  void *new_ptr = realloc(ptr, size);
+  if( new_ptr == NULL && size != 0 ) mrbc_alloc_out_of_memory();
+  return new_ptr;
 }
 /*
  * When MRBC_ALLOC_LIBC is defined, you can not use mrbc_alloc_usable_size()
