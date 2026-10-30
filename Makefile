@@ -99,7 +99,7 @@ test_host_gcc_no_libc:
 		-e PICORB_DEBUG=1 \
 		-e MRUBY_CONFIG=femtoruby-test \
 		-e PICORB_NO_LIBC_ALLOC=1 \
-		-e RUBY="build/host/bin/femtoruby" \
+		-e RUBY="build/femtoruby-test/bin/femtoruby" \
 		--rm -v $(shell pwd):/work/mrubyc mrubyc-test \
 		bash -c \
 		"rake clean && rake && ruby /work/mrubyc/test/0_runner.rb"
@@ -109,7 +109,7 @@ test_host_gcc:
 		-e CC=gcc \
 		-e PICORB_DEBUG=1 \
 		-e MRUBY_CONFIG=femtoruby-test \
-		-e RUBY="build/host/bin/femtoruby" \
+		-e RUBY="build/femtoruby-test/bin/femtoruby" \
 		--rm -v $(shell pwd):/work/mrubyc mrubyc-test \
 		bash -c \
 		"rake clean && rake && ruby /work/mrubyc/test/0_runner.rb"
@@ -120,7 +120,7 @@ test_host_clang_no_libc:
 		-e PICORB_DEBUG=1 \
 		-e MRUBY_CONFIG=femtoruby-test \
 		-e PICORB_NO_LIBC_ALLOC=1 \
-		-e RUBY="build/host/bin/femtoruby" \
+		-e RUBY="build/femtoruby-test/bin/femtoruby" \
 		--rm -v $(shell pwd):/work/mrubyc mrubyc-test \
 		bash -c \
 		"rake clean && rake && ruby /work/mrubyc/test/0_runner.rb"
@@ -130,7 +130,7 @@ test_host_clang:
 		-e CC=clang \
 		-e PICORB_DEBUG=1 \
 		-e MRUBY_CONFIG=femtoruby-test \
-		-e RUBY="build/host/bin/femtoruby" \
+		-e RUBY="build/femtoruby-test/bin/femtoruby" \
 		--rm -v $(shell pwd):/work/mrubyc mrubyc-test \
 		bash -c \
 		"rake clean && rake && ruby /work/mrubyc/test/0_runner.rb"

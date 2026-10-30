@@ -70,7 +70,7 @@ jobs:
               -e CC=gcc \
               -e PICORB_DEBUG=1 \
               -e MRUBY_CONFIG=femtoruby-test \
-              -e RUBY="bin/femtoruby" \
+              -e RUBY="build/femtoruby-test/bin/femtoruby" \
               --rm -v ${{ github.workspace }}:/work/mrubyc mrubyc-test \
               bash -c "rake clean && rake && ruby /work/mrubyc/test/0_runner.rb"
             ;;
@@ -79,7 +79,7 @@ jobs:
               -e CC=gcc \
               -e PICORB_DEBUG=1 \
               -e MRUBY_CONFIG=femtoruby-test \
-              -e RUBY="bin/femtoruby" \
+              -e RUBY="build/femtoruby-test/bin/femtoruby" \
               -e PICORB_NO_LIBC_ALLOC=1 \
               --rm -v ${{ github.workspace }}:/work/mrubyc mrubyc-test \
               bash -c "rake clean && rake && ruby /work/mrubyc/test/0_runner.rb"
@@ -89,7 +89,7 @@ jobs:
               -e CC=clang \
               -e PICORB_DEBUG=1 \
               -e MRUBY_CONFIG=femtoruby-test \
-              -e RUBY="bin/femtoruby" \
+              -e RUBY="build/femtoruby-test/bin/femtoruby" \
               --rm -v ${{ github.workspace }}:/work/mrubyc mrubyc-test \
               bash -c "rake clean && rake && ruby /work/mrubyc/test/0_runner.rb"
             ;;
@@ -98,7 +98,7 @@ jobs:
               -e CC=clang \
               -e PICORB_DEBUG=1 \
               -e MRUBY_CONFIG=femtoruby-test \
-              -e RUBY="bin/femtoruby" \
+              -e RUBY="build/femtoruby-test/bin/femtoruby" \
               -e PICORB_NO_LIBC_ALLOC=1 \
               --rm -v ${{ github.workspace }}:/work/mrubyc mrubyc-test \
               bash -c "rake clean && rake && ruby /work/mrubyc/test/0_runner.rb"
