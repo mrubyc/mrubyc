@@ -1026,7 +1026,7 @@ static inline void op_jmpuw( mrbc_vm *vm, mrbc_value *regs EXT )
 
   // check whether the jump point is inside or outside the catch handler.
   uint32_t jump_point = jump_inst - vm->cur_irep->inst;
-  if( (bin_to_uint32(handler->begin) < jump_point) &&
+  if( (bin_to_uint32(handler->begin) <= jump_point) &&
       (jump_point <= bin_to_uint32(handler->end)) ) {
     vm->inst = jump_inst;
     return;
@@ -1202,7 +1202,7 @@ CASE_OP_JMPUW:
 
   // check whether the jump point is inside or outside the catch handler.
   uint32_t jump_point = (uint8_t *)ra.handle - vm->cur_irep->inst;
-  if( (bin_to_uint32(handler->begin) < jump_point) &&
+  if( (bin_to_uint32(handler->begin) <= jump_point) &&
       (jump_point <= bin_to_uint32(handler->end)) ) {
     vm->inst = ra.handle;
     return;
