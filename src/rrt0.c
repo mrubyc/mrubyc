@@ -339,6 +339,12 @@ int mrbc_delete_task(mrbc_tcb *tcb)
 
   mrbc_vm_close( &tcb->vm );
 
+  // Give back the reference that sub_task_get() keeps for the task.
+  if( tcb->task_instance ) {
+    mrbc_decref( &mrbc_immediate_value(MRBC_TT_OBJECT, .instance = tcb->task_instance) );
+    tcb->task_instance = NULL;
+  }
+
   return 0;
 }
 
