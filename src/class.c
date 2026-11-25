@@ -306,7 +306,7 @@ void mrbc_define_method(struct VM *vm, mrbc_class *cls, const char *name, mrbc_f
 
   mrbc_method *m = mrbc_method_table_insert_entry( vm, cls, sym_id );
   if( m->sym_id == sym_id && !m->c_func ) {
-    mrbc_irep_adjust_ref_count( m->irep, -1 );
+    mrbc_irep_inc_dec_ref( m->irep, -1 );
   }
   *m = (mrbc_method){
     .type = 'm',
