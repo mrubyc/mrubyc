@@ -181,6 +181,7 @@ typedef struct VM mrb_vm;
 /***** Function prototypes **************************************************/
 //@cond
 void mrbc_cleanup_vm(void);
+void mrbc_irep_adjust_ref_count(mrbc_irep *irep, int inc_dec);
 mrbc_callinfo *mrbc_push_callinfo(mrbc_vm *vm, mrbc_sym method_id, int reg_offset, int n_args);
 void mrbc_pop_callinfo(mrbc_vm *vm);
 mrbc_vm *mrbc_vm_new(int regs_size);
