@@ -121,6 +121,10 @@
 
 // #define MRBC_NO_TIMER
 
+// Specify the symbol lookup method.
+// Use linear search to save a bit of memory.
+// #define MRBC_SYMBOL_SEARCH_LINEAR
+
 // Console new-line mode.
 // If you need to convert LF to CRLF in console output, enable the following:
 // #define MRBC_CONVERT_CRLF

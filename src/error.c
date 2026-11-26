@@ -319,6 +319,7 @@ static void c_exception_message(struct VM *vm, mrbc_value v[], int argc)
   METHOD("new", c_exception_new )
 #if MRBC_USE_STRING
   METHOD("message", c_exception_message )
+  METHOD("to_s",    c_exception_message )
 #endif
 
   CLASS("NoMemoryError            < Exception")
