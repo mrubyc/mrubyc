@@ -208,16 +208,21 @@ static mrbc_irep * load_irep_1(mrbc_vm *vm, const uint8_t *bin, int *len)
   mrbc_sym *tbl_syms = mrbc_irep_tbl_syms(p_irep);
   for( int i = 0; i < slen; i++ ) {
     int siz = bin_to_uint16(p) + 1;	p += 2;
-    char *sym_str;
+    mrbc_sym sym;
 
     if (vm->flag_permanence == 1) {
-      sym_str = mrbc_raw_alloc_no_free(siz);
-      memcpy(sym_str, p, siz);
+      // The bytecode may be freed later, so the symbol table keeps a copy
+      // of the name. A symbol that is registered already needs no copy.
+      sym = mrbc_search_symid( (const char *)p );
+      if( sym < 0 ) {
+        char *sym_str = mrbc_raw_alloc_no_free(siz);
+        memcpy(sym_str, p, siz);
+        sym = mrbc_str_to_symid( sym_str );
+      }
     } else {
-      sym_str = (char *)p;
+      sym = mrbc_str_to_symid( (const char *)p );
     }
 
-    mrbc_sym sym = mrbc_str_to_symid( sym_str );
     if( sym < 0 ) {
       mrbc_raise(vm, MRBC_CLASS(Exception), "Overflow MAX_SYMBOLS_COUNT");
       return NULL;

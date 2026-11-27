@@ -2677,10 +2677,21 @@ static inline void op_symbol( mrbc_vm *vm, mrbc_value *regs EXT )
   FETCH_BB();
 
   const char *p = (const char *)mrbc_irep_pool_ptr(vm->cur_irep, b);
-  mrbc_sym sym_id = mrbc_str_to_symid( p+3 );	// 3 is TT and length
-  if( sym_id < 0 ) {
-    mrbc_raise(vm, MRBC_CLASS(Exception), "Overflow MAX_SYMBOLS_COUNT");
-    return;
+  p += 3;	// 3 is TT and length
+  mrbc_sym sym_id;
+
+  if( vm->flag_permanence == 1 ) {
+    // The bytecode may be freed later, so the symbol table must not point
+    // into the pool. mrbc_symbol_new() copies the name of a new symbol.
+    mrbc_value sym_val = mrbc_symbol_new( vm, p );
+    if( mrbc_type(sym_val) != MRBC_TT_SYMBOL ) return;	// raised.
+    sym_id = mrbc_symbol( sym_val );
+  } else {
+    sym_id = mrbc_str_to_symid( p );
+    if( sym_id < 0 ) {
+      mrbc_raise(vm, MRBC_CLASS(Exception), "Overflow MAX_SYMBOLS_COUNT");
+      return;
+    }
   }
 
   mrbc_decref(&regs[a]);
